@@ -186,7 +186,7 @@ run_experiment() {
   # 2. chmod the experiment script
   # 3. run the experiment script
   instance_repo_dir=/home/shared/reczilla
-  instance_script_location=${instance_repo_dir}/scripts/run_experiment_on_instance.sh
+  instance_script_location=${instance_repo_dir}/reczilla_scripts/run_experiment_on_instance.sh
 
   sleep 10
 
@@ -299,7 +299,7 @@ run_experiment_GPU() {
   # 2. chmod the experiment script
   # 3. run the experiment script
   instance_repo_dir=/home/shared/reczilla
-  instance_script_location=${instance_repo_dir}/scripts/run_experiment_on_instance.sh
+  instance_script_location=${instance_repo_dir}/reczilla_scripts/run_experiment_on_instance.sh
 
   sleep 10
 
