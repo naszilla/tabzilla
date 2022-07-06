@@ -29,6 +29,14 @@ def main(args):
     # get all trials and save to file
     all_trials = study.get_trials()
 
+    print(" --- all trials --- ")
+    for trial in all_trials:
+        print(f"trial num: {trial.number}")
+        print(f"user_attrs: {trial.user_attrs}")
+        print(f"system_attrs: {trial.system_attrs}")
+        print(f"datetime_start: {trial.datetime_start}")
+        print(" --- --- --- ")
+
     # Run best trial again and save it!
     model = model_name(study.best_trial.params, args)
     cross_validation(model, X, y, args, save_model=True)
