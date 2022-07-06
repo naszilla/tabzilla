@@ -3,6 +3,7 @@ import catboost as cat
 import lightgbm as lgb
 
 import numpy as np
+from pathlib import Path
 
 from models.basemodel import BaseModel
 
@@ -88,6 +89,7 @@ class CatBoost(BaseModel):
         self.params["od_wait"] = self.args.early_stopping_rounds
         self.params["verbose"] = self.args.logging_period
         self.params["train_dir"] = "output/CatBoost/" + self.args.dataset + "/catboost_info"
+        Path(self.params["train_dir"]).parent.mkdir(parents=True, exist_ok=True)
 
         if args.use_gpu:
             self.params["task_type"] = "GPU"
