@@ -1,17 +1,32 @@
+# experiment script for tabzilla
+#
+# this script takes three inputs:
+# - a config file for general args (see tabzilla_utils.get_general_parser)
+# - a config file for dataset args (see tabzilla_utils.get_dataset_parser)
+# - the name of a model (algorithm) to train and evaluate the dataset on
+
+########
+# TODO:
+# - change the output file name to something standardized, or take it as an arg
+# - do randomized hyperparameter search
+
+
 import logging
 import sys
 
 import optuna
 
-from models import str2model
+import argparse 
+from argparse import Namespace
+
+from models import str2model, all_models
 from utils.load_data import load_data
 from utils.parser import get_parser, get_given_parameters_parser
 from utils.io_utils import save_results_to_file, save_hyperparameters_to_file, save_loss_to_file
 from utils.scorer import get_scorer
-from tabzilla_utils import trial_to_dict
+from tabzilla_utils import trial_to_dict, get_general_parser, get_dataset_parser
 
 from train import cross_validation
-
 
 class TabZillaObjective(object):
     """adapted from TabSurvey.train.Objective. this saves all metrics as user attributes for each trial."""
@@ -72,14 +87,29 @@ def main(args):
     print(f"trials complete. results written to {storage_name}")
 
 if __name__ == "__main__":
-    parser = get_parser()
-    arguments = parser.parse_args()
-    print(arguments)
 
-    if arguments.optimize_hyperparameters:
-        main(arguments)
-    else:
-        # Also load the best parameters
-        parser = get_given_parameters_parser()
-        arguments = parser.parse_args()
-        main_once(arguments)
+    parser = argparse.ArgumentParser(description='parser for tabzilla experiments')
+
+    parser.add_argument('--dataset_config', required=True, type=str, help='config file for dataset args')
+    parser.add_argument('--general_config', required=True, type=str, help='config file for general args')
+    parser.add_argument('--model_name', required=True, type=str, choices=all_models, help="name of the algorithm")
+    
+    args = parser.parse_args()
+    print(f"ARGS: {args}" )
+
+    # now parse the dataset and general config files
+    dataset_parser = get_dataset_parser()
+    general_parser = get_general_parser()
+
+    dataset_args = dataset_parser.parse_args(args="-data_config " + args.dataset_config)
+    print(f"DATASET ARGS: {dataset_args}")
+
+    general_args = general_parser.parse_args(args="-gen_config " + args.general_config)
+    print(f"GENERAL ARGS: {general_args}")
+
+    # combine all arge
+    combined_args = Namespace(**vars(args), **vars(dataset_args), **vars(general_args))
+
+    print(f"COMBINED ARGS: {combined_args}")
+
+    main(combined_args)

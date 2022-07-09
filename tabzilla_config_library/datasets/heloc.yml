@@ -1,0 +1,13 @@
+# General parameters
+dataset: Heloc
+objective: binary
+direction: maximize
+
+# Preprocessing parameters
+scale: True
+target_encode: False
+one_hot_encode: False
+
+# About the data
+num_classes: 1  # for classification
+num_features: 23
