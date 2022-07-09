@@ -6,8 +6,46 @@ import optuna
 from models import str2model
 from utils.load_data import load_data
 from utils.parser import get_parser, get_given_parameters_parser
+from utils.io_utils import save_results_to_file, save_hyperparameters_to_file, save_loss_to_file
+from utils.scorer import get_scorer
+from tabzilla_utils import trial_to_dict
 
-from train import Objective, cross_validation
+from train import cross_validation
+
+
+class TabZillaObjective(object):
+    """adapted from TabSurvey.train.Objective. this saves all metrics as user attributes for each trial."""
+
+    def __init__(self, args, model_name, X, y):
+        # Save the model that will be trained
+        self.model_name = model_name
+
+        # Save the trainings data
+        self.X = X
+        self.y = y
+
+        self.args = args
+
+    def __call__(self, trial):
+        # Define hyperparameters to optimize
+        trial_params = self.model_name.define_trial_parameters(trial, self.args)
+
+        # Create model
+        model = self.model_name(trial_params, self.args)
+
+        # Cross validate the chosen hyperparameters
+        sc, time = cross_validation(model, self.X, self.y, self.args)
+
+        save_hyperparameters_to_file(self.args, trial_params, sc.get_results(), time)
+
+        # save important attributes to trial user attributes
+        trial.set_user_attr("trial_params", trial_params)  # trial hyperparameters
+        trial.set_user_attr("metrics", sc.get_results())  # dict of performance metrics defined in scorer.py
+        trial.set_user_attr("avg_train_time", time[0])
+        trial.set_user_attr("avg_test_time", time[1])
+
+        return sc.get_objective_result()
+
 
 def main(args):
     print("Start hyperparameter optimization")
@@ -15,31 +53,23 @@ def main(args):
 
     model_name = str2model(args.model_name)
 
+    sc = get_scorer(args)
+
+    # all results will be written to the local sqlite database. 
+    # if this database exists, results will be added to it--this is due to the flag load_if_exists for optuna.create_study
+    # NOTE: study_name should always be equivalent ot the database file name. this is necessary for reading the study database.
     optuna.logging.get_logger("optuna").addHandler(logging.StreamHandler(sys.stdout))
     study_name = args.model_name + "_" + args.dataset
     storage_name = "sqlite:///{}.db".format(study_name)
 
-    study = optuna.create_study(direction=args.direction,
-                                study_name=study_name,
-                                storage=storage_name,
-                                load_if_exists=True)
-    study.optimize(Objective(args, model_name, X, y), n_trials=args.n_trials)
-    print("Best parameters:", study.best_trial.params)
-
-    # get all trials and save to file
-    all_trials = study.get_trials()
-
-    print(" --- all trials --- ")
-    for trial in all_trials:
-        print(f"trial num: {trial.number}")
-        print(f"user_attrs: {trial.user_attrs}")
-        print(f"system_attrs: {trial.system_attrs}")
-        print(f"datetime_start: {trial.datetime_start}")
-        print(" --- --- --- ")
-
-    # Run best trial again and save it!
-    model = model_name(study.best_trial.params, args)
-    cross_validation(model, X, y, args, save_model=True)
+    study = optuna.create_study(
+        direction=args.direction,
+        study_name=study_name,
+        storage=storage_name,
+        load_if_exists=True,
+    )
+    study.optimize(TabZillaObjective(args, model_name, X, y), n_trials=args.n_trials)
+    print(f"trials complete. results written to {storage_name}")
 
 if __name__ == "__main__":
     parser = get_parser()
