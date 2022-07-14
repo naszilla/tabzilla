@@ -66,3 +66,14 @@ Each dataset is specified by its own yml config file, similar to the way that da
   --target_encode       Encode the targets that they start at 0. (0, 1, 2,...) (default: False)
   --one_hot_encode      OneHotEncode the categorical features (default: False)
 ```
+
+### Adding New Datasets
+
+There are two steps to adding a new dataset to this codebase:
+
+1. Create a yml config file that provides important metadata (see previous section)
+
+2. Add a codeblock in a new `elif` statement, in the file [`TabSurvey/load_data.py`](TabSurvey/load_data.py), which prepares the dataset. The name of this dataset should match the `dataset` flag in the yml config file.
+
+
+**NOTE/TODO**: We should probably get rid of the dataset yml files, and just define this metadata in code. This would be cleaner. We used dataset classes in the reczillag project, which might be useful here.
