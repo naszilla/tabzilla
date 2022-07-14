@@ -33,7 +33,7 @@ for config in "${CONFIGS[@]}"; do
 
     conda activate "${MODELS[$model]}"
 
-    python train.py --config "$config" --model_name "$model" --n_trials $N_TRIALS --epochs $EPOCHS
+    python tabzilla_experiment.py --config "$config" --model_name "$model" --n_trials $N_TRIALS --epochs $EPOCHS
 
     conda deactivate
 
