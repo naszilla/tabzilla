@@ -1,0 +1,14 @@
+# General parameters
+dataset: HIGGS
+objective: binary
+direction: maximize
+
+# Preprocessing parameters
+scale: True
+target_encode: False
+one_hot_encode: False
+
+# About the data
+num_classes: 1  # should be 1 for binary classification
+num_features: 28
+cat_idx: [27]

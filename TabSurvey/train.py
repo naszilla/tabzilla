@@ -56,7 +56,7 @@ def cross_validation(model, X, y, args, save_model=False):
         # Compute scores on the output
         sc.eval(y_test, curr_model.predictions, curr_model.prediction_probabilities)
 
-        print(sc.get_results())
+        # print(sc.get_results())
 
     # Best run is saved to file
     if save_model:

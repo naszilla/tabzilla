@@ -1,0 +1,12 @@
+# General parameters
+dataset: CaliforniaHousing
+objective: regression
+direction: minimize
+
+# Preprocessing parameters
+scale: True
+target_encode: False
+
+# About the data
+num_features: 8
+num_classes: 1 # always one for regression!
