@@ -19,7 +19,7 @@ The three inputs are:
 
 ### General Parameters
 
-General parameters for each experiment are read from a yml config file, by the parser returned by [`TabSurvey.tabzilla_utils.get_general_parser`](TabSurvey/tabzilla_utils.py). Below is a description of each of the general parameters read by this parser. An example config file can be found in: [TabSurvey/tabzilla_config_library/general.yml](TabSurvey/tabzilla_config_library/general.yml).
+General parameters for each experiment are read from a yml config file, by the parser returned by [`TabSurvey.tabzilla_utils.get_general_parser`](TabSurvey/tabzilla_utils.py). Below is a description of each of the general parameters read by this parser. An example config file can be found in: [tabzilla_config_library/general.yml](tabzilla_config_library/general.yml).
 
 **General config parameters**
 ```
@@ -47,7 +47,7 @@ General parameters for each experiment are read from a yml config file, by the p
 
 ### Datasets
 
-Each dataset is specified by its own yml config file, similar to the way that datasets are specified in the TabSurvey codebase. Parameters from the dataset config file are read using the parser returned by [`TabSurvey.tabzilla_utils.get_dataset_parser`](`TabSurvey/tabzilla_utils.py`). Below is a description of each of the dataset parameters read by this parser. We store config files for all tabzilla experiments in: [TabSurvey/tabzilla_config_library/datasets](TabSurvey/tabzilla_config_library/datasets).
+Each dataset is specified by its own yml config file, similar to the way that datasets are specified in the TabSurvey codebase. Parameters from the dataset config file are read using the parser returned by [`TabSurvey.tabzilla_utils.get_dataset_parser`](TabSurvey/tabzilla_utils.py). Below is a description of each of the dataset parameters read by this parser. We store config files for all tabzilla experiments in: [tabzilla_config_library/datasets](tabzilla_config_library/datasets).
 
 **Dataset config parameters**
 ```
