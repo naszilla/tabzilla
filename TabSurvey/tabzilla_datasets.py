@@ -59,7 +59,7 @@ class TabularDataset(object):
         if target_type == "regression":
             assert num_classes == 1
         elif target_type == "binary":
-            assert num_classes == 2
+            assert num_classes == 1
         elif target_type == "classification":
             assert num_classes > 2
 
@@ -118,13 +118,14 @@ class TabularDataset(object):
             metadata['num_instances'],
         )
 
-    def write(self, p: Path) -> None:
+    def write(self, p: Path, overwrite=False) -> None:
         """write the dataset to a new folder. this folder cannot already exist"""
-        
-        assert ~p.exists(), f"the path {p} already exists."
+
+        if not overwrite:
+            assert ~p.exists(), f"the path {p} already exists."
         
         # create the folder
-        p.mkdir(parents=True)
+        p.mkdir(parents=True, exist_ok=overwrite)
 
         # write data
         with gzip.GzipFile(p.joinpath('X.npy.gz'), "w") as f:
@@ -134,7 +135,7 @@ class TabularDataset(object):
 
         # write metadata
         with open(p.joinpath('metadata.json'), 'w') as f:
-            json.dump(self.get_metadata(), f)
+            json.dump(self.get_metadata(), f, indent=4)
                 
 
 class CaliforniaHousing(TabularDataset):
