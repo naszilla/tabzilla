@@ -20,22 +20,19 @@
 # 'CaliforniaHousing'
 
 
-
-import sklearn.datasets
-
-import numpy as np
-import pandas as pd
-
-import json
 import gzip
-
+import json
 from pathlib import Path
 
+import numpy as np
+import sklearn.datasets
+from sklearn.preprocessing import LabelEncoder
 
 
 class TabularDataset(object):
 
-    def __init__(self, name: str, X: np.ndarray, y: np.ndarray, cat_idx: list, target_type: str, num_classes: int, num_features: int, num_instances: int) -> None:
+    def __init__(self, name: str, X: np.ndarray, y: np.ndarray, cat_idx: list, target_type: str, num_classes: int,
+                 num_features: int, num_instances: int, target_encode=False) -> None:
         """
         name: name of the dataset
         X: matrix of shape (num_instances x num_features)
@@ -71,6 +68,17 @@ class TabularDataset(object):
         self.num_classes = num_classes
         self.num_features = num_features
         self.num_instances = num_instances
+        self.target_encode = target_encode
+
+        if target_encode:
+            le = LabelEncoder()
+            self.y = le.fit_transform(self.y)
+
+            # TODO: Verify this is not needed
+            # # Setting this if classification task
+            # if target_type == "classification":
+            #     self.num_classes = len(le.classes_)
+            #     print("Having", self.num_classes, "classes as target.")
 
         pass
     
@@ -82,6 +90,7 @@ class TabularDataset(object):
             "num_classes": self.num_classes,
             "num_features": self.num_features,
             "num_instances": self.num_instances,
+            "target_encode": self.target_encode
         }
 
     @classmethod

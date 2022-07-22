@@ -41,7 +41,8 @@ def preprocess_cal_housing(dataset_name):
                              target_type="regression",
                              num_classes=1,
                              num_features=8,
-                             num_instances=len(y))
+                             num_instances=len(y),
+                             target_encode=False)
     return dataset
 
 @registered_preprocessor("Covertype")
@@ -52,7 +53,8 @@ def preprocess_covertype(dataset_name):
                              target_type="classification",
                              num_classes=7,
                              num_features=54,
-                             num_instances=len(y))
+                             num_instances=len(y),
+                             target_encode=True)
     return dataset
 
 @registered_preprocessor("Adult")
@@ -75,7 +77,8 @@ def preprocess_covertype(dataset_name):
                              target_type="binary",
                              num_classes=1,
                              num_features=14,
-                             num_instances=len(y))
+                             num_instances=len(y),
+                             target_encode=True)
     return dataset
 
 
