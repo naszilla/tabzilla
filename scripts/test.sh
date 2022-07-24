@@ -4,7 +4,7 @@
 # this script should be run from directory tabzilla
 cd ./TabSurvey
 
-CONFIG_DIR=/home/duncan/tabzilla/TabSurvey/temp
+TABZILLA_DIR=/home/duncan/tabzilla
 SEARCH_CONFIG=${CONFIG_DIR}/general.yml
 
 N_TRIALS=2
@@ -22,17 +22,26 @@ MODELS=(
         #  ["DecisionTree"]=$SKLEARN_ENV
           )
 
-DATASET_DIRS=( "${CONFIG_DIR}/cal_housing"
-          )
+DATASET_NAMES=( 
+  CaliforniaHousing
+  Covertype
+)
 
 # conda init bash
 eval "$(conda shell.bash hook)"
 
-for dataset_dir in "${DATASET_DIRS[@]}"; do
+for dataset_name in "${DATASET_NAMES[@]}"; do
 
   for model in "${!MODELS[@]}"; do
     printf "\n\n----------------------------------------------------------------------------\n"
-    printf 'Training %s with %s in env %s\n\n' "$model" "$dataset_config" "${MODELS[$model]}"
+    printf 'Training %s with %s in env %s\n\n' "$model" "$dataset_name" "${MODELS[$model]}"
+
+    # pre-process dataset. this does nothing if the dataset is already pre-processed.
+    conda activate base
+    python tabzilla_data_preprocessing.py --dataset_name ${dataset_name}
+
+    # the dataset will be located here
+    dataset_dir=${TABZILLA_DIR}/TabSurvey/datasets/${dataset_name}
 
     conda activate "${MODELS[$model]}"
 
