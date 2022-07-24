@@ -19,9 +19,9 @@ from collections import namedtuple
 import optuna
 
 from models import all_models, str2model
-from TabSurvey.tabzilla_datasets import TabularDataset
-from TabSurvey.tabzilla_utils import get_search_parser
-from tabzilla_utils import cross_validation
+from tabzilla_datasets import TabularDataset
+from tabzilla_utils import 
+from tabzilla_utils import cross_validation, get_search_parser
 
 
 class TabZillaObjective(object):
