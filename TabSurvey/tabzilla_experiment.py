@@ -20,7 +20,6 @@ import optuna
 
 from models import all_models, str2model
 from tabzilla_datasets import TabularDataset
-from tabzilla_utils import 
 from tabzilla_utils import cross_validation, get_search_parser
 
 
