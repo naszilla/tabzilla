@@ -2,12 +2,12 @@
 # instead, this script "prepares" each dataset implemented in our codebase, by doing the following:
 # - reading the dataset from a file or online source
 # - applying any necessary cleaning (no pre-processing, like encoding or scaling variables)
-# - writes each dataset to its own local directory. each dataset directory will contain: 
+# - writes each dataset to its own local directory. each dataset directory will contain:
 # -- a compressed version of the dataset (X.npy and y.npy)
 # -- a json containing metadata
 #
 # example use - initialize the CaliforniaHousing dataset, write it to a local folder, and then read it into a new TabularDataset object:
-# 
+#
 # >>> from tabzilla_prepare_data import CaliforniaHousing, TabularDataset
 # >>> from pathlib import Path
 # >>> c = CaliforniaHousing()
@@ -30,27 +30,44 @@ from sklearn.preprocessing import LabelEncoder
 
 
 class TabularDataset(object):
-
-    def __init__(self, name: str, X: np.ndarray, y: np.ndarray, cat_idx: list, target_type: str, num_classes: int,
-                 num_features: int, num_instances: int, target_encode=False) -> None:
+    def __init__(
+        self,
+        name: str,
+        X: np.ndarray,
+        y: np.ndarray,
+        cat_idx: list,
+        target_type: str,
+        num_classes: int,
+        num_features: int,
+        num_instances: int,
+        target_encode=False,
+    ) -> None:
         """
         name: name of the dataset
         X: matrix of shape (num_instances x num_features)
         y: array of length (num_instances)
         cat_idx: indices of categorical features
-        target_type: {"regression", "classification", "binary"} 
+        target_type: {"regression", "classification", "binary"}
         num_classes: 1 for regression 2 for binary, and >2 for classification
-        num_features: number of features  
+        num_features: number of features
         num_instances: number of instances
         """
         assert isinstance(X, np.ndarray), "X must be an instance of np.ndarray"
         assert isinstance(y, np.ndarray), "y must be an instance of np.ndarray"
-        assert X.shape[0] == num_instances, f"first dimension of X must be equal to num_instances. X has shape {X.shape}"
-        assert X.shape[1] == num_features, f"second dimension of X must be equal to num_features. X has shape {X.shape}"
-        assert y.shape == (num_instances,), f"shape of y must be (num_instances, ). y has shape {y.shape} and num_instances={num_instances}"
+        assert (
+            X.shape[0] == num_instances
+        ), f"first dimension of X must be equal to num_instances. X has shape {X.shape}"
+        assert (
+            X.shape[1] == num_features
+        ), f"second dimension of X must be equal to num_features. X has shape {X.shape}"
+        assert y.shape == (
+            num_instances,
+        ), f"shape of y must be (num_instances, ). y has shape {y.shape} and num_instances={num_instances}"
 
         if len(cat_idx) > 0:
-            assert max(cat_idx) <= num_features - 1, f"max index in cat_idx is {max(cat_idx)}, but num_features is {num_features}"
+            assert (
+                max(cat_idx) <= num_features - 1
+            ), f"max index in cat_idx is {max(cat_idx)}, but num_features is {num_features}"
         assert target_type in ["regression", "classification", "binary"]
 
         if target_type == "regression":
@@ -81,7 +98,7 @@ class TabularDataset(object):
             #     print("Having", self.num_classes, "classes as target.")
 
         pass
-    
+
     def get_metadata(self) -> dict:
         return {
             "name": self.name,
@@ -90,7 +107,7 @@ class TabularDataset(object):
             "num_classes": self.num_classes,
             "num_features": self.num_features,
             "num_instances": self.num_instances,
-            "target_encode": self.target_encode
+            "target_encode": self.target_encode,
         }
 
     @classmethod
@@ -117,14 +134,14 @@ class TabularDataset(object):
             metadata = json.load(f)
 
         return cls(
-            metadata['name'],
-            X, 
-            y, 
-            metadata['cat_idx'], 
-            metadata['target_type'], 
-            metadata['num_classes'],
-            metadata['num_features'], 
-            metadata['num_instances'],
+            metadata["name"],
+            X,
+            y,
+            metadata["cat_idx"],
+            metadata["target_type"],
+            metadata["num_classes"],
+            metadata["num_features"],
+            metadata["num_instances"],
         )
 
     def write(self, p: Path, overwrite=False) -> None:
@@ -132,25 +149,33 @@ class TabularDataset(object):
 
         if not overwrite:
             assert ~p.exists(), f"the path {p} already exists."
-        
+
         # create the folder
         p.mkdir(parents=True, exist_ok=overwrite)
 
         # write data
-        with gzip.GzipFile(p.joinpath('X.npy.gz'), "w") as f:
+        with gzip.GzipFile(p.joinpath("X.npy.gz"), "w") as f:
             np.save(f, self.X)
-        with gzip.GzipFile(p.joinpath('y.npy.gz'), "w") as f:
+        with gzip.GzipFile(p.joinpath("y.npy.gz"), "w") as f:
             np.save(f, self.y)
 
         # write metadata
-        with open(p.joinpath('metadata.json'), 'w') as f:
+        with open(p.joinpath("metadata.json"), "w") as f:
             json.dump(self.get_metadata(), f, indent=4)
-                
+
 
 class CaliforniaHousing(TabularDataset):
     """from sklearn"""
+
     def __init__(self):
         X, y = sklearn.datasets.fetch_california_housing(return_X_y=True)
         super().__init__(
-            "CaliforniaHousing", X, y, [], "regression", 1, 8, len(y),
+            "CaliforniaHousing",
+            X,
+            y,
+            [],
+            "regression",
+            1,
+            8,
+            len(y),
         )

@@ -4,8 +4,8 @@
 # this script should be run from directory tabzilla
 cd ./TabSurvey
 
-CONFIG_DIR=/home/duncan/tabzilla/tabzilla_config_library
-GENERAL_CONFIG=${CONFIG_DIR}/general.yml
+CONFIG_DIR=/home/duncan/tabzilla/TabSurvey/temp
+SEARCH_CONFIG=${CONFIG_DIR}/general.yml
 
 N_TRIALS=2
 EPOCHS=3
@@ -22,14 +22,13 @@ MODELS=(
         #  ["DecisionTree"]=$SKLEARN_ENV
           )
 
-DATASET_CONFIGS=( "${CONFIG_DIR}/datasets/adult.yml"
-          "${CONFIG_DIR}/datasets/california_housing.yml"
+DATASET_DIRS=( "${CONFIG_DIR}/cal_housing"
           )
 
 # conda init bash
 eval "$(conda shell.bash hook)"
 
-for dataset_config in "${DATASET_CONFIGS[@]}"; do
+for dataset_dir in "${DATASET_DIRS[@]}"; do
 
   for model in "${!MODELS[@]}"; do
     printf "\n\n----------------------------------------------------------------------------\n"
@@ -37,8 +36,7 @@ for dataset_config in "${DATASET_CONFIGS[@]}"; do
 
     conda activate "${MODELS[$model]}"
 
-    # python tabzilla_experiment.py --config "$config" --model_name "$model" --n_trials $N_TRIALS --epochs $EPOCHS --optimize_hyperparameters
-    python tabzilla_experiment.py --dataset_config  ${dataset_config} --general_config ${GENERAL_CONFIG} --model_name "${model}"
+    python tabzilla_experiment.py --dataset_dir  ${dataset_dir} --search_config ${SEARCH_CONFIG} --model_name "${model}"
     
 
     conda deactivate
