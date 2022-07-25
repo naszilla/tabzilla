@@ -21,7 +21,7 @@ import optuna
 
 from models import all_models, str2model
 from tabzilla_datasets import TabularDataset
-from tabzilla_utils import cross_validation, get_search_parser
+from tabzilla_utils import cross_validation, get_search_parser, get_scorer
 
 
 class TabZillaObjective(object):
@@ -36,6 +36,10 @@ class TabZillaObjective(object):
 
         self.dataset = dataset
         self.search_args = search_args
+
+        # get the direction of optimization from the scorer object
+        sc_tmp = get_scorer(dataset.target_type)
+        self.direction = sc_tmp.direction
 
     def __call__(self, trial):
         # Define hyperparameters to optimize
@@ -103,7 +107,6 @@ class TabZillaObjective(object):
 
 
 def main(args, search_args):
-    print("Start hyperparameter optimization")
     dataset = TabularDataset.read(Path(args.dataset_dir).resolve())
 
     model_handle = str2model(args.model_name)
@@ -115,11 +118,8 @@ def main(args, search_args):
     study_name = args.model_name + "_" + dataset.name
     storage_name = "sqlite:///{}.db".format(study_name)
 
-    # TODO: direction should be set when setting the loss function, should not be passed as an argument or set as a dataset attribute
-    if dataset.target_type == "binary":
-        direction = "maximize"
-    else:
-        direction = "minimize"
+    objective = TabZillaObjective(model_handle, dataset, search_args)
+    direction = objective.direction
 
     study = optuna.create_study(
         direction=direction,
@@ -127,10 +127,7 @@ def main(args, search_args):
         storage=storage_name,
         load_if_exists=True,
     )
-    study.optimize(
-        TabZillaObjective(model_handle, dataset, search_args),
-        n_trials=search_args.n_trials,
-    )
+    study.optimize(objective, n_trials=search_args.n_trials)
     print(f"trials complete. results written to {storage_name}")
 
 

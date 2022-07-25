@@ -35,6 +35,7 @@ class RegScorer(Scorer):
     def __init__(self):
         self.mses = []
         self.r2s = []
+        self.direction = "minimize"  # we want to minimize MSE
 
     # y_probabilities is None for Regression
     def eval(self, y_true, y_prediction, y_probabilities):
@@ -69,6 +70,7 @@ class ClassScorer(Scorer):
         self.aucs = []
         self.accs = []
         self.f1s = []
+        self.direction = "minimize"  # we want to minimize log-loss
 
     def eval(self, y_true, y_prediction, y_probabilities):
         logloss = log_loss(y_true, y_probabilities)
@@ -118,6 +120,8 @@ class BinScorer(Scorer):
         self.aucs = []
         self.accs = []
         self.f1s = []
+        self.direction = "maximize"  # we want to maximize AUC
+
 
     def eval(self, y_true, y_prediction, y_probabilities):
         logloss = log_loss(y_true, y_probabilities)
