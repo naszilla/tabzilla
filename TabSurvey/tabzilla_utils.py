@@ -2,14 +2,14 @@ import json
 from pathlib import Path
 
 from sklearn.model_selection import KFold, StratifiedKFold
-from TabSurvey.tabzilla_data_processing import process_data
-from TabSurvey.utils.scorer import BinScorer, ClassScorer, RegScorer
+from tabzilla_data_processing import process_data
+from utils.scorer import BinScorer, ClassScorer, RegScorer
 
 from optuna.trial import FrozenTrial
 
-from TabSurvey.models.basemodel import BaseModel
-from TabSurvey.tabzilla_datasets import TabularDataset
-from TabSurvey.utils.timer import Timer
+from models.basemodel import BaseModel
+from tabzilla_datasets import TabularDataset
+from utils.timer import Timer
 
 
 def get_scorer(objective):
