@@ -91,6 +91,20 @@ class TabularDataset(object):
             le = LabelEncoder()
             self.y = le.fit_transform(self.y)
 
+        # TODO: move this setting of cat_dims to the preprocessing script, and take cat_dims as a constructor arg
+        cat_dims = []
+        num_idx = []
+        for i in range(self.num_features):
+            if self.cat_idx and i in self.cat_idx:
+                le = LabelEncoder()
+                _ = le.fit_transform(X[:, i])
+                # Setting this?
+                cat_dims.append(len(le.classes_))
+            else:
+                num_idx.append(i)
+
+        self.cat_dims = cat_dims
+
             # TODO: Verify this is not needed
             # # Setting this if classification task
             # if target_type == "classification":
