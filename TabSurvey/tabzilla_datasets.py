@@ -23,6 +23,7 @@
 import gzip
 import json
 from pathlib import Path
+from typing import Optional
 
 import numpy as np
 import sklearn.datasets
@@ -31,16 +32,16 @@ from sklearn.preprocessing import LabelEncoder
 
 class TabularDataset(object):
     def __init__(
-        self,
-        name: str,
-        X: np.ndarray,
-        y: np.ndarray,
-        cat_idx: list,
-        target_type: str,
-        num_classes: int,
-        num_features: int,
-        num_instances: int,
-        cat_dims=None,
+            self,
+            name: str,
+            X: np.ndarray,
+            y: np.ndarray,
+            cat_idx: list,
+            target_type: str,
+            num_classes: int,
+            num_features: Optional[int] = None,
+            num_instances: Optional[int] = None,
+            cat_dims: Optional[list] = None,
     ) -> None:
         """
         name: name of the dataset
@@ -54,19 +55,30 @@ class TabularDataset(object):
         """
         assert isinstance(X, np.ndarray), "X must be an instance of np.ndarray"
         assert isinstance(y, np.ndarray), "y must be an instance of np.ndarray"
-        assert (
-            X.shape[0] == num_instances
-        ), f"first dimension of X must be equal to num_instances. X has shape {X.shape}"
-        assert (
-            X.shape[1] == num_features
-        ), f"second dimension of X must be equal to num_features. X has shape {X.shape}"
-        assert y.shape == (
-            num_instances,
-        ), f"shape of y must be (num_instances, ). y has shape {y.shape} and num_instances={num_instances}"
+        assert X.shape[0] == y.shape[0], "X and y must match along their 0-th dimensions"
+        assert len(X.shape) == 2, "X must be 2-dimensional"
+        assert len(y.shape) == 1, "y must be 1-dimensional"
+
+        if num_instances is not None:
+            assert (
+                    X.shape[0] == num_instances
+            ), f"first dimension of X must be equal to num_instances. X has shape {X.shape}"
+            assert y.shape == (
+                num_instances,
+            ), f"shape of y must be (num_instances, ). y has shape {y.shape} and num_instances={num_instances}"
+        else:
+            num_instances = X.shape[0]
+
+        if num_features is not None:
+            assert (
+                    X.shape[1] == num_features
+            ), f"second dimension of X must be equal to num_features. X has shape {X.shape}"
+        else:
+            num_features = X.shape[1]
 
         if len(cat_idx) > 0:
             assert (
-                max(cat_idx) <= num_features - 1
+                    max(cat_idx) <= num_features - 1
             ), f"max index in cat_idx is {max(cat_idx)}, but num_features is {num_features}"
         assert target_type in ["regression", "classification", "binary"]
 
@@ -84,31 +96,26 @@ class TabularDataset(object):
         self.target_type = target_type
         self.num_classes = num_classes
         self.num_features = num_features
-        self.num_instances = num_instances
         self.cat_dims = cat_dims
+        self.num_instances = num_instances
 
         pass
 
     def target_encode(self):
-        # TODO: Remove print statement after expected behavior is verified
-        print("target_encode...")
+        #print("target_encode...")
         le = LabelEncoder()
         self.y = le.fit_transform(self.y)
 
-        # TODO: Verify this is not needed
-        # # Setting this if classification task
-        # if target_type == "classification":
-        #     self.num_classes = len(le.classes_)
-        #     print("Having", self.num_classes, "classes as target.")
+        # Sanity check
+        if self.target_type == "classification":
+            assert self.num_classes == len(le.classes_), "num_classes was set incorrectly."
 
     def cat_feature_encode(self):
-        # TODO: Remove print statement after expected behavior is verified
-        print("cat_feature_encode...")
+        #print("cat_feature_encode...")
         if not self.cat_dims is None:
             raise RuntimeError("cat_dims is already set. Categorical feature encoding might be running twice.")
         self.cat_dims = []
 
-        # TODO: Check this is done at the right place
         # Preprocess data
         for i in range(self.num_features):
             if self.cat_idx and i in self.cat_idx:
@@ -117,7 +124,6 @@ class TabularDataset(object):
 
                 # Setting this?
                 self.cat_dims.append(len(le.classes_))
-
 
     def get_metadata(self) -> dict:
         return {
@@ -186,7 +192,6 @@ class TabularDataset(object):
         with open(p.joinpath("metadata.json"), "w") as f:
             metadata = self.get_metadata()
             json.dump(self.get_metadata(), f, indent=4)
-
 
 # class CaliforniaHousing(TabularDataset):
 #     """from sklearn"""

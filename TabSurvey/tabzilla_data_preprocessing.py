@@ -52,9 +52,7 @@ def preprocess_cal_housing(dataset_name):
     dataset = TabularDataset(dataset_name, X, y,
                              cat_idx=[],
                              target_type="regression",
-                             num_classes=1,
-                             num_features=8,
-                             num_instances=len(y))
+                             num_classes=1)
     return dataset
 
 @dataset_preprocessor("Covertype", target_encode=True)
@@ -63,9 +61,7 @@ def preprocess_covertype(dataset_name):
     dataset = TabularDataset(dataset_name, X, y,
                              cat_idx=[],
                              target_type="classification",
-                             num_classes=7,
-                             num_features=54,
-                             num_instances=len(y))
+                             num_classes=7)
     return dataset
 
 @dataset_preprocessor("Adult", target_encode=True)
@@ -86,9 +82,7 @@ def preprocess_covertype(dataset_name):
     dataset = TabularDataset(dataset_name, X, y,
                              cat_idx=[1,3,5,6,7,8,9,13],
                              target_type="binary",
-                             num_classes=1,
-                             num_features=14,
-                             num_instances=len(y))
+                             num_classes=1)
     return dataset
 
 

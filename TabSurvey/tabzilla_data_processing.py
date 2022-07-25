@@ -3,29 +3,11 @@ from sklearn.preprocessing import StandardScaler, LabelEncoder, OneHotEncoder
 
 # TODO: Handle validation?
 def process_data(dataset, train_index, test_index, verbose=False, scale=False, one_hot_encode=False):
-    # num_idx = []
-
-    # X = dataset.X
-    # y = dataset.y
-
     num_mask = np.ones(dataset.X.shape[1])
     num_mask[dataset.cat_idx] = 0
     # TODO: Remove this assertion after sufficient testing
     assert num_mask.sum() + len(dataset.cat_idx) == dataset.X.shape[1]
 
-
-    # # TODO: Check this is done at the right place
-    # # Preprocess data
-    # for i in range(dataset.num_features):
-    #     if dataset.cat_idx and i in dataset.cat_idx:
-    #         le = LabelEncoder()
-    #         X[:, i] = le.fit_transform(X[:, i])
-    #
-    #         # Setting this?
-    #         cat_dims.append(len(le.classes_))
-    #
-    #     else:
-    #         num_idx.append(i)
 
     X_train, y_train = dataset.X[train_index], dataset.y[train_index]
     X_test, y_test = dataset.X[test_index], dataset.y[test_index]
