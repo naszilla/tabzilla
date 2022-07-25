@@ -83,7 +83,8 @@ def cross_validation(
         test_timer.end()
 
         # Save model weights and the truth/prediction pairs for traceability
-        curr_model.save_model_and_predictions(y_test, i)
+        # TODO: remove if not needed
+        # curr_model.save_model_and_predictions(y_test, i)
 
         # TODO: remove if not needed
         # if save_model:
