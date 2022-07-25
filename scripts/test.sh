@@ -36,9 +36,9 @@ for dataset_name in "${DATASET_NAMES[@]}"; do
     printf "\n\n----------------------------------------------------------------------------\n"
     printf 'Training %s with %s in env %s\n\n' "$model" "$dataset_name" "${MODELS[$model]}"
 
-    # pre-process dataset. this does nothing if the dataset is already pre-processed.
+    # pre-process dataset. overwrite any existing dataset using flag --overwrite
     conda activate base
-    python tabzilla_data_preprocessing.py --dataset_name ${dataset_name}
+    python tabzilla_data_preprocessing.py --dataset_name ${dataset_name} --overwrite
 
     # the dataset will be located here
     dataset_dir=${TABZILLA_DIR}/TabSurvey/datasets/${dataset_name}
