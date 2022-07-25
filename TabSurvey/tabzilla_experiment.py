@@ -8,8 +8,6 @@
 ########
 # TODO:
 # - change the output file name to something standardized, or take it as an arg
-# - do randomized hyperparameter search
-
 
 import argparse
 import logging
