@@ -5,7 +5,7 @@
 cd ./TabSurvey
 
 TABZILLA_DIR=/home/duncan/tabzilla
-SEARCH_CONFIG=${CONFIG_DIR}/general.yml
+SEARCH_CONFIG=${TABZILLA_DIR}/TabSurvey/tabzilla_search_config.yml
 
 N_TRIALS=2
 EPOCHS=3
