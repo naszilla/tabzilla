@@ -2,6 +2,7 @@ from pathlib import Path
 import argparse
 import sklearn
 import pandas as pd
+import functools
 
 from tabzilla_datasets import TabularDataset
 
@@ -9,17 +10,29 @@ dataset_path = Path("datasets")
 
 preprocessors = {}
 
-def registered_preprocessor(dataset_name):
+def dataset_preprocessor(dataset_name, target_encode=False, cat_feature_encode=True):
     """
     Adds the function to the dictionary of pre-processors, which can then be called as preprocessors[dataset_name]()
     Args:
         dataset_name: Name of the dataset
 
     """
-    def register_func_decorator(func):
-        preprocessors[dataset_name] = lambda: func(dataset_name)
-        return func
-    return register_func_decorator
+    def dataset_preprocessor_decorator(func):
+        @functools.wraps(func)
+        def wrapper_preprocessor(*args, **kwargs):
+            dataset = func(*args, **kwargs)
+            if target_encode:
+                dataset.target_encode()
+            if cat_feature_encode:
+                dataset.cat_feature_encode()
+            return dataset
+
+        if dataset_name in preprocessors:
+            raise RuntimeError(f"Duplicate dataset names not allowed: {dataset_name}")
+        preprocessors[dataset_name] = wrapper_preprocessor
+        return wrapper_preprocessor
+
+    return dataset_preprocessor_decorator
 
 
 def preprocess_dataset(dataset_name, overwrite=False):
@@ -28,12 +41,12 @@ def preprocess_dataset(dataset_name, overwrite=False):
     if not overwrite and dest_path.exists():
         print(f"Found existing folder {dest_path}. Skipping.")
         return
-    dataset = preprocessors[dataset_name]()
+    dataset = preprocessors[dataset_name](dataset_name)
     dataset.write(dest_path, overwrite=overwrite)
     return
 
 
-@registered_preprocessor("CaliforniaHousing")
+@dataset_preprocessor("CaliforniaHousing", target_encode=False)
 def preprocess_cal_housing(dataset_name):
     X, y = sklearn.datasets.fetch_california_housing(return_X_y=True)
     dataset = TabularDataset(dataset_name, X, y,
@@ -41,11 +54,10 @@ def preprocess_cal_housing(dataset_name):
                              target_type="regression",
                              num_classes=1,
                              num_features=8,
-                             num_instances=len(y),
-                             target_encode=False)
+                             num_instances=len(y))
     return dataset
 
-@registered_preprocessor("Covertype")
+@dataset_preprocessor("Covertype", target_encode=True)
 def preprocess_covertype(dataset_name):
     X, y = sklearn.datasets.fetch_covtype(return_X_y=True)
     dataset = TabularDataset(dataset_name, X, y,
@@ -53,11 +65,10 @@ def preprocess_covertype(dataset_name):
                              target_type="classification",
                              num_classes=7,
                              num_features=54,
-                             num_instances=len(y),
-                             target_encode=True)
+                             num_instances=len(y))
     return dataset
 
-@registered_preprocessor("Adult")
+@dataset_preprocessor("Adult", target_encode=True)
 def preprocess_covertype(dataset_name):
     url_data = "https://archive.ics.uci.edu/ml/machine-learning-databases/adult/adult.data"
 
@@ -77,8 +88,7 @@ def preprocess_covertype(dataset_name):
                              target_type="binary",
                              num_classes=1,
                              num_features=14,
-                             num_instances=len(y),
-                             target_encode=True)
+                             num_instances=len(y))
     return dataset
 
 

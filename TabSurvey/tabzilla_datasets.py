@@ -40,7 +40,7 @@ class TabularDataset(object):
         num_classes: int,
         num_features: int,
         num_instances: int,
-        target_encode=False,
+        cat_dims=None,
     ) -> None:
         """
         name: name of the dataset
@@ -85,43 +85,49 @@ class TabularDataset(object):
         self.num_classes = num_classes
         self.num_features = num_features
         self.num_instances = num_instances
-        self.target_encode = target_encode
+        self.cat_dims = cat_dims
 
-        if target_encode:
-            le = LabelEncoder()
-            self.y = le.fit_transform(self.y)
+        pass
 
-        # TODO: move this setting of cat_dims to the preprocessing script, and take cat_dims as a constructor arg
-        cat_dims = []
-        num_idx = []
+    def target_encode(self):
+        # TODO: Remove print statement after expected behavior is verified
+        print("target_encode...")
+        le = LabelEncoder()
+        self.y = le.fit_transform(self.y)
+
+        # TODO: Verify this is not needed
+        # # Setting this if classification task
+        # if target_type == "classification":
+        #     self.num_classes = len(le.classes_)
+        #     print("Having", self.num_classes, "classes as target.")
+
+    def cat_feature_encode(self):
+        # TODO: Remove print statement after expected behavior is verified
+        print("cat_feature_encode...")
+        if not self.cat_dims is None:
+            raise RuntimeError("cat_dims is already set. Categorical feature encoding might be running twice.")
+        self.cat_dims = []
+
+        # TODO: Check this is done at the right place
+        # Preprocess data
         for i in range(self.num_features):
             if self.cat_idx and i in self.cat_idx:
                 le = LabelEncoder()
-                _ = le.fit_transform(X[:, i])
+                self.X[:, i] = le.fit_transform(self.X[:, i])
+
                 # Setting this?
-                cat_dims.append(len(le.classes_))
-            else:
-                num_idx.append(i)
+                self.cat_dims.append(len(le.classes_))
 
-        self.cat_dims = cat_dims
-
-            # TODO: Verify this is not needed
-            # # Setting this if classification task
-            # if target_type == "classification":
-            #     self.num_classes = len(le.classes_)
-            #     print("Having", self.num_classes, "classes as target.")
-
-        pass
 
     def get_metadata(self) -> dict:
         return {
             "name": self.name,
             "cat_idx": self.cat_idx,
+            "cat_dims": self.cat_dims,
             "target_type": self.target_type,
             "num_classes": self.num_classes,
             "num_features": self.num_features,
             "num_instances": self.num_instances,
-            "target_encode": self.target_encode,
         }
 
     @classmethod
@@ -145,18 +151,21 @@ class TabularDataset(object):
 
         # read metadata
         with open(metadata_path, "r") as f:
-            metadata = json.load(f)
+            kwargs = json.load(f)
 
-        return cls(
-            metadata["name"],
-            X,
-            y,
-            metadata["cat_idx"],
-            metadata["target_type"],
-            metadata["num_classes"],
-            metadata["num_features"],
-            metadata["num_instances"],
-        )
+        kwargs["X"], kwargs["y"] = X, y
+        return cls(**kwargs)
+
+        # return cls(
+        #     metadata["name"],
+        #     X,
+        #     y,
+        #     metadata["cat_idx"],
+        #     metadata["target_type"],
+        #     metadata["num_classes"],
+        #     metadata["num_features"],
+        #     metadata["num_instances"],
+        # )
 
     def write(self, p: Path, overwrite=False) -> None:
         """write the dataset to a new folder. this folder cannot already exist"""
@@ -175,21 +184,22 @@ class TabularDataset(object):
 
         # write metadata
         with open(p.joinpath("metadata.json"), "w") as f:
+            metadata = self.get_metadata()
             json.dump(self.get_metadata(), f, indent=4)
 
 
-class CaliforniaHousing(TabularDataset):
-    """from sklearn"""
-
-    def __init__(self):
-        X, y = sklearn.datasets.fetch_california_housing(return_X_y=True)
-        super().__init__(
-            "CaliforniaHousing",
-            X,
-            y,
-            [],
-            "regression",
-            1,
-            8,
-            len(y),
-        )
+# class CaliforniaHousing(TabularDataset):
+#     """from sklearn"""
+#
+#     def __init__(self):
+#         X, y = sklearn.datasets.fetch_california_housing(return_X_y=True)
+#         super().__init__(
+#             "CaliforniaHousing",
+#             X,
+#             y,
+#             [],
+#             "regression",
+#             1,
+#             8,
+#             len(y),
+#         )
