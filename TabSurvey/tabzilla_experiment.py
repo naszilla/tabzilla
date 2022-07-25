@@ -15,13 +15,13 @@ import argparse
 import logging
 import sys
 from collections import namedtuple
+from pathlib import Path 
 
 import optuna
 
 from models import all_models, str2model
-from TabSurvey.tabzilla_datasets import TabularDataset
-from TabSurvey.tabzilla_utils import get_search_parser
-from tabzilla_utils import cross_validation
+from tabzilla_datasets import TabularDataset
+from tabzilla_utils import cross_validation, get_search_parser
 
 
 class TabZillaObjective(object):
@@ -104,7 +104,7 @@ class TabZillaObjective(object):
 
 def main(args, search_args):
     print("Start hyperparameter optimization")
-    dataset = TabularDataset.read(args.dataset_dir)
+    dataset = TabularDataset.read(Path(args.dataset_dir).resolve())
 
     model_handle = str2model(args.model_name)
 
@@ -115,8 +115,14 @@ def main(args, search_args):
     study_name = args.model_name + "_" + dataset.name
     storage_name = "sqlite:///{}.db".format(study_name)
 
+    # TODO: direction should be set when setting the loss function, should not be passed as an argument or set as a dataset attribute
+    if dataset.target_type == "binary":
+        direction = "maximize"
+    else:
+        direction = "minimize"
+
     study = optuna.create_study(
-        direction=dataset.direction,
+        direction=direction,
         study_name=study_name,
         storage=storage_name,
         load_if_exists=True,
