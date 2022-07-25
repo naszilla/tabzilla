@@ -1,0 +1,20 @@
+# Cross validation parameters
+num_splits: 5
+shuffle: True
+seed: 221
+
+# trials for hyperparameter search or optimization
+n_random_trials: 5
+n_opt_trials: 3
+
+###### GPU parameters
+use_gpu: False
+gpu_ids: [0, 1]
+data_parallel: True
+
+# Training parameters
+batch_size: 128
+val_batch_size: 256
+early_stopping_rounds: 20
+epochs: 1000
+logging_period: 100

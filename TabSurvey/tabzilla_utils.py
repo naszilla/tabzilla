@@ -237,14 +237,12 @@ def get_search_parser():
         config_file_parser_class=configargparse.YAMLConfigFileParser,
         formatter_class=configargparse.ArgumentDefaultsHelpFormatter,
     )
-
     search_parser.add(
         "-search_config",
         required=True,
         is_config_file=True,
         help="optional config file for search parser",
     )
-
     search_parser.add(
         "--use_gpu", action="store_true", help="Set to true if GPU is available"
     )
@@ -259,19 +257,23 @@ def get_search_parser():
         action="store_true",
         help="Distribute the training over multiple GPUs",
     )
-
     search_parser.add(
         "--optimize_hyperparameters",
         action="store_true",
         help="Search for the best hyperparameters",
     )
     search_parser.add(
-        "--n_trials",
+        "--n_random_trials",
         type=int,
-        default=100,
-        help="Number of trials for the hyperparameter optimization",
+        default=10,
+        help="Number of trials of random hyperparameter search to run",
     )
-
+    search_parser.add(
+        "--n_opt_trials",
+        type=int,
+        default=10,
+        help="Number of trials of hyperparameter optimization to run",
+    )
     search_parser.add(
         "--num_splits",
         type=int,
@@ -284,7 +286,6 @@ def get_search_parser():
     search_parser.add(
         "--seed", type=int, default=123, help="Seed for KFold initialization."
     )
-
     search_parser.add(
         "--batch_size", type=int, default=128, help="Batch size used for training"
     )

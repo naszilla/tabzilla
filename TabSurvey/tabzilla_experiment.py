@@ -18,6 +18,7 @@ from collections import namedtuple
 from pathlib import Path 
 
 import optuna
+from optuna.samplers import RandomSampler
 
 from models import all_models, str2model
 from tabzilla_datasets import TabularDataset
@@ -119,15 +120,37 @@ def main(args, search_args):
     storage_name = "sqlite:///{}.db".format(study_name)
 
     objective = TabZillaObjective(model_handle, dataset, search_args)
-    direction = objective.direction
 
-    study = optuna.create_study(
-        direction=direction,
-        study_name=study_name,
-        storage=storage_name,
-        load_if_exists=True,
-    )
-    study.optimize(objective, n_trials=search_args.n_trials)
+    if search_args.n_random_trials > 0:
+        print(f"evaluating {search_args.n_random_trials} random hyperparameter samples...")
+        study_name = args.model_name + "_" + dataset.name + "_random" 
+        study = optuna.create_study(
+            direction=objective.direction,
+            study_name=study_name,
+            storage=storage_name,
+            load_if_exists=True,
+            sampler=RandomSampler(),
+        )
+        study.optimize(objective, n_trials=search_args.n_random_trials)
+        previous_trials = study.trials
+    else:
+        previous_trials = None
+
+    if search_args.n_opt_trials:
+        print(f"running {search_args.n_opt_trials} steps of hyperparameter optimization...")
+        study_name = args.model_name + "_" + dataset.name + "_opt" 
+        study = optuna.create_study(
+            direction=objective.direction,
+            study_name=study_name,
+            storage=storage_name,
+            load_if_exists=True,
+        )
+        # if random search was run, add these trials
+        if previous_trials is not None:
+            print(f"adding {search_args.n_random_trials} random trials to warm-start HPO")
+            study.add_trials(previous_trials)
+        study.optimize(objective, n_trials=search_args.n_opt_trials)
+
     print(f"trials complete. results written to {storage_name}")
 
 
