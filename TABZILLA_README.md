@@ -2,13 +2,18 @@
 
 ...
 
-## Running Tabzilla Experiments
+# Python Environments
+
+Hm. Yikes.
+
+
+# Running Tabzilla Experiments
 
 We modified the TabSurvey code in order to run experiments to generate results for our meta-learning tasks. The script [`TabSurvey/tabzilla_experiment.py`](TabSurvey/tabzilla_experiment.py) runs these experiments (this is adapted from the script [`TabSurvey/train.py`](TabSurvey/train.py)).
 
 Similar to `test.py`, this script writes a database of various results from each train/test cycle, which are recorded and written via [optuna](https://optuna.org/).
 
-### `TabSurvey/tabzilla_experiment.py`
+## `TabSurvey/tabzilla_experiment.py`
 
 Each ccall to `tabzilla_experiment.py` runs a hyperparameter search for a single algorithm on a single dataset. There are three inputs to this script: the dataset and general parameters (including hyperparameter search params) are passed using their own yml config files; the algorihtm name is passed as a string. 
 
@@ -17,9 +22,9 @@ The three inputs are:
 - `--general_config`: a yml config file specifying general parameters of the experiment (see section "General Parameters" below)
 - `--model_name`: a string indicating the model to evaluate. The list of models is imported from `TabSurvey.models.all_models`.
 
-### General Parameters
+## General Parameters
 
-General parameters for each experiment are read from a yml config file, by the parser returned by [`TabSurvey.tabzilla_utils.get_general_parser`](TabSurvey/tabzilla_utils.py). Below is a description of each of the general parameters read by this parser. An example config file can be found in: [tabzilla_config_library/general.yml](tabzilla_config_library/general.yml).
+General parameters for each experiment are read from a yml config file, by the parser returned by [`TabSurvey.tabzilla_utils.get_general_parser`](TabSurvey/tabzilla_utils.py). Below is a description of each of the general parameters read by this parser. An example config file can be found in: [TabSurvey/tabsurvey_search_config.yml](TabSurvey/tabsurvey_search_config.yml).
 
 **General config parameters**
 ```
@@ -45,35 +50,58 @@ General parameters for each experiment are read from a yml config file, by the p
 ```
 
 
-### Datasets
+# Datasets
 
-Each dataset is specified by its own yml config file, similar to the way that datasets are specified in the TabSurvey codebase. Parameters from the dataset config file are read using the parser returned by [`TabSurvey.tabzilla_utils.get_dataset_parser`](TabSurvey/tabzilla_utils.py). Below is a description of each of the dataset parameters read by this parser. We store config files for all tabzilla experiments in: [tabzilla_config_library/datasets](tabzilla_config_library/datasets).
+Datasets are handled using the class [`TabSurvey.tabzilla_datasets.TabularDataset`](TabSurvey.tabzilla_datasets.py); all datasets are accessed using an instance of this class. Each dataset is initialized using a function with the decorator `dataset_preprocessor` defined in [`TabSurvey/tabzilla_data_preprocessing.py`](TabSurvey/tabzilla_data_preprocessing.py). Each of these functions is accessed through function `preprocess_dataset()`, which returns any defined datasets by name. For example, the following code will return a `TabularDataset` object representing the `CaliforniaHousing` dataset, and will write it to a local directory unless it already has been written:
 
-**Dataset config parameters**
-```
-  --dataset DATASET     Name of the dataset that will be used (default: None)
-  --objective {regression,classification,binary}
-                        Set the type of the task (default: regression)
-  --direction {minimize,maximize}
-                        Direction of optimization. (default: minimize)
-  --num_features NUM_FEATURES
-                        Set the total number of features. (default: None)
-  --num_classes NUM_CLASSES
-                        Set the number of classes in a classification task. (default: 1)
-  --cat_idx CAT_IDX     Indices of the categorical features (default: None)
-  --cat_dims CAT_DIMS   Cardinality of the categorical features (is set automatically, when the load_data function is used. (default: None)
-  --scale               Normalize input data. (default: False)
-  --target_encode       Encode the targets that they start at 0. (0, 1, 2,...) (default: False)
-  --one_hot_encode      OneHotEncode the categorical features (default: False)
+```python
+from TabSurvey.tabzilla_data_preprocessing import preprocess_dataset
+
+dataset = preprocess_dataset("CaliforniaHousing", overwrite=False)
 ```
 
-### Adding New Datasets
+Calling function `preprocess_dataset()` will write a local copy of the dataset (flag `overwrite`) determines whether the dataset will be rewritten if it already exists. It is not necessary to write datasets to file to run experiments (they can just live in memory), however find it helpful to write dataset files for bookkeeping. Once a dataset is preprocessed and written to a local directory, it can be read directly into a `TabularDataset` object.
 
-There are two steps to adding a new dataset to this codebase:
+Calling `tabzilla_data_preprocessing.py` as a script will preprocess selected datasets, writing them to local directories. For example, the following command:
 
-1. Create a yml config file that provides important metadata (see previous section)
+```bash
+> python tabzilla_data_preprocessing.py --dataset_name CaliforniaHousing
+```
 
-2. Add a codeblock in a new `elif` statement, in the file [`TabSurvey/utils/load_data.py`](TabSurvey/utils/load_data.py), which prepares the dataset. The name of this dataset should match the `dataset` flag in the yml config file.
+will preprocess and write the `CaliforniaHousing` dataset to local directory `tabzilla/TabSurvey/datasets/CaliforniaHousing`. 
 
+## Reading Preprocessed Datasets
 
-**NOTE/TODO**: We should probably get rid of the dataset yml files, and just define this metadata in code. This would be cleaner. We used dataset classes in the reczillag project, which might be useful here.
+Once a dataset has been preprocessed, as in the above example, it can be read directly into a `TabularDataset` object. For example, if we preprocess `CaliforniaHousing` as shown above, then the following code will read this dataset:
+
+```python
+from TabSurvey.tabzilla_datasets import TabularDataset
+from pathlib import Path
+
+dataset = TabularDataset.read(Path("tabzilla/TabSurvey/datasets/CaliforniaHousing"))
+```
+
+## Adding New Datasets
+
+To add a new dataset, you need to add a new function to [`TabSurvey/tabzilla_data_preprocessing.py`](TabSurvey/tabzilla_data_preprocessing.py), which defines all information about the dataset. This function needs to use the decorator `dataset_preproccessor`. Below is an example:
+
+```python
+
+@dataset_preprocessor("ExampleDataset", target_encode=True)
+def preprocess_covertype(dataset_name):
+
+    X = np.array(
+      []
+    )
+
+    # a list of indices of the categorical and binary features. all other features are assumed to be numerical.
+    cat_idx = []
+
+    # can be "binary" "
+    target_type = "binary"
+    ...
+
+    # TBD
+
+    return dataset
+```
