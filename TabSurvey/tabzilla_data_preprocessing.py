@@ -5,6 +5,8 @@ import pandas as pd
 import functools
 
 from tabzilla_datasets import TabularDataset
+from tabzilla_datasets_openml import openml_tasks, preprocess_openml
+from sklearn.model_selection import train_test_split
 
 dataset_path = Path("datasets")
 
@@ -86,6 +88,14 @@ def preprocess_covertype(dataset_name):
     return dataset
 
 
+# Call the dataset preprocessor decorator for each of the selected OpenML datasets
+for kwargs in openml_tasks:
+    target_encode = kwargs["target_type"] != "regression"
+    kwargs_copy = {key: val for key, val in kwargs.items() if key != "dataset_name"}
+    dataset_preprocessor(kwargs["dataset_name"], target_encode=target_encode)(
+        functools.partial(preprocess_openml, **kwargs_copy))
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Dataset pre-processing utility.")
     parser.add_argument('--dataset_name',
@@ -98,11 +108,12 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.dataset_name is not None and args.process_all:
-        print("dataset_name cannot be specified simultaneously with the flag process_all")
+        raise RuntimeError("dataset_name cannot be specified simultaneously with the flag process_all")
+    elif args.dataset_name is None and not args.process_all:
+        raise RuntimeError("Need to specify either dataset_name or process_all flag")
 
+    if args.process_all:
+        for dataset_name in preprocessors.keys():
+            preprocess_dataset(dataset_name, args.overwrite)
     else:
-        if args.process_all:
-            for dataset_name in preprocessors.keys():
-                preprocess_dataset(dataset_name, args.overwrite)
-        else:
-            preprocess_dataset(args.dataset_name, args.overwrite)
+        preprocess_dataset(args.dataset_name, args.overwrite)
