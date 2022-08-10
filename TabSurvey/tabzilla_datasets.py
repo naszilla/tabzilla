@@ -42,6 +42,7 @@ class TabularDataset(object):
             num_features: Optional[int] = None,
             num_instances: Optional[int] = None,
             cat_dims: Optional[list] = None,
+            split_indeces: Optional[list] = None
     ) -> None:
         """
         name: name of the dataset
@@ -52,6 +53,8 @@ class TabularDataset(object):
         num_classes: 1 for regression 2 for binary, and >2 for classification
         num_features: number of features
         num_instances: number of instances
+        split_indeces: specifies dataset splits as a list of dictionaries, with entries "train", "val", and "test".
+            each entry specifies the indeces corresponding to the train, validation, and test set.
         """
         assert isinstance(X, np.ndarray), "X must be an instance of np.ndarray"
         assert isinstance(y, np.ndarray), "y must be an instance of np.ndarray"
@@ -98,6 +101,7 @@ class TabularDataset(object):
         self.num_features = num_features
         self.cat_dims = cat_dims
         self.num_instances = num_instances
+        self.split_indeces = split_indeces
 
         pass
 
@@ -144,22 +148,26 @@ class TabularDataset(object):
         X_path = p.joinpath("X.npy.gz")
         y_path = p.joinpath("y.npy.gz")
         metadata_path = p.joinpath("metadata.json")
+        split_indeces_path = p / "split_indeces.npy.gz"
 
         assert X_path.exists(), f"path to X does not exist: {X_path}"
-        assert y_path.exists(), f"path to X does not exist: {y_path}"
-        assert metadata_path.exists(), f"path to X does not exist: {metadata_path}"
+        assert y_path.exists(), f"path to y does not exist: {y_path}"
+        assert metadata_path.exists(), f"path to metadata does not exist: {metadata_path}"
+        assert split_indeces_path.exists(), f"path to split indeces does not exist: {split_indeces_path}"
 
         # read data
         with gzip.GzipFile(X_path, "r") as f:
             X = np.load(f)
         with gzip.GzipFile(y_path, "r") as f:
             y = np.load(f)
+        with gzip.GzipFile(split_indeces_path, "rb") as f:
+            split_indeces = np.load(f)
 
         # read metadata
         with open(metadata_path, "r") as f:
             kwargs = json.load(f)
 
-        kwargs["X"], kwargs["y"] = X, y
+        kwargs["X"], kwargs["y"], kwargs["split_indeces"] = X, y, split_indeces
         return cls(**kwargs)
 
         # return cls(
@@ -187,6 +195,8 @@ class TabularDataset(object):
             np.save(f, self.X)
         with gzip.GzipFile(p.joinpath("y.npy.gz"), "w") as f:
             np.save(f, self.y)
+        with gzip.GzipFile(p.joinpath("split_indeces.npy.gz"), "wb") as f:
+            np.save(f, self.split_indeces)
 
         # write metadata
         with open(p.joinpath("metadata.json"), "w") as f:

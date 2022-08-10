@@ -48,6 +48,7 @@ def preprocess_dataset(dataset_name, overwrite=False):
     return
 
 
+# TODO: build split_indeces
 @dataset_preprocessor("CaliforniaHousing", target_encode=False)
 def preprocess_cal_housing(dataset_name):
     X, y = sklearn.datasets.fetch_california_housing(return_X_y=True)
@@ -57,6 +58,7 @@ def preprocess_cal_housing(dataset_name):
                              num_classes=1)
     return dataset
 
+# TODO: build split_indeces
 @dataset_preprocessor("Covertype", target_encode=True)
 def preprocess_covertype(dataset_name):
     X, y = sklearn.datasets.fetch_covtype(return_X_y=True)
@@ -66,6 +68,7 @@ def preprocess_covertype(dataset_name):
                              num_classes=7)
     return dataset
 
+# TODO: build split_indeces
 @dataset_preprocessor("Adult", target_encode=True)
 def preprocess_covertype(dataset_name):
     url_data = "https://archive.ics.uci.edu/ml/machine-learning-databases/adult/adult.data"
