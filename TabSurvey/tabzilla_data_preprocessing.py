@@ -1,40 +1,21 @@
-from pathlib import Path
 import argparse
-import sklearn
-import pandas as pd
-import functools
+from pathlib import Path
 
-from tabzilla_datasets import TabularDataset
-from tabzilla_datasets_openml import openml_tasks, preprocess_openml
-from sklearn.model_selection import train_test_split
+# Import all preprocessor modules and add them to list for them to be in list of preprocessors
+import tabzilla_preprocessors_openml
+import tabzilla_preprocessors
+preprocessor_modules = [tabzilla_preprocessors, tabzilla_preprocessors_openml]
 
 dataset_path = Path("datasets")
 
-preprocessors = {}
+def build_preprocessors_dict():
+    preprocessors = {}
+    for module in preprocessor_modules:
+        # TODO: Safe handling for duplicate keys
+        preprocessors.update(module.preprocessor_dict)
+    return preprocessors
 
-def dataset_preprocessor(dataset_name, target_encode=False, cat_feature_encode=True):
-    """
-    Adds the function to the dictionary of pre-processors, which can then be called as preprocessors[dataset_name]()
-    Args:
-        dataset_name: Name of the dataset
-
-    """
-    def dataset_preprocessor_decorator(func):
-        @functools.wraps(func)
-        def wrapper_preprocessor(*args, **kwargs):
-            dataset = func(*args, **kwargs)
-            if target_encode:
-                dataset.target_encode()
-            if cat_feature_encode:
-                dataset.cat_feature_encode()
-            return dataset
-
-        if dataset_name in preprocessors:
-            raise RuntimeError(f"Duplicate dataset names not allowed: {dataset_name}")
-        preprocessors[dataset_name] = wrapper_preprocessor
-        return wrapper_preprocessor
-
-    return dataset_preprocessor_decorator
+preprocessors = build_preprocessors_dict()
 
 
 def preprocess_dataset(dataset_name, overwrite=False):
@@ -43,60 +24,11 @@ def preprocess_dataset(dataset_name, overwrite=False):
     if not overwrite and dest_path.exists():
         print(f"Found existing folder {dest_path}. Skipping.")
         return
-    dataset = preprocessors[dataset_name](dataset_name)
+    if dataset_name not in preprocessors:
+        raise KeyError(f"Unrecognized dataset name: {dataset_name}")
+    dataset = preprocessors[dataset_name]()
     dataset.write(dest_path, overwrite=overwrite)
     return
-
-
-# TODO: build split_indeces
-@dataset_preprocessor("CaliforniaHousing", target_encode=False)
-def preprocess_cal_housing(dataset_name):
-    X, y = sklearn.datasets.fetch_california_housing(return_X_y=True)
-    dataset = TabularDataset(dataset_name, X, y,
-                             cat_idx=[],
-                             target_type="regression",
-                             num_classes=1)
-    return dataset
-
-# TODO: build split_indeces
-@dataset_preprocessor("Covertype", target_encode=True)
-def preprocess_covertype(dataset_name):
-    X, y = sklearn.datasets.fetch_covtype(return_X_y=True)
-    dataset = TabularDataset(dataset_name, X, y,
-                             cat_idx=[],
-                             target_type="classification",
-                             num_classes=7)
-    return dataset
-
-# TODO: build split_indeces
-@dataset_preprocessor("Adult", target_encode=True)
-def preprocess_covertype(dataset_name):
-    url_data = "https://archive.ics.uci.edu/ml/machine-learning-databases/adult/adult.data"
-
-    features = ['age', 'workclass', 'fnlwgt', 'education', 'education_num', 'marital-status', 'occupation',
-                'relationship', 'race', 'sex', 'capital-gain', 'capital-loss', 'hours-per-week', 'native-country']
-    label = "income"
-    columns = features + [label]
-    df = pd.read_csv(url_data, names=columns)
-
-    df.fillna(0, inplace=True)
-
-    X = df[features].to_numpy()
-    y = df[label].to_numpy()
-
-    dataset = TabularDataset(dataset_name, X, y,
-                             cat_idx=[1,3,5,6,7,8,9,13],
-                             target_type="binary",
-                             num_classes=1)
-    return dataset
-
-
-# Call the dataset preprocessor decorator for each of the selected OpenML datasets
-for kwargs in openml_tasks:
-    target_encode = kwargs["target_type"] != "regression"
-    kwargs_copy = {key: val for key, val in kwargs.items() if key != "dataset_name"}
-    dataset_preprocessor(kwargs["dataset_name"], target_encode=target_encode)(
-        functools.partial(preprocess_openml, **kwargs_copy))
 
 
 if __name__ == "__main__":
