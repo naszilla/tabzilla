@@ -1,7 +1,7 @@
 import pandas as pd
 import sklearn
 
-from tabzilla_dataset_preprocessing_utils import dataset_preprocessor
+from tabzilla_preprocessor_utils import dataset_preprocessor
 
 preprocessor_dict = {}
 

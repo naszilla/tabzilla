@@ -2,7 +2,7 @@ import openml
 import numpy as np
 import functools
 
-from tabzilla_dataset_preprocessing_utils import dataset_preprocessor, cv_n_folds
+from tabzilla_preprocessor_utils import dataset_preprocessor, cv_n_folds
 
 preprocessor_dict = {}
 
