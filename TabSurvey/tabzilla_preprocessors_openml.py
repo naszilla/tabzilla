@@ -11,20 +11,20 @@ debug_mode = False
 openml_tasks = [
     {
         "openml_task_id": 361089,
-        "dataset_name": "California_OpenML",
-        "target_type": "regression"
+        # "dataset_name": "openml_california", # Can be explicitly specified for faster execution
+        # "target_type": "regression", # Does not need to be explicitly specified, but can be
     },
     {
         "openml_task_id": 2071,
-        "dataset_name": "Adult_OpenML",
-        "target_type": "binary",
+        # "dataset_name": "openml_adult", # Can be explicitly specified for faster execution
+        # "target_type": "binary", # Does not need to be explicitly specified, but can be
         # "force_cat_features": ["workclass", "education"], # Example (these are not needed in this case)
         # "force_num_features": ["fnlwgt", "education-num"], # Example (these are not needed in this case)
     },
 ]
 
 # Based on: https://github.com/releaunifreiburg/WellTunedSimpleNets/blob/main/utilities.py
-def preprocess_openml(openml_task_id, target_type, force_cat_features=None, force_num_features=None):
+def preprocess_openml(openml_task_id, target_type=None, force_cat_features=None, force_num_features=None):
     if force_num_features is None:
         force_num_features = []
     if force_cat_features is None:
@@ -64,10 +64,28 @@ def preprocess_openml(openml_task_id, target_type, force_cat_features=None, forc
                 assert len(intersect) == 0
 
     dataset = task.get_dataset()
+    task.get_dataset()
     X, y, categorical_indicator, col_names = dataset.get_data(
         dataset_format='dataframe',
         target=dataset.default_target_attribute,
     )
+
+    # Infer task type if not provided
+    if target_type is None:
+        if task.task_type == "Supervised Regression":
+            target_type = "regression"
+        elif task.task_type == "Supervised Classification":
+            n_unique_labels = len(task.class_labels)
+            if n_unique_labels == 2:
+                target_type = "binary"
+            elif n_unique_labels > 2:
+                target_type = "classification"
+            else:
+                raise RuntimeError(f"Unexpected number of class labels: {n_unique_labels}")
+        else:
+            raise RuntimeError(f"Unsupported task type: {task.task_type}")
+
+    # Get num_classes
     if target_type == "regression":
         num_classes = 1
     elif target_type == "binary":
@@ -91,14 +109,20 @@ def preprocess_openml(openml_task_id, target_type, force_cat_features=None, forc
         "cat_idx": cat_idx,
         "target_type": target_type,
         "num_classes": num_classes,
-        "split_indeces": split_indeces
+        "split_indeces": split_indeces,
+        "split_source": "openml",
     }
 
 
 # Call the dataset preprocessor decorator for each of the selected OpenML datasets
 for kwargs in openml_tasks:
-    target_encode = kwargs["target_type"] != "regression"
     kwargs_copy = {key: val for key, val in kwargs.items() if key != "dataset_name"}
-    dataset_preprocessor(preprocessor_dict, kwargs["dataset_name"],
-                         target_encode=target_encode, generate_split=False)(
+    # Create a dataset name if not specified
+    if not "dataset_name" in kwargs:
+        task = openml.tasks.get_task(task_id=kwargs["openml_task_id"], download_data=False, download_qualities=False)
+        ds = openml.datasets.get_dataset(task.dataset_id, download_data=False, download_qualities=False)
+        dataset_name = f"openml_{ds.name}"
+    else:
+        dataset_name = kwargs["dataset_name"]
+    dataset_preprocessor(preprocessor_dict, dataset_name, generate_split=False)(
         functools.partial(preprocess_openml, **kwargs_copy))

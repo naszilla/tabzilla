@@ -42,7 +42,8 @@ class TabularDataset(object):
         num_features: Optional[int] = None,
         num_instances: Optional[int] = None,
         cat_dims: Optional[list] = None,
-        split_indeces: Optional[list] = None
+        split_indeces: Optional[list] = None,
+        split_source: Optional[str] = None
     ) -> None:
         """
         name: name of the dataset
@@ -104,6 +105,7 @@ class TabularDataset(object):
         self.cat_dims = cat_dims
         self.num_instances = num_instances
         self.split_indeces = split_indeces
+        self.split_source = split_source
 
         pass
 
@@ -144,6 +146,7 @@ class TabularDataset(object):
             "num_classes": self.num_classes,
             "num_features": self.num_features,
             "num_instances": self.num_instances,
+            "split_source": self.split_source,
         }
 
     @classmethod
@@ -176,16 +179,6 @@ class TabularDataset(object):
         kwargs["X"], kwargs["y"], kwargs["split_indeces"] = X, y, split_indeces
         return cls(**kwargs)
 
-        # return cls(
-        #     metadata["name"],
-        #     X,
-        #     y,
-        #     metadata["cat_idx"],
-        #     metadata["target_type"],
-        #     metadata["num_classes"],
-        #     metadata["num_features"],
-        #     metadata["num_instances"],
-        # )
 
     def write(self, p: Path, overwrite=False) -> None:
         """write the dataset to a new folder. this folder cannot already exist"""

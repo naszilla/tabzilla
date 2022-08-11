@@ -7,7 +7,7 @@ import numpy as np
 cv_n_folds = 10 # Number of folds to use for splitting
 
 
-def dataset_preprocessor(preprocessor_dict, dataset_name, target_encode=False,
+def dataset_preprocessor(preprocessor_dict, dataset_name, target_encode=None,
                          cat_feature_encode=True, generate_split=True):
     """
     Adds the function to the dictionary of pre-processors, which can then be called as preprocessor_dict[dataset_name]()
@@ -21,8 +21,12 @@ def dataset_preprocessor(preprocessor_dict, dataset_name, target_encode=False,
             dataset_kwargs = func(*args, **kwargs)
             if generate_split:
                 dataset_kwargs["split_indeces"] = split_dataset(dataset_kwargs)
+                dataset_kwargs["split_source"] = "random_init"
             dataset = TabularDataset(dataset_name, **dataset_kwargs)
-            if target_encode:
+
+            # Infer target_encode based on target type
+            is_regression = dataset.target_type == "regression"
+            if (target_encode is None and not is_regression) or target_encode:
                 dataset.target_encode()
             if cat_feature_encode:
                 dataset.cat_feature_encode()
