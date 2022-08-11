@@ -6,14 +6,17 @@ from tabzilla_preprocessor_utils import dataset_preprocessor, cv_n_folds
 
 preprocessor_dict = {}
 
+easy_import_task_file = "openml_easy_import_list.txt" # Datasets identified just by their ID can be easily imported from here
+
 debug_mode = False
 
 openml_tasks = [
-    {
-        "openml_task_id": 361089,
-        # "dataset_name": "openml_california", # Can be explicitly specified for faster execution
-        # "target_type": "regression", # Does not need to be explicitly specified, but can be
-    },
+    # This dataset has been added to openml_easy_import_list.txt as an example
+    # {
+    #     "openml_task_id": 361089,
+    #     # "dataset_name": "openml_california", # Can be explicitly specified for faster execution
+    #     # "target_type": "regression", # Does not need to be explicitly specified, but can be
+    # },
     {
         "openml_task_id": 2071,
         # "dataset_name": "openml_adult", # Can be explicitly specified for faster execution
@@ -22,6 +25,12 @@ openml_tasks = [
         # "force_num_features": ["fnlwgt", "education-num"], # Example (these are not needed in this case)
     },
 ]
+
+with open(easy_import_task_file, "r") as f:
+    for line in f:
+        task_id = int(line.strip())
+        openml_tasks.append({"openml_task_id": task_id})
+
 
 # Based on: https://github.com/releaunifreiburg/WellTunedSimpleNets/blob/main/utilities.py
 def preprocess_openml(openml_task_id, target_type=None, force_cat_features=None, force_num_features=None):
