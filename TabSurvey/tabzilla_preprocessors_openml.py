@@ -24,8 +24,7 @@ openml_tasks = [
 ]
 
 # Based on: https://github.com/releaunifreiburg/WellTunedSimpleNets/blob/main/utilities.py
-def preprocess_openml(openml_task_id, target_type, generate_split=False, force_cat_features=None,
-                      force_num_features=None):
+def preprocess_openml(openml_task_id, target_type, force_cat_features=None, force_num_features=None):
     if force_num_features is None:
         force_num_features = []
     if force_cat_features is None:

@@ -11,7 +11,9 @@ dataset_path = Path("datasets")
 def build_preprocessors_dict():
     preprocessors = {}
     for module in preprocessor_modules:
-        # TODO: Safe handling for duplicate keys
+        duplicates = preprocessors.keys() & module.preprocessor_dict.keys()
+        if duplicates:
+            raise RuntimeError(f"Duplicate dataset_name key found in module {module}: {duplicates}")
         preprocessors.update(module.preprocessor_dict)
     return preprocessors
 
