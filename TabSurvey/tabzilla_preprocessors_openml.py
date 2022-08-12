@@ -75,7 +75,7 @@ def preprocess_openml(openml_task_id, target_type=None, force_cat_features=None,
     dataset = task.get_dataset()
     X, y, categorical_indicator, col_names = dataset.get_data(
         dataset_format='dataframe',
-        target=dataset.default_target_attribute,
+        target=task.target_name,
     )
 
     # Infer task type if not provided
