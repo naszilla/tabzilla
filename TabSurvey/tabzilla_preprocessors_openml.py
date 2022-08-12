@@ -73,7 +73,6 @@ def preprocess_openml(openml_task_id, target_type=None, force_cat_features=None,
                 assert len(intersect) == 0
 
     dataset = task.get_dataset()
-    task.get_dataset()
     X, y, categorical_indicator, col_names = dataset.get_data(
         dataset_format='dataframe',
         target=dataset.default_target_attribute,
