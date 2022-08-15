@@ -104,9 +104,22 @@ Currently, there are two main procedures to add datasets: one for OpenML dataset
 
 ### General datasets
 
-To add a new dataset, you need to add a new function to [`TabSurvey/tabzilla_data_preprocessors.py`](TabSurvey/tabzilla_data_preprocessor_utils.py), which defines all information about the dataset. This function needs to use the decorator `dataset_preproccessor`.
+To add a new dataset, you need to add a new function to [`TabSurvey/tabzilla_preprocessors.py`](TabSurvey/tabzilla_preprocessor_utils.py), which defines all information about the dataset. This function needs to use the decorator `dataset_preproccessor`, and is invoked through `tabzilla_data_preprocessing.py`.
 
-Further description of the decorator and its flags TBD.
+In general, the function must take no arguments, and it must return a dictionary with keys used to initialize a `TabularDataset` object. The following keys are required (since they are required by the constructor):
+1. `X`: features, as numpy array of shape `(n_examples, n_features)`
+2. `y`: labels, as numpy array of shape `(n_samples,)`
+3. `cat_idx`: sorted list of indeces of categorical columns in `X`.
+4. `target_type`: one of `"regression"`, `"binary"`, and `"classification"`.
+5. `"num_classes"`: number of classes, as an integer. Use 1 for `"regression"` and `"binary"`, and the actual number of classes for `"classification"`.
+6. Any other optional arguments that you wish to manually specify to create the `TabularDataset` object (usually not needed, since they are inferred if not automatically detected).
+
+Regarding the decorator `dataset_preproccessor`, it takes in the following arguments:
+1. `preprocessor_dict`: set to `preprocessor_dict` if adding a pre-processor within `tabzilla_preprocessors.py` (this is used to add an entry to `preprocessor_dict` that will correspond to the new dataset preprocessor).
+2. `dataset_name`: unique string name that will be used to refer to the dataset. This name will be used by `tabzilla_data_preprocessing.py` and it will be used in the save location for the dataset.
+3. `target_encode` (optional): flag to specify whether to run `y` through a Label Encoder. If not specified, then the Label Encoder will be used iff the `target_type` is `binary` or `classification`.
+4. `cat_feature_encode` (optional): flag to indicate whether a Label Encoder should be used on the categorical features. By default, this is set to `True`.
+5. `generate_split` (optional): flag to indicate whether to generate a random split (based on a seed) using 10-fold cross validation (as implemented in `split_dataset` in `tabzilla_preprocessor_utils.py`). Defaults to `True`. If set to `False`, you should specify a split using the `split_indeces` entry in the output dictionary of the function.
 
 Below is an example:
 
@@ -137,6 +150,15 @@ def preprocess_covertype():
     }
 
 ```
+This dataset will be named `"ExampleDataset"`, with Label Encoding being applied to the target and the categorical features, and a default split being generated using `split_dataset`.
+
+Once you have implemented a new dataset, verify that pre-processing runs as expected. From `TabSurvey`, run the following:
+
+```bash
+> python tabzilla_data_preprocessing.py --dataset_name YOUR_DATASET_NAME
+```
+
+This should output a folder under `TabSurvey/datasets/YOUR_DATASET_NAME` with files `metadata.json`, `split_indeces.npy.gz`, `X.npy.gz`, and `y.npy.gz`. Open `metadata.json` and check that the metadata corresponds to what you expect.
 
 ### OpenML datasets
 OpenML datasets need to be added under [`TabSurvey/tabzilla_data_preprocessors_openml.py`](TabSurvey/tabzilla_data_preprocessors_openml.py).
@@ -193,13 +215,13 @@ For some datasets, you might need to use Option 2. In particular, Option 2 lets 
 Here is an example:
 
 ```python
-    {
-        "openml_task_id": 2071,
-        "dataset_name": "openml_adult", # Can be explicitly specified for faster execution
-        "target_type": "binary", # Does not need to be explicitly specified, but can be
-        "force_cat_features": ["workclass", "education"], # Example (these are not needed in this case)
-        "force_num_features": ["fnlwgt", "education-num"], # Example (these are not needed in this case)
-    }
+{
+    "openml_task_id": 2071,
+    "dataset_name": "openml_adult", # Can be explicitly specified for faster execution
+    "target_type": "binary", # Does not need to be explicitly specified, but can be
+    "force_cat_features": ["workclass", "education"], # Example (these are not needed in this case)
+    "force_num_features": ["fnlwgt", "education-num"], # Example (these are not needed in this case)
+}
 ```
 
 You do not need to provide all of the fields. Once you are done, add the dictionary entry to `openml_tasks` under `tabzilla_preprocessors_openml.py`.
