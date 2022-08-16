@@ -165,7 +165,7 @@ OpenML datasets need to be added under [`TabSurvey/tabzilla_data_preprocessors_o
 
 OpenML distinguishes tasks from datasets, where tasks are specific prediction tasks associated with a dataset. For our purposes, we will be using OpenML tasks to obtain datasets for training and evaluation.
 
-We use the OpenML API. [Here](https://openml.github.io/openml-python/develop/examples/30_extended/tasks_tutorial.html) is a tutorial on OpenML tasks, including listing tasks according to a series of filters. We will use the benchmark suites as a start, especially the [OpenML-CC18](https://openml.github.io/openml-python/develop/examples/20_basic/simple_suites_tutorial.html#openml-cc18).
+We use the OpenML API. [Here](https://openml.github.io/openml-python/develop/examples/30_extended/tasks_tutorial.html) is a tutorial on OpenML tasks, including listing tasks according to a series of filters. A good resource are benchmark suites, such as the [OpenML-CC18](https://openml.github.io/openml-python/develop/examples/20_basic/simple_suites_tutorial.html#openml-cc18). However, note that OpenML-CC18 tasks have already been imported into the repository.
 
 #### Step 1: Identifying the dataset
 
@@ -174,50 +174,62 @@ The first step is identifying the OpenML task ID. This can either be obtained by
 Note that we are focusing on either regression tasks or supervised classification tasks, so please ensure whatever OpenML task you look at belongs to these task types. Furthermore, please ensure the evaluation procedure for the task is "10-fold Crossvalidation". If this is not the case, and you believe the dataset is worth adding to our repo, please let the rest of the team know (this might require either modifying the code or using the procedure for general datasets).
 
 
-#### Step 2: Manual Inspection
+#### Step 2: Inspection
 
-Once you have found the task id for a dataset, the next step is to inspect the dataset. For that, you can use the following piece of code:
+Once you have found the task id for a dataset, the next step is to inspect the dataset. For that, run the following from a Python console with `TabSurvey` as the working directory:
 
 ```python
-import openml
-openml_task_id = 361089 # Your task ID goes here
-task = openml.tasks.get_task(task_id=openml_task_id)
-dataset = task.get_dataset()
-X, y, categorical_indicator, col_names = dataset.get_data(
-    dataset_format='dataframe',
-    target=task.target_name,
-)
+from tabzilla_preprocessors_openml import inspect_openml_task
+inspect_openml_task(YOUR_OPENML_TASK_ID, exploratory_mode=True)
 ```
 
-`X` represents the features (as a Pandas dataframe), `y` represents the target, `categorical_indicator` is a list of booleans for each column of X that are true iff the corresponding column is categorical, and `col_names` is the list of column names for `X`.
-
-Please perform the following checks:
+The function performs the following checks
 1. `task.task_type` is `'Supervised Regression'` or `'Supervised Classification'`.
-2. Verify that the `categorical_indicator` has all correct entries by manual inspection of the data. If you find any mislabeled entries, make a note of mislabeled numerical or categorical columns.
-3. If the dataset has missing values, please make a note of it (this is not necessarily a deal-breaker, but might require modifications to the code).
-4. `task.estimation_procedure['type']` should be `'crossvalidation'` with `task.estimation_procedure['parameters'] = {'number_repeats': '1', 'number_folds': '10', 'percentage': ''}`. If this does not match, please let the team know since this might require modifications to the code.
+2. No column is composed completely of missing values. No labels are missing. In addition, the number of missing values is printed out.
+3. Categorical columns are correctly identified (see `categorical_indicator` within the function).
+4. The estimation procedure is 10-fold cross validation.  Sometimes, a different task might use the same dataset with 10-fold cross validation, so please check for that. If this still does not match, please let the team know since this might require modifications to the code.
 
+If all checks are passed, the output is similar to the following:
+```python
+inspect_openml_task(7592, exploratory_mode=True)
+TASK ID: 7592
+Warning: 6465 missing values.
+Tests passed!
+(Pdb)
+```
+The debugger is invoked to allow you to inspect the dataset (eliminate the `exploratory_mode` argument to change this behavior).
+
+If, on the other hand, some checks fail, the output is similar to the following:
+```python
+inspect_openml_task(3021, exploratory_mode=True)
+TASK ID: 3021
+Warning: 6064 missing values.
+Errors found:
+Found full null columns: ['TBG']
+Mislabeled categorical columns
+(Pdb)
+```
+The debugger is invoked to allow you to see how to rectify the issues. In this case, a column needs to be dropped from the dataset (`"TBG"`).
 
 #### Step 3: Adding the dataset
 If the dataset passes all of these checks (which should be the case for the curated benchmarks), you have two options to add the dataset:
 1. Adding the task ID to `openml_easy_import_list.txt`
 2. Adding the task data as a dictionary in the list `openml_tasks` under `tabzilla_preprocessors_openml.py`.
 
-Option 1 is suited for quick addition of a dataset that has no problems or additional cleaning required. Simply add the task ID as a new line in `openml_easy_import_list.txt`. The dataset will be given an automatic name with the format `f"openml_{OPENML_DATASET_NAME}"`. You can find the `OPENML_DATASET_NAME` dataset name using `task.get_dataset().name`.
+Option 1 is suited for quick addition of a dataset that has no problems or additional cleaning required. Simply add the task ID as a new line in `openml_easy_import_list.txt`. The dataset will be given an automatic name with the format `f"openml__DATASET_NAME__TASK_ID"`. You can find the `OPENML_DATASET_NAME` dataset name using `task.get_dataset().name`.
 
 For some datasets, you might need to use Option 2. In particular, Option 2 lets you specify the following for any dataset:
-1. `"openml_task_id"` (required): the OpenML task ID 
-2. `"dataset_name"` (optional): specify a manual dataset name (if you want something other than `f"openml_{DATASET_NAME}"`). Specifying this can result in faster execution of the pre-processing script.
-3. `"target_type"` (optional): The target type can be automatically determined by the code based on the OpenML task metadata, but you can force the `"target_type"` by specifying this attribute. The options are: `"regression"`, `"binary"`, and `"classification"`.
-4. `"force_cat_features"` (optional): list of strings specifying column names for columns that will be forced to be treated as categorical. Use if you found categorical columns incorrectly labeled in `categorical_indicator`. You only need to specify categorical columns which were incorrectly labeled (not all of them).
-5. `"force_num_features"` (optional): list of strings specifying column names for columns that will be forced to be treated as numerical. Use if you found numerical columns incorrectly labeled in `categorical_indicator`. You only need to specify numerical columns which were incorrectly labeled (not all of them).
+1. `"openml_task_id"` (required): the OpenML task ID
+2. `"target_type"` (optional): The target type can be automatically determined by the code based on the OpenML task metadata, but you can force the `"target_type"` by specifying this attribute. The options are: `"regression"`, `"binary"`, and `"classification"`.
+3. `"force_cat_features"` (optional): list of strings specifying column names for columns that will be forced to be treated as categorical. Use if you found categorical columns incorrectly labeled in `categorical_indicator`. You only need to specify categorical columns which were incorrectly labeled (not all of them).
+4. `"force_num_features"` (optional): list of strings specifying column names for columns that will be forced to be treated as numerical. Use if you found numerical columns incorrectly labeled in `categorical_indicator`. You only need to specify numerical columns which were incorrectly labeled (not all of them).
+5. `"drop_features"` (optional): list of strings specifying column names for columns that will be dropped.
 
 Here is an example:
 
 ```python
 {
-    "openml_task_id": 2071,
-    "dataset_name": "openml_adult", # Can be explicitly specified for faster execution
+    "openml_task_id": 7592,
     "target_type": "binary", # Does not need to be explicitly specified, but can be
     "force_cat_features": ["workclass", "education"], # Example (these are not needed in this case)
     "force_num_features": ["fnlwgt", "education-num"], # Example (these are not needed in this case)
@@ -235,6 +247,6 @@ The final step is running pre-processing on the dataset. From `TabSurvey`, run t
 > python tabzilla_data_preprocessing.py --dataset_name YOUR_DATASET_NAME
 ```
 
-(If you used the easy import option and you do not know the dataset name, you can use `task.get_dataset().name` to find the OpenML dataset name. Use that name with the prefix `openml_`.)
+(If you do not know the dataset name, it will the format `f"openml__DATASET_NAME__TASK_ID"`. You can find the `OPENML_DATASET_NAME` dataset name using `task.get_dataset().name`. Alternatively, run the script with the flag `--process_all` instead of the `--dataset_name` flag). 
 
-This should output a folder under `TabSurvey/datasets/YOUR_DATASET_NAME` with files `metadata.json`, `split_indeces.npy.gz`, `X.npy.gz`, and `y.npy.gz`. Open `metadata.json` and check that the metadata corresponds to what you expect (especially `target_type`).
+This should output a folder under `TabSurvey/datasets/YOUR_DATASET_NAME` with files `metadata.json`, `split_indeces.npy.gz`, `X.npy.gz`, and `y.npy.gz`. Open `metadata.json` and check that the metadata corresponds to what you expect (especially `target_type`). Note that running the pre-processing also performs the checks within `inspect_openml_task` again, which is particularly useful if you had to make any changes (for Option 2 of OpenML dataset addition). This ensures the final dataset saved to disk passes the checks.

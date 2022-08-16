@@ -102,13 +102,14 @@ def preprocess_openml(openml_task_id, target_type=None, force_cat_features=None,
             col_names.append(col_name)
             categorical_indicator.append(is_categorical)
 
+    # Run checks
     openml_data_dict = {
         "X": X,
         "y": y,
         "categorical_indicator": categorical_indicator,
         "col_names": col_names
     }
-    errors = inspect_openml_task(openml_task_id, openml_data_dict=openml_data_dict, verbose=False)
+    errors = inspect_openml_task(openml_task_id, openml_data_dict=openml_data_dict, verbose=False, debug=False)
     if errors:
         print("Dataset checks failed:")
         for error in errors:
@@ -153,7 +154,8 @@ def preprocess_openml(openml_task_id, target_type=None, force_cat_features=None,
     }
 
 
-def inspect_openml_task(openml_task_id, openml_data_dict=None, debug=False, accept_nans=True, verbose=True):
+def inspect_openml_task(openml_task_id, openml_data_dict=None, accept_nans=True, verbose=True,
+                        debug=True, exploratory_mode=False):
     """
     Use this function to inspect an OpenML task. The checks include making sure that the task is of the correct type
     (supervised classification or regression), checking missing values, cross validation, and validity of categorical
@@ -163,9 +165,11 @@ def inspect_openml_task(openml_task_id, openml_data_dict=None, debug=False, acce
         openml_task_id: The OpenML task ID, specified as an integ
         openml_data_dict (optional): specify a dictionary with entries for X, y, categorical_indicator, col_names.
             This is not needed for manual checking of datasets and is only used by the pre-processor function.
-        debug: set to True if you want to invoke the debugger if the dataset does not pass any of the checks.
+        debug: set to False if you do not want to invoke the debugger if the dataset does not pass any of the checks.
         accept_nans: set to False if you want the dataset to fail if there are any NaN features.
         verbose: set to False to suppress the console output.
+        exploratory_mode: set to True if you want to invoke the debugger at the end of execution to explore the dataset,
+            regardless of whether the checks were passed
 
     Returns:
         err_messages: list of strings of error messages. Empty if no errors were returned.
@@ -226,12 +230,14 @@ def inspect_openml_task(openml_task_id, openml_data_dict=None, debug=False, acce
     if not err_messages:
         if verbose:
             print("Tests passed!")
+        if exploratory_mode:
+            breakpoint()
     else:
         if verbose:
             print("Errors found:")
             for message in err_messages:
                 print(message)
-        if debug:
+        if debug or exploratory_mode:
             breakpoint()
 
     return err_messages
