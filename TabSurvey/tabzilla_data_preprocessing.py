@@ -20,12 +20,14 @@ def build_preprocessors_dict():
 preprocessors = build_preprocessors_dict()
 
 
-def preprocess_dataset(dataset_name, overwrite=False):
-    print(f"Processing {dataset_name}...")
+def preprocess_dataset(dataset_name, overwrite=False, verbose=True):
     dest_path = dataset_path / dataset_name
     if not overwrite and dest_path.exists():
-        print(f"Found existing folder {dest_path}. Skipping.")
+        if verbose:
+            print(f"{dataset_name:<40}| Found existing folder. Skipping.")
         return
+
+    print(f"{dataset_name:<40}| Processing...")
     if dataset_name not in preprocessors:
         raise KeyError(f"Unrecognized dataset name: {dataset_name}")
     dataset = preprocessors[dataset_name]()
@@ -50,7 +52,7 @@ if __name__ == "__main__":
         raise RuntimeError("Need to specify either dataset_name or process_all flag")
 
     if args.process_all:
-        for dataset_name in preprocessors.keys():
+        for dataset_name in sorted(preprocessors.keys()):
             preprocess_dataset(dataset_name, args.overwrite)
     else:
         preprocess_dataset(args.dataset_name, args.overwrite)

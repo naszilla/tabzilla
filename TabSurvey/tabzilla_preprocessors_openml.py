@@ -11,19 +11,22 @@ easy_import_task_file = "openml_easy_import_list.txt" # Datasets identified just
 debug_mode = False
 
 openml_tasks = [
-    # This dataset has been added to openml_easy_import_list.txt as an example
+    {
+        "openml_task_id": 3021,
+        "drop_features": ["TBG"],
+    }
+    # These datasets have been added to openml_easy_import_list.txt, but are provided here as a blueprint
+    # for addition of other datasets
     # {
     #     "openml_task_id": 361089,
-    #     # "dataset_name": "openml_california", # Can be explicitly specified for faster execution
     #     # "target_type": "regression", # Does not need to be explicitly specified, but can be
     # },
-    {
-        "openml_task_id": 2071,
-        # "dataset_name": "openml_adult", # Can be explicitly specified for faster execution
-        # "target_type": "binary", # Does not need to be explicitly specified, but can be
-        # "force_cat_features": ["workclass", "education"], # Example (these are not needed in this case)
-        # "force_num_features": ["fnlwgt", "education-num"], # Example (these are not needed in this case)
-    },
+    # {
+    #     "openml_task_id": 7592,
+    #     # "target_type": "binary", # Does not need to be explicitly specified, but can be
+    #     # "force_cat_features": ["workclass", "education"], # Example (these are not needed in this case)
+    #     # "force_num_features": ["fnlwgt", "education-num"], # Example (these are not needed in this case)
+    # },
 ]
 
 with open(easy_import_task_file, "r") as f:
@@ -33,11 +36,14 @@ with open(easy_import_task_file, "r") as f:
 
 
 # Based on: https://github.com/releaunifreiburg/WellTunedSimpleNets/blob/main/utilities.py
-def preprocess_openml(openml_task_id, target_type=None, force_cat_features=None, force_num_features=None):
+def preprocess_openml(openml_task_id, target_type=None, force_cat_features=None, force_num_features=None,
+                      drop_features=None):
     if force_num_features is None:
         force_num_features = []
     if force_cat_features is None:
         force_cat_features = []
+    if drop_features is None:
+        drop_features = []
 
     task = openml.tasks.get_task(task_id=openml_task_id)
     n_repeats, n_folds, n_samples = task.get_split_dimensions()
@@ -78,6 +84,39 @@ def preprocess_openml(openml_task_id, target_type=None, force_cat_features=None,
         target=task.target_name,
     )
 
+    # Patch categorical columns and numerical columns in case of any mislabeling
+    for feature_name in force_cat_features:
+        categorical_indicator[col_names.index(feature_name)] = True
+    for feature_name in force_num_features:
+        categorical_indicator[col_names.index(feature_name)] = False
+
+    # Drop features
+    if drop_features:
+        drop_indices = sorted([col_names.index(col) for col in drop_features])
+        X.drop(columns=drop_features, inplace=True)
+        categorical_indicator_old, categorical_indicator = categorical_indicator, []
+        col_names_old, col_names = col_names, []
+        for idx, (col_name, is_categorical) in enumerate(zip(col_names_old, categorical_indicator_old)):
+            if idx in drop_indices:
+                continue
+            col_names.append(col_name)
+            categorical_indicator.append(is_categorical)
+
+    openml_data_dict = {
+        "X": X,
+        "y": y,
+        "categorical_indicator": categorical_indicator,
+        "col_names": col_names
+    }
+    errors = inspect_openml_task(openml_task_id, openml_data_dict=openml_data_dict, verbose=False)
+    if errors:
+        print("Dataset checks failed:")
+        for error in errors:
+            print(error)
+        raise RuntimeError("One or more dataset checks failed!")
+
+    cat_idx = [idx for idx, indicator in enumerate(categorical_indicator) if indicator]
+
     # Infer task type if not provided
     if target_type is None:
         if task.task_type == "Supervised Regression":
@@ -103,14 +142,6 @@ def preprocess_openml(openml_task_id, target_type=None, force_cat_features=None,
     else:
         raise RuntimeError(f"Unrecognized target_type: {target_type}")
 
-    # Patch categorical columns and numerical columns in case of any mislabeling
-    for feature_name in force_cat_features:
-        categorical_indicator[col_names.index(feature_name)] = True
-    for feature_name in force_num_features:
-        categorical_indicator[col_names.index(feature_name)] = False
-
-    cat_idx = [idx for idx, indicator in enumerate(categorical_indicator) if indicator]
-
     return {
         "X": X.values,
         "y": np.array(y),
@@ -122,15 +153,94 @@ def preprocess_openml(openml_task_id, target_type=None, force_cat_features=None,
     }
 
 
+def inspect_openml_task(openml_task_id, openml_data_dict=None, debug=False, accept_nans=True, verbose=True):
+    """
+    Use this function to inspect an OpenML task. The checks include making sure that the task is of the correct type
+    (supervised classification or regression), checking missing values, cross validation, and validity of categorical
+    column labels.
+
+    Args:
+        openml_task_id: The OpenML task ID, specified as an integ
+        openml_data_dict (optional): specify a dictionary with entries for X, y, categorical_indicator, col_names.
+            This is not needed for manual checking of datasets and is only used by the pre-processor function.
+        debug: set to True if you want to invoke the debugger if the dataset does not pass any of the checks.
+        accept_nans: set to False if you want the dataset to fail if there are any NaN features.
+        verbose: set to False to suppress the console output.
+
+    Returns:
+        err_messages: list of strings of error messages. Empty if no errors were returned.
+    """
+    if verbose:
+        print(f"TASK ID: {openml_task_id}")
+    task = openml.tasks.get_task(task_id=openml_task_id)
+
+    if openml_data_dict is None:
+
+        dataset = task.get_dataset()
+        X, y, categorical_indicator, col_names = dataset.get_data(
+            dataset_format='dataframe',
+            target=task.target_name,
+        )
+    else:
+        X, y, categorical_indicator, col_names = (openml_data_dict["X"], openml_data_dict["y"],
+                                                  openml_data_dict["categorical_indicator"],
+                                                  openml_data_dict["col_names"])
+
+    err_messages = []
+    def check_true(condition, message):
+        if not condition:
+            err_messages.append(message)
+
+    # Task type check
+    check_true((task.task_type == "Supervised Regression") or (
+                    task.task_type == "Supervised Classification"), f"Wrong task type: {task.task_type}")
+
+    # Missing values checks
+    num_na = X.isna().sum().sum()
+    if num_na != 0:
+        if verbose:
+            print("Warning: {} missing values.".format(num_na))
+        check_true(accept_nans, "NaNs not accepted.")
+
+    null_cols = X.isnull().all()
+    null_cols = null_cols[null_cols].index.to_list()
+    check_true(not null_cols, f"Found full null columns: {null_cols}")
+    check_true(y.isna().sum() == 0, "Missing labels.")
+
+    # Cross validation checks
+    estimation = task.estimation_procedure
+    check_true(estimation["type"] == "crossvalidation", "Not cross validation")
+    check_true(estimation["parameters"]["number_repeats"] == '1', "Wrong number_repeats")
+    check_true(estimation["parameters"]["number_folds"] == str(cv_n_folds), "Wrong number of folds")
+
+    # Categorical indicator checks
+    cat_mask = np.array(categorical_indicator)
+    # Confirm all columns labeled as categorical are categorical
+    check_true(len(X.loc[:, cat_mask].select_dtypes("category").columns) == cat_mask.sum(), "Mislabeled numerical columns")
+    # Confirm rest of the columns are all numerical
+    check_true(len(X.loc[:, ~cat_mask].select_dtypes("number").columns) == (
+        ~cat_mask).sum(), "Mislabeled categorical columns")
+    num_types = list(X.loc[:, ~cat_mask].dtypes.unique())
+    cat_types = list(X.loc[:, cat_mask].dtypes.unique())
+
+    if not err_messages:
+        if verbose:
+            print("Tests passed!")
+    else:
+        if verbose:
+            print("Errors found:")
+            for message in err_messages:
+                print(message)
+        if debug:
+            breakpoint()
+
+    return err_messages
+
 # Call the dataset preprocessor decorator for each of the selected OpenML datasets
 for kwargs in openml_tasks:
-    kwargs_copy = {key: val for key, val in kwargs.items() if key != "dataset_name"}
-    # Create a dataset name if not specified
-    if not "dataset_name" in kwargs:
-        task = openml.tasks.get_task(task_id=kwargs["openml_task_id"], download_data=False, download_qualities=False)
-        ds = openml.datasets.get_dataset(task.dataset_id, download_data=False, download_qualities=False)
-        dataset_name = f"openml_{ds.name}"
-    else:
-        dataset_name = kwargs["dataset_name"]
+    task = openml.tasks.get_task(task_id=kwargs["openml_task_id"], download_data=False, download_qualities=False)
+    ds = openml.datasets.get_dataset(task.dataset_id, download_data=False, download_qualities=False)
+    dataset_name = f"openml__{ds.name}__{kwargs['openml_task_id']}"
+
     dataset_preprocessor(preprocessor_dict, dataset_name, generate_split=False)(
-        functools.partial(preprocess_openml, **kwargs_copy))
+        functools.partial(preprocess_openml, **kwargs))
