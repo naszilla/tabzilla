@@ -43,7 +43,7 @@ class TabularDataset(object):
         num_instances: Optional[int] = None,
         cat_dims: Optional[list] = None,
         split_indeces: Optional[list] = None,
-        split_source: Optional[str] = None
+        split_source: Optional[str] = None,
     ) -> None:
         """
         name: name of the dataset
@@ -161,8 +161,12 @@ class TabularDataset(object):
 
         assert X_path.exists(), f"path to X does not exist: {X_path}"
         assert y_path.exists(), f"path to y does not exist: {y_path}"
-        assert metadata_path.exists(), f"path to metadata does not exist: {metadata_path}"
-        assert split_indeces_path.exists(), f"path to split indeces does not exist: {split_indeces_path}"
+        assert (
+            metadata_path.exists()
+        ), f"path to metadata does not exist: {metadata_path}"
+        assert (
+            split_indeces_path.exists()
+        ), f"path to split indeces does not exist: {split_indeces_path}"
 
         # read data
         with gzip.GzipFile(X_path, "r") as f:
@@ -170,7 +174,7 @@ class TabularDataset(object):
         with gzip.GzipFile(y_path, "r") as f:
             y = np.load(f)
         with gzip.GzipFile(split_indeces_path, "rb") as f:
-            split_indeces = np.load(f)
+            split_indeces = np.load(f, allow_pickle=True)
 
         # read metadata
         with open(metadata_path, "r") as f:
@@ -178,7 +182,6 @@ class TabularDataset(object):
 
         kwargs["X"], kwargs["y"], kwargs["split_indeces"] = X, y, split_indeces
         return cls(**kwargs)
-
 
     def write(self, p: Path, overwrite=False) -> None:
         """write the dataset to a new folder. this folder cannot already exist"""
