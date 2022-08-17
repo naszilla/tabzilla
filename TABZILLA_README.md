@@ -6,11 +6,11 @@
 
 This repository uses four conda python environments, which are also defined in the TabSurvey dockerfiles. We need to use different environments because some algorithms have different requirements. These four environments are specified in files created using command `conda env export`.
 
-The name of each environment, and their specification file are:
-- `sklearn`: [`conda_envs/sklearn.yml`](conda_envs/sklearn.yml)
-- `gbdt`: [`conda_envs/gbdt.yml`](conda_envs/gbdt.yml)
-- `torch`: [`conda_envs/torch.yml`](conda_envs/torch.yml)
-- `tensorflow`: [`conda_envs/tensorflow.yml`](conda_envs/tensorflow.yml)
+Each environment is specified in a yml file:
+- [`conda_envs/sklearn.yml`](conda_envs/sklearn.yml)
+- [`conda_envs/gbdt.yml`](conda_envs/gbdt.yml)
+- [`conda_envs/torch.yml`](conda_envs/torch.yml)
+- [`conda_envs/tensorflow.yml`](conda_envs/tensorflow.yml)
 
 Each of these four environments can be created using the command `conda env create`:
 
@@ -20,6 +20,7 @@ conda env create -f ./conda_envs/gbdt.yml
 conda env create -f ./conda_envs/torch.yml
 conda env create -f ./conda_envs/tensorflow.yml
 ```
+**Note:** These environments were created in linux, and some packages may not be available on Windows or OSX. If you get a `ResolvePackageNotFound` error when creating these environments, try removing these incompatible packages from the environment files.
 
 Different algorithms require different environments. (TBD)
 
