@@ -13,7 +13,7 @@ import argparse
 import logging
 import sys
 from collections import namedtuple
-from pathlib import Path 
+from pathlib import Path
 
 import optuna
 from optuna.samplers import RandomSampler
@@ -36,7 +36,7 @@ class TabZillaObjective(object):
         self.dataset = dataset
         self.search_args = search_args
 
-        # get the direction of optimization from the scorer object
+        # create the scorer, and get the direction of optimization from the scorer object
         sc_tmp = get_scorer(dataset.target_type)
         self.direction = sc_tmp.direction
 
@@ -90,19 +90,19 @@ class TabZillaObjective(object):
         model = self.model_name(trial_params, args)
 
         # Cross validate the chosen hyperparameters
-        sc, time = cross_validation(
-            model, self.dataset, save_model=False, seed=0, num_splits=5, shuffle=True
+        sc_val, sc_test, train_timer, val_timer, test_timer = cross_validation(
+            model, self.dataset
         )
 
         # save important attributes to trial_user_attr
         trial.set_user_attr("trial_params", trial_params)  # trial hyperparameters
-        trial.set_user_attr(
-            "metrics", sc.get_results()
-        )  # dict of performance metrics defined in scorer.py
-        trial.set_user_attr("avg_train_time", time[0])
-        trial.set_user_attr("avg_test_time", time[1])
+        trial.set_user_attr("val_metrics", sc_val.get_results())
+        trial.set_user_attr("test_metrics", sc_test.get_results())
+        trial.set_user_attr("train_times", train_timer.save_times)
+        trial.set_user_attr("val_times", val_timer.save_times)
+        trial.set_user_attr("test_times", test_timer.save_times)
 
-        return sc.get_objective_result()
+        return sc_val.get_objective_result()
 
 
 def main(args, search_args):
@@ -120,8 +120,10 @@ def main(args, search_args):
     objective = TabZillaObjective(model_handle, dataset, search_args)
 
     if search_args.n_random_trials > 0:
-        print(f"evaluating {search_args.n_random_trials} random hyperparameter samples...")
-        study_name = args.model_name + "_" + dataset.name + "_random" 
+        print(
+            f"evaluating {search_args.n_random_trials} random hyperparameter samples..."
+        )
+        study_name = args.model_name + "_" + dataset.name + "_random"
         study = optuna.create_study(
             direction=objective.direction,
             study_name=study_name,
@@ -135,8 +137,10 @@ def main(args, search_args):
         previous_trials = None
 
     if search_args.n_opt_trials:
-        print(f"running {search_args.n_opt_trials} steps of hyperparameter optimization...")
-        study_name = args.model_name + "_" + dataset.name + "_opt" 
+        print(
+            f"running {search_args.n_opt_trials} steps of hyperparameter optimization..."
+        )
+        study_name = args.model_name + "_" + dataset.name + "_opt"
         study = optuna.create_study(
             direction=objective.direction,
             study_name=study_name,
@@ -145,7 +149,9 @@ def main(args, search_args):
         )
         # if random search was run, add these trials
         if previous_trials is not None:
-            print(f"adding {search_args.n_random_trials} random trials to warm-start HPO")
+            print(
+                f"adding {search_args.n_random_trials} random trials to warm-start HPO"
+            )
             study.add_trials(previous_trials)
         study.optimize(objective, n_trials=search_args.n_opt_trials)
 
