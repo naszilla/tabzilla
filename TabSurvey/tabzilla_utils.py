@@ -23,35 +23,28 @@ def get_scorer(objective):
         raise NotImplementedError('No scorer for "' + args.objective + '" implemented')
 
 
-def cross_validation(
-    model: BaseModel,
-    dataset: TabularDataset,
-    save_model=False,
-    seed=0,
-    num_splits=5,
-    shuffle=True,
-):
+def cross_validation(model: BaseModel, dataset: TabularDataset):
     """
     adapted from TabSurvey.train.cross_validation.
 
-    takes a BaseModel and TabularDataset as input, and trains and evaluates the model using k-fold cross
-    validation on the dataset. for regression, use k-fold. for classification & binary, use stratified k-fold"""
+    takes a BaseModel and TabularDataset as input, and trains and evaluates the model using cross validation with all
+    folds specified in the dataset property split_indeces
+    """
 
     # Record some statistics and metrics
-    sc = get_scorer(dataset.target_type)
+    # create a scorer object for both the val set and test set
+    sc_val = get_scorer(dataset.target_type)
+    sc_test = get_scorer(dataset.target_type)
     train_timer = Timer()
+    val_timer = Timer()
     test_timer = Timer()
 
-    if dataset.target_type == "regression":
-        kf = KFold(n_splits=num_splits, shuffle=shuffle, random_state=seed)
-    elif dataset.target_type == "classification" or dataset.target_type == "binary":
-        kf = StratifiedKFold(n_splits=num_splits, shuffle=shuffle, random_state=seed)
-    else:
-        raise NotImplementedError(
-            "Objective" + dataset.target_type + "is not yet implemented."
-        )
+    # iterate over all train/val/test splits in the dataset property split_indeces
+    for i, split_dictionary in enumerate(dataset.split_indeces):
 
-    for i, (train_index, test_index) in enumerate(kf.split(dataset.X, dataset.y)):
+        train_index = split_dictionary["train"]
+        val_index = split_dictionary["val"]
+        test_index = split_dictionary["test"]
 
         # run pre-processing & split data
         # TODO: maybe make a pre-processing object for passing all of these args.. or, attach this to the TabularDataset object.
@@ -59,12 +52,14 @@ def cross_validation(
         processed_data = process_data(
             dataset,
             train_index,
+            val_index,
             test_index,
             verbose=False,
             scale=False,
             one_hot_encode=False,
         )
         X_train, y_train = processed_data["data_train"]
+        X_val, y_val = processed_data["data_val"]
         X_test, y_test = processed_data["data_test"]
 
         # Create a new unfitted version of the model
@@ -72,48 +67,30 @@ def cross_validation(
 
         # Train model
         train_timer.start()
+        # loss history can be saved if needed
+        # TODO: check out X_test, y_test are used here. it appears that they are sometimes used for training... this would not be good.
         loss_history, val_loss_history = curr_model.fit(
-            X_train, y_train, X_test, y_test
+            X_train,
+            y_train,
+            X_test,
+            y_test,
         )
         train_timer.end()
 
-        # Test model
+        # Test model on val and test sets
+        val_timer.start()
+        val_predictions, val_prediction_probs = curr_model.predict(X_val)
+        val_timer.end()
+
         test_timer.start()
-        curr_model.predict(X_test)
+        test_predictions, test_prediction_probs = curr_model.predict(X_test)
         test_timer.end()
 
-        # Save model weights and the truth/prediction pairs for traceability
-        # TODO: remove if not needed
-        # curr_model.save_model_and_predictions(y_test, i)
+        # evaluate on val and test sets
+        sc_val.eval(y_val, val_predictions, val_prediction_probs)
+        sc_test.eval(y_test, test_predictions, test_prediction_probs)
 
-        # TODO: remove if not needed
-        # if save_model:
-        #     save_loss_to_file(args, loss_history, "loss", extension=i)
-        #     save_loss_to_file(args, val_loss_history, "val_loss", extension=i)
-
-        # Compute scores on the output
-        sc.eval(y_test, curr_model.predictions, curr_model.prediction_probabilities)
-
-        # print(sc.get_results())
-
-    # Best run is saved to file
-    # TODO: remove if not needed
-    # if save_model:
-    #     print("Results:", sc.get_results())
-    #     print("Train time:", train_timer.get_average_time())
-    #     print("Inference time:", test_timer.get_average_time())
-
-    #     # Save the all statistics to a file
-    #     save_results_to_file(
-    #         args,
-    #         sc.get_results(),
-    #         train_timer.get_average_time(),
-    #         test_timer.get_average_time(),
-    #         model.params,
-    #     )
-
-    # print("Finished cross validation")
-    return sc, (train_timer.get_average_time(), test_timer.get_average_time())
+    return sc_val, sc_test, train_timer, val_timer, test_timer
 
 
 def write_dict_to_json(x: dict, filepath: Path):
