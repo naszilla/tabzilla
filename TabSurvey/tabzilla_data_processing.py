@@ -1,7 +1,7 @@
 import numpy as np
 from sklearn.preprocessing import StandardScaler, LabelEncoder, OneHotEncoder
 
-# TODO: Handle validation?
+
 def process_data(
     dataset,
     train_index,

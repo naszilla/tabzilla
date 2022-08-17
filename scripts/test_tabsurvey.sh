@@ -4,36 +4,58 @@
 
 cd ./TabSurvey
 
-N_TRIALS=2
-EPOCHS=3
-
 SKLEARN_ENV="sklearn"
 GBDT_ENV="gbdt"
 TORCH_ENV="torch"
 KERAS_ENV="tensorflow"
 
-declare -A MODELS
-MODELS=( ["LinearModel"]=$SKLEARN_ENV
-         ["KNN"]=$SKLEARN_ENV
-         ["DecisionTree"]=$SKLEARN_ENV
-          )
+# search parameters
+SEARCH_CONFIG=./tabzilla_search_config.yml
 
-CONFIGS=( "config/adult.yml"
-          "config/california_housing.yml"
-          )
+
+##########################################################
+# define lists of datasets and models to evaluate them on
+
+MODELS=(
+  "LinearModel:$SKLEARN_ENV"
+  "KNN:$SKLEARN_ENV"
+  "DecisionTree:$SKLEARN_ENV"
+  )
+
+
+DATASETS=(
+  openml__california__361089
+)
 
 # conda init bash
 eval "$(conda shell.bash hook)"
 
-for config in "${CONFIGS[@]}"; do
+for dataset in "${DATASETS[@]}"; do
+    printf "\n----------------------------------------------------------------------------\n"
+    printf "pre-processing dataset: ${dataset}...\n"
 
-  for model in "${!MODELS[@]}"; do
-    printf "\n\n----------------------------------------------------------------------------\n"
-    printf 'Training %s with %s in env %s\n\n' "$model" "$config" "${MODELS[$model]}"
+    conda activate openml
 
-    conda activate "${MODELS[$model]}"
+    # pre-process dataset
+    python tabzilla_data_preprocessing.py --dataset_name ${dataset}
 
-    python tabzilla_experiment.py --config "$config" --model_name "$model" --n_trials $N_TRIALS --epochs $EPOCHS
+    # this will write the dataset to directory TabSurvey/datasets/${dataset}
+    DATASET_DIR=./datasets/${dataset}
+
+    conda deactivate
+
+  for model_env in "${MODELS[@]}"; do
+
+    model="${model_env%%:*}"
+    env="${model_env##*:}"
+
+    printf "\n\n|----------------------------------------------------------------------------\n"
+    # printf 'Training %s on dataset %s in env %s\n\n' "$model" "$dataset" "${MODELS[$model]}"
+    printf '| Training %s on dataset %s in env %s\n\n' "$model" "$dataset" "$env"
+
+    conda activate "${env}"
+
+    python tabzilla_experiment.py --dataset_dir ${DATASET_DIR} --search_config ${SEARCH_CONFIG} --model_name "$model"
 
     conda deactivate
 
