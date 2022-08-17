@@ -49,13 +49,6 @@ General parameters for each experiment are read from a yml config file, by the p
   --use_gpu             Set to true if GPU is available (default: False)
   --gpu_ids GPU_IDS     IDs of the GPUs used when data_parallel is true (default: None)
   --data_parallel       Distribute the training over multiple GPUs (default: False)
-  --optimize_hyperparameters
-                        Search for the best hyperparameters (default: False)
-  --n_trials N_TRIALS   Number of trials for the hyperparameter optimization (default: 100)
-  --num_splits NUM_SPLITS
-                        Number of splits done for cross validation (default: 5)
-  --shuffle             Shuffle data during cross-validation (default: False)
-  --seed SEED           Seed for KFold initialization. (default: 123)
   --batch_size BATCH_SIZE
                         Batch size used for training (default: 128)
   --val_batch_size VAL_BATCH_SIZE
@@ -69,6 +62,8 @@ General parameters for each experiment are read from a yml config file, by the p
 
 
 # Datasets
+
+**Note:** Most datasets used here are from [OpenML](https://www.openml.org/), and you will need to create an OpenML account to use this codebase. In order to download datasets using this repo, you need to have a python environment with the openml module, and you need to be authenticated through your OpenML account. Please follow [these installation and authentication instructions](https://openml.github.io/openml-python/main/examples/20_basic/introduction_tutorial.html#sphx-glr-examples-20-basic-introduction-tutorial-py) to make sure you can access openml.  
 
 Datasets are handled using the class [`TabSurvey.tabzilla_datasets.TabularDataset`](TabSurvey.tabzilla_datasets.py); all datasets are accessed using an instance of this class. Each dataset is initialized using a function with the decorator `dataset_preprocessor` defined in [`TabSurvey/tabzilla_data_preprocessor_utils.py`](TabSurvey/tabzilla_data_preprocessor_utils.py). Each of these functions is accessed through function `preprocess_dataset()`, which returns any defined datasets by name. For example, the following code will return a `TabularDataset` object representing the `CaliforniaHousing` dataset, and will write it to a local directory unless it already has been written:
 
