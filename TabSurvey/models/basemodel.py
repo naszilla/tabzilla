@@ -54,10 +54,17 @@ class BaseModel:
 
         # Create a placeholder for the predictions on the test dataset
         self.predictions = None
-        self.prediction_probabilities = None  # Only used by binary / multi-class-classification
+        self.prediction_probabilities = (
+            None  # Only used by binary / multi-class-classification
+        )
 
-    def fit(self, X: np.ndarray, y: np.ndarray, X_val: tp.Union[None, np.ndarray] = None,
-            y_val: tp.Union[None, np.ndarray] = None) -> tp.Tuple[list, list]:
+    def fit(
+        self,
+        X: np.ndarray,
+        y: np.ndarray,
+        X_val: tp.Union[None, np.ndarray] = None,
+        y_val: tp.Union[None, np.ndarray] = None,
+    ) -> tp.Tuple[list, list]:
         """Trains the model.
 
         The training is done on the trainings dataset (X, y). If a validation set (X_val, y_val) is provided,
@@ -87,13 +94,16 @@ class BaseModel:
         :return: predicted values / classes of test data (Shape N x 1)
         """
 
+        # TabZilla update: always return prediction probabilities
+        self.prediction_probabilities = None
+
         if self.args.objective == "regression":
             self.predictions = self.model.predict(X)
         elif self.args.objective == "classification" or self.args.objective == "binary":
             self.prediction_probabilities = self.predict_proba(X)
             self.predictions = np.argmax(self.prediction_probabilities, axis=1)
 
-        return self.predictions
+        return self.predictions, self.prediction_probabilities
 
     def predict_proba(self, X: np.ndarray) -> np.ndarray:
         """
@@ -109,8 +119,9 @@ class BaseModel:
 
         # If binary task returns only probability for the true class, adapt it to return (N x 2)
         if self.prediction_probabilities.shape[1] == 1:
-            self.prediction_probabilities = np.concatenate((1 - self.prediction_probabilities,
-                                                            self.prediction_probabilities), 1)
+            self.prediction_probabilities = np.concatenate(
+                (1 - self.prediction_probabilities, self.prediction_probabilities), 1
+            )
         return self.prediction_probabilities
 
     def save_model_and_predictions(self, y_true: np.ndarray, filename_extension=""):
@@ -166,15 +177,21 @@ class BaseModel:
         """
         if self.args.objective == "regression":
             # Save array where [:,0] is the truth and [:,1] the prediction
-            y = np.concatenate((y_true.reshape(-1, 1), self.predictions.reshape(-1, 1)), axis=1)
+            y = np.concatenate(
+                (y_true.reshape(-1, 1), self.predictions.reshape(-1, 1)), axis=1
+            )
         else:
             # Save array where [:,0] is the truth and [:,1:] are the prediction probabilities
-            y = np.concatenate((y_true.reshape(-1, 1), self.prediction_probabilities), axis=1)
+            y = np.concatenate(
+                (y_true.reshape(-1, 1), self.prediction_probabilities), axis=1
+            )
 
         save_predictions_to_file(y, self.args, filename_extension)
 
     def get_model_size(self):
-        raise NotImplementedError("Calculation of model size has not been implemented for this model.")
+        raise NotImplementedError(
+            "Calculation of model size has not been implemented for this model."
+        )
 
     def attribute(cls, X: np.ndarray, y: np.ndarray, strategy: str = "") -> np.ndarray:
         """Get feature attributions for inherently interpretable models. This function is only implemented for
@@ -189,4 +206,6 @@ class BaseModel:
 
         :return The (non-normalized) importance attributions for each feature in each data point. (Shape N x D)
         """
-        raise NotImplementedError(f"This method is not implemented for class {type(cls)}.")
+        raise NotImplementedError(
+            f"This method is not implemented for class {type(cls)}."
+        )
