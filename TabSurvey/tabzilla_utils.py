@@ -235,11 +235,6 @@ def get_search_parser():
         help="Distribute the training over multiple GPUs",
     )
     search_parser.add(
-        "--optimize_hyperparameters",
-        action="store_true",
-        help="Search for the best hyperparameters",
-    )
-    search_parser.add(
         "--n_random_trials",
         type=int,
         default=10,
@@ -250,18 +245,6 @@ def get_search_parser():
         type=int,
         default=10,
         help="Number of trials of hyperparameter optimization to run",
-    )
-    search_parser.add(
-        "--num_splits",
-        type=int,
-        default=5,
-        help="Number of splits done for cross validation",
-    )
-    search_parser.add(
-        "--shuffle", action="store_true", help="Shuffle data during cross-validation"
-    )
-    search_parser.add(
-        "--seed", type=int, default=123, help="Seed for KFold initialization."
     )
     search_parser.add(
         "--batch_size", type=int, default=128, help="Batch size used for training"

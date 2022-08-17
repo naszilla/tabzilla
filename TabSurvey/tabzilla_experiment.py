@@ -29,7 +29,7 @@ class TabZillaObjective(object):
     this saves all metrics as user attributes for each trial.
     """
 
-    def __init__(self, model_name, dataset, search_args):
+    def __init__(self, model_name, dataset, search_args, hparam_source):
         # Save the model that will be trained
         self.model_name = model_name
 
@@ -40,7 +40,12 @@ class TabZillaObjective(object):
         sc_tmp = get_scorer(dataset.target_type)
         self.direction = sc_tmp.direction
 
+        # this should be a string, which is set as a user attrivute
+        self.hparam_source = hparam_source
+
     def __call__(self, trial):
+
+        # TODO: we should limit the number of samples for algs with no hyperparams - right now, this is only LinearModel..
         # Define hyperparameters to optimize
         trial_params = self.model_name.define_trial_parameters(
             trial, None
@@ -101,6 +106,7 @@ class TabZillaObjective(object):
         trial.set_user_attr("train_times", train_timer.save_times)
         trial.set_user_attr("val_times", val_timer.save_times)
         trial.set_user_attr("test_times", test_timer.save_times)
+        trial.set_user_attr("hparam_source", self.hparam_source)
 
         return sc_val.get_objective_result()
 
@@ -117,13 +123,13 @@ def main(args, search_args):
     study_name = args.model_name + "_" + dataset.name
     storage_name = "sqlite:///{}.db".format(study_name)
 
-    objective = TabZillaObjective(model_handle, dataset, search_args)
-
     if search_args.n_random_trials > 0:
+
+        objective = TabZillaObjective(model_handle, dataset, search_args, "random")
+
         print(
             f"evaluating {search_args.n_random_trials} random hyperparameter samples..."
         )
-        study_name = args.model_name + "_" + dataset.name + "_random"
         study = optuna.create_study(
             direction=objective.direction,
             study_name=study_name,
@@ -137,10 +143,14 @@ def main(args, search_args):
         previous_trials = None
 
     if search_args.n_opt_trials:
+
+        objective = TabZillaObjective(
+            model_handle, dataset, search_args, "optimization"
+        )
+
         print(
             f"running {search_args.n_opt_trials} steps of hyperparameter optimization..."
         )
-        study_name = args.model_name + "_" + dataset.name + "_opt"
         study = optuna.create_study(
             direction=objective.direction,
             study_name=study_name,

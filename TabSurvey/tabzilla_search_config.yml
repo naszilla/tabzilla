@@ -1,11 +1,6 @@
-# Cross validation parameters
-num_splits: 5
-shuffle: True
-seed: 221
-
 # trials for hyperparameter search or optimization
-n_random_trials: 5
-n_opt_trials: 3
+n_random_trials: 10
+n_opt_trials: 0
 
 ###### GPU parameters
 use_gpu: False
