@@ -1,5 +1,6 @@
 import openml
 import numpy as np
+import pandas as pd
 import functools
 
 from tabzilla_preprocessor_utils import dataset_preprocessor, cv_n_folds
@@ -241,6 +242,34 @@ def inspect_openml_task(openml_task_id, openml_data_dict=None, accept_nans=True,
             breakpoint()
 
     return err_messages
+
+
+def get_openml_task_metadata(save=False):
+    """
+    Gets a dataframe with all OpenML supervised classification and regression tasks, along with a column that indicates
+    whether the task has been imported into the repository.
+    Returns:
+    task_df: the dataframe.
+    """
+    task_types = [openml.tasks.task.TaskType.SUPERVISED_CLASSIFICATION,
+                  openml.tasks.task.TaskType.SUPERVISED_REGRESSION]
+    task_df = [openml.tasks.list_tasks(task_type, output_format="dataframe")
+               for task_type in task_types]
+    task_df = pd.concat(task_df)
+    task_df.set_index("tid", inplace=True)
+
+    implemented_tasks = [kwargs["openml_task_id"] for kwargs in openml_tasks]
+
+    task_df["in_repo"] = False
+    task_df.loc[implemented_tasks, "in_repo"] = True
+    in_repo = task_df.pop("in_repo")
+    task_df.insert(0, "in_repo", in_repo)
+
+    if save:
+        task_df.to_csv("openml_task_metadata.csv")
+
+    return task_df
+
 
 # Call the dataset preprocessor decorator for each of the selected OpenML datasets
 for kwargs in openml_tasks:

@@ -65,12 +65,12 @@ General parameters for each experiment are read from a yml config file, by the p
 
 **Note:** Most datasets used here are from [OpenML](https://www.openml.org/), and you will need to create an OpenML account to use this codebase. In order to download datasets using this repo, you need to have a python environment with the openml module, and you need to be authenticated through your OpenML account. Please follow [these installation and authentication instructions](https://openml.github.io/openml-python/main/examples/20_basic/introduction_tutorial.html#sphx-glr-examples-20-basic-introduction-tutorial-py) to make sure you can access openml.  
 
-Datasets are handled using the class [`TabSurvey.tabzilla_datasets.TabularDataset`](TabSurvey.tabzilla_datasets.py); all datasets are accessed using an instance of this class. Each dataset is initialized using a function with the decorator `dataset_preprocessor` defined in [`TabSurvey/tabzilla_data_preprocessor_utils.py`](TabSurvey/tabzilla_data_preprocessor_utils.py). Each of these functions is accessed through function `preprocess_dataset()`, which returns any defined datasets by name. For example, the following code will return a `TabularDataset` object representing the `CaliforniaHousing` dataset, and will write it to a local directory unless it already has been written:
+Datasets are handled using the class [`TabSurvey.tabzilla_datasets.TabularDataset`](TabSurvey.tabzilla_datasets.py); all datasets are accessed using an instance of this class. Each dataset is initialized using a function with the decorator `dataset_preprocessor` defined in [`TabSurvey/tabzilla_data_preprocessor_utils.py`](TabSurvey/tabzilla_data_preprocessor_utils.py). Each of these functions is accessed through function `preprocess_dataset()`, which returns any defined datasets by name. For example, the following code will return a `TabularDataset` object representing the `openml__california__361089` dataset, and will write it to a local directory unless it already has been written:
 
 ```python
 from TabSurvey.tabzilla_data_preprocessing import preprocess_dataset
 
-dataset = preprocess_dataset("CaliforniaHousing", overwrite=False)
+dataset = preprocess_dataset("openml__california__361089", overwrite=False)
 ```
 
 Calling function `preprocess_dataset()` will write a local copy of the dataset (flag `overwrite`) determines whether the dataset will be rewritten if it already exists. It is not necessary to write datasets to file to run experiments (they can just live in memory), however find it helpful to write dataset files for bookkeeping. Once a dataset is preprocessed and written to a local directory, it can be read directly into a `TabularDataset` object.
@@ -78,7 +78,7 @@ Calling function `preprocess_dataset()` will write a local copy of the dataset (
 Calling `tabzilla_data_preprocessing.py` as a script will preprocess selected datasets, writing them to local directories. For example, the following command:
 
 ```bash
-> python tabzilla_data_preprocessing.py --dataset_name CaliforniaHousing
+> python tabzilla_data_preprocessing.py --dataset_name openml__california__361089
 ```
 
 will preprocess and write the `CaliforniaHousing` dataset to local directory `tabzilla/TabSurvey/datasets/CaliforniaHousing`. 
@@ -91,7 +91,7 @@ Once a dataset has been preprocessed, as in the above example, it can be read di
 from TabSurvey.tabzilla_datasets import TabularDataset
 from pathlib import Path
 
-dataset = TabularDataset.read(Path("tabzilla/TabSurvey/datasets/CaliforniaHousing"))
+dataset = TabularDataset.read(Path("tabzilla/TabSurvey/datasets/openml__california__361089"))
 ```
 
 ## Adding New Datasets
@@ -167,7 +167,9 @@ We use the OpenML API. [Here](https://openml.github.io/openml-python/develop/exa
 
 The first step is identifying the OpenML task ID. This can either be obtained by [browsing the lists of OpenML tasks](https://openml.github.io/openml-python/develop/examples/30_extended/tasks_tutorial.html#listing-tasks) and fetching a promising one, searching for a specific dataset within OpenML (e.g. California Housing), or using one of the benchmark suites.
 
-Note that we are focusing on either regression tasks or supervised classification tasks, so please ensure whatever OpenML task you look at belongs to these task types. Furthermore, please ensure the evaluation procedure for the task is "10-fold Crossvalidation". If this is not the case, and you believe the dataset is worth adding to our repo, please let the rest of the team know (this might require either modifying the code or using the procedure for general datasets).
+A convenience function has been added to fetch a dataframe with all relevant OpenML tasks. Call `get_openml_task_metadata` within `tabzilla_preprocessors_openml.py` to obtain a dataframe listing all available tasks, indexed by task ID. The column `in_repo` indicates whether the task has already been added to the repo or not. **Please do not add a task for which there is already a task in the repo that uses the same dataset.**
+
+Note that we are focusing on either regression tasks or supervised classification tasks, so please ensure whatever OpenML task you look at belongs to these task types. Furthermore, please ensure the evaluation procedure for the task is "10-fold Crossvalidation" (if this is not the case, try seeing if there is another task that uses 10-fold crossvalidation using the same dataset). If this kind of split is not available, please let the rest of the team know (this might require either modifying the code or using the procedure for general datasets).
 
 
 #### Step 2: Inspection
