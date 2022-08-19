@@ -209,6 +209,14 @@ Mislabeled categorical columns
 ```
 The debugger is invoked to allow you to see how to rectify the issues. In this case, a column needs to be dropped from the dataset (`"TBG"`).
 
+It is also possible to run the checks on all the tasks of a suite as a batch. You can run:
+```python
+from tabzilla_preprocessors_openml import check_tasks_from_suite
+suite_id = 218 # Example
+succeeded, failed = check_tasks_from_suite(suite_id)
+```
+This function runs `inspect_openml_task` on all the tasks from the specified suite **that have not yet been added to the repository**. `succeeded` contains a list of the task IDs for tasks that passed all of the tests, while `failed` contains the other tasks.
+
 #### Step 3: Adding the dataset
 If the dataset passes all of these checks (which should be the case for the curated benchmarks), you have two options to add the dataset:
 1. Adding the task ID to `openml_easy_import_list.txt`

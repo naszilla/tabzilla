@@ -180,7 +180,6 @@ def inspect_openml_task(openml_task_id, openml_data_dict=None, accept_nans=True,
     task = openml.tasks.get_task(task_id=openml_task_id)
 
     if openml_data_dict is None:
-
         dataset = task.get_dataset()
         X, y, categorical_indicator, col_names = dataset.get_data(
             dataset_format='dataframe',
@@ -269,6 +268,40 @@ def get_openml_task_metadata(save=False):
         task_df.to_csv("openml_task_metadata.csv")
 
     return task_df
+
+
+def check_tasks_from_suite(suite_id):
+    """
+    Goes through the tasks in the OpenML suite identified by suite_id. For any tasks that are not yet in the repo,
+    inspect_openml_task is invoked on the task. Any tasks that succeed and can be added to the repo are placed in
+    succeeded_tasks, and any that fail (and possibly require manual inspection or importing) are added on failed_tasks.
+
+    Args:
+        suite_id: integer describing the suite ID
+
+    Returns:
+        succeeded_tasks, failed_tasks: list of tasks that pass the tests, and list of tasks that do not pass the tests
+            (as task IDs). Only tasks that are not already in the repo are included.
+    """
+    implemented_tasks = {kwargs["openml_task_id"] for kwargs in openml_tasks}
+
+    suite = openml.study.get_suite(suite_id)
+    task_list = suite.tasks
+
+    failed_tasks = []
+    succeeded_tasks = []
+
+    for openml_task_id in task_list:
+        if openml_task_id in implemented_tasks:
+            continue
+        errors = inspect_openml_task(openml_task_id, debug=False)
+        if errors:
+            failed_tasks.append(openml_task_id)
+        else:
+            succeeded_tasks.append(openml_task_id)
+
+    return succeeded_tasks, failed_tasks
+
 
 
 # Call the dataset preprocessor decorator for each of the selected OpenML datasets
