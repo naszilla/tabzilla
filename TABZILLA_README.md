@@ -98,7 +98,7 @@ dataset = TabularDataset.read(Path("tabzilla/TabSurvey/datasets/openml__californ
 
 Currently, there are two main procedures to add datasets: one for OpenML datasets, and one for more general datasets. Whenever possible, you should use the OpenML version of the dataset, since it will result in a more seamless process.
 
-### General datasets
+### General (non-OpenML) datasets
 
 To add a new dataset, you need to add a new function to [`TabSurvey/tabzilla_preprocessors.py`](TabSurvey/tabzilla_preprocessor_utils.py), which defines all information about the dataset. This function needs to use the decorator `dataset_preproccessor`, and is invoked through `tabzilla_data_preprocessing.py`.
 
