@@ -1,15 +1,21 @@
 import json
+import time
 from pathlib import Path
-
-from sklearn.model_selection import KFold, StratifiedKFold
-from tabzilla_data_processing import process_data
-from utils.scorer import BinScorer, ClassScorer, RegScorer
 
 from optuna.trial import FrozenTrial
 
+from models import all_models
 from models.basemodel import BaseModel
+from tabzilla_data_processing import process_data
 from tabzilla_datasets import TabularDataset
+from utils.scorer import BinScorer, ClassScorer, RegScorer
 from utils.timer import Timer
+
+
+def generate_filepath(name, extension):
+    # generate filepath, of the format <name>_YYYYMMDD_HHMMDD.<extension>
+    timestr = time.strftime("%Y%m%d_%H%M%S")
+    return (name + "_%s." + extension) % timestr
 
 
 def get_scorer(objective):
@@ -23,21 +29,113 @@ def get_scorer(objective):
         raise NotImplementedError('No scorer for "' + args.objective + '" implemented')
 
 
-def cross_validation(model: BaseModel, dataset: TabularDataset):
+class ExperimentResult:
     """
-    adapted from TabSurvey.train.cross_validation.
+    container class for an experiment result.
 
+    attributes:
+    - dataset(TabularDataset): a dataset object
+    - model(BaseModel): the model trained & evaluated on the dataset
+    - timers(dict[Timer]): timers for training and evaluating model
+    - scorers(dict): scorer objects for train, test, and val sets
+    - predictions(dict): output of the model on the dataset. keys = "train", "test", "val"
+    - probabilities(dict): probabilities of predicted class (only for classification problems)
+    - ground_truth(dict): ground truth for each prediction, stored here just for convenience.
+    - hparam_source(str): a string describing how the hyperparameters were generated
+    - trial_number(int): trial number
+
+    attributes "predictions", "probabilities", and "ground_truth" each have the same shape as the lists in dataset.split_indeces.
+    """
+
+    def __init__(
+        self,
+        dataset,
+        model,
+        timers,
+        scorers,
+        predictions,
+        probabilities,
+        ground_truth,
+    ) -> None:
+        self.dataset = dataset
+        self.model = model
+        self.timers = timers
+        self.scorers = scorers
+        self.predictions = predictions
+        self.probabilities = probabilities
+        self.ground_truth = ground_truth
+
+        # we will set these after initialization
+        self.hparam_source = None
+        self.trial_number = None
+
+    def write(self, filepath):
+        """write all result properties to a new file. raise an exception if the file exists."""
+
+        # create a dict with all output we want to store
+        result_dict = {
+            "dataset": self.dataset.get_metadata(),
+            "model": self.model.get_metadata(),
+            "hparam_source": self.hparam_source,
+            "trial_number": self.trial_number,
+            "timers": {name: timer.save_times for name, timer in self.timers.items()},
+            "scorers": {
+                name: scorer.get_results() for name, scorer in self.scorers.items()
+            },
+            "predictions": self.predictions,
+            "probabilities": self.probabilities,
+            "ground_truth": self.ground_truth,
+        }
+
+        write_dict_to_json(result_dict, filepath)
+
+    def read(filepath):
+        # TODO, if needed
+        pass
+
+
+def cross_validation(model: BaseModel, dataset: TabularDataset) -> ExperimentResult:
+    """
     takes a BaseModel and TabularDataset as input, and trains and evaluates the model using cross validation with all
     folds specified in the dataset property split_indeces
+
+    returns an ExperimentResult object, which contains all metadata and results from the cross validation run, including:
+    - evlaution objects for the validation and test sets
+    - predictions and prediction probabilities for all data points in each fold.
+    - runtimes for training and evaluation, for each fold
     """
 
     # Record some statistics and metrics
-    # create a scorer object for both the val set and test set
-    sc_val = get_scorer(dataset.target_type)
-    sc_test = get_scorer(dataset.target_type)
-    train_timer = Timer()
-    val_timer = Timer()
-    test_timer = Timer()
+    # create a scorer & timer object for the train, val, and test sets
+    scorers = {
+        "train": get_scorer(dataset.target_type),
+        "val": get_scorer(dataset.target_type),
+        "test": get_scorer(dataset.target_type),
+    }
+    timers = {
+        "train": Timer(),
+        "val": Timer(),
+        "test": Timer(),
+        "train-eval": Timer(),
+    }
+
+    # store predictions and class probabilities. probs will be None for regression problems.
+    # these have the same dimension as train_index, test_index, and val_index
+    predictions = {
+        "train": [],
+        "val": [],
+        "test": [],
+    }
+    probabilities = {
+        "train": [],
+        "val": [],
+        "test": [],
+    }
+    ground_truth = {
+        "train": [],
+        "val": [],
+        "test": [],
+    }
 
     # iterate over all train/val/test splits in the dataset property split_indeces
     for i, split_dictionary in enumerate(dataset.split_indeces):
@@ -47,8 +145,6 @@ def cross_validation(model: BaseModel, dataset: TabularDataset):
         test_index = split_dictionary["test"]
 
         # run pre-processing & split data
-        # TODO: maybe make a pre-processing object for passing all of these args.. or, attach this to the TabularDataset object.
-        # TODO: pass these processing args from the experiment function, somehow...
         processed_data = process_data(
             dataset,
             train_index,
@@ -66,31 +162,63 @@ def cross_validation(model: BaseModel, dataset: TabularDataset):
         curr_model = model.clone()
 
         # Train model
-        train_timer.start()
+        timers["train"].start()
         # loss history can be saved if needed
-        # TODO: check out X_test, y_test are used here. it appears that they are sometimes used for training... this would not be good.
+        # TODO: check how X_test, y_test are used here. it appears that they are sometimes used for training... this would not be good.
         loss_history, val_loss_history = curr_model.fit(
             X_train,
             y_train,
             X_test,
             y_test,
         )
-        train_timer.end()
+        timers["train"].end()
 
-        # Test model on val and test sets
-        val_timer.start()
-        val_predictions, val_prediction_probs = curr_model.predict(X_val)
-        val_timer.end()
+        # evaluate on train set
+        timers["train-eval"].start()
+        train_predictions, train_probs = curr_model.predict(X_train)
+        timers["train-eval"].end()
 
-        test_timer.start()
-        test_predictions, test_prediction_probs = curr_model.predict(X_test)
-        test_timer.end()
+        # evaluate on val set
+        timers["val"].start()
+        val_predictions, val_probs = curr_model.predict(X_val)
+        timers["val"].end()
 
-        # evaluate on val and test sets
-        sc_val.eval(y_val, val_predictions, val_prediction_probs)
-        sc_test.eval(y_test, test_predictions, test_prediction_probs)
+        # evaluate on test set
+        timers["test"].start()
+        test_predictions, test_probs = curr_model.predict(X_test)
+        timers["test"].end()
 
-    return sc_val, sc_test, train_timer, val_timer, test_timer
+        # evaluate on train, val, and test sets
+        scorers["train"].eval(y_train, train_predictions, train_probs)
+        scorers["val"].eval(y_val, val_predictions, val_probs)
+        scorers["test"].eval(y_test, test_predictions, test_probs)
+
+        # store predictions & ground truth
+
+        # train
+        predictions["train"].append(list(train_predictions))
+        probabilities["train"].append(list(train_probs))
+        ground_truth["train"].append(list(y_train))
+
+        # val
+        predictions["val"].append(list(val_predictions))
+        probabilities["val"].append(list(val_probs))
+        ground_truth["val"].append(list(y_val))
+
+        # test
+        predictions["test"].append(list(test_predictions))
+        probabilities["test"].append(list(test_probs))
+        ground_truth["test"].append(list(y_test))
+
+    return ExperimentResult(
+        dataset=dataset,
+        model=model,
+        timers=timers,
+        scorers=scorers,
+        predictions=predictions,
+        probabilities=probabilities,
+        ground_truth=ground_truth,
+    )
 
 
 def write_dict_to_json(x: dict, filepath: Path):
@@ -100,175 +228,99 @@ def write_dict_to_json(x: dict, filepath: Path):
         json.dump(x, f)
 
 
-def trial_to_dict(trial):
-    """return a dict representation of an optuna FrozenTrial"""
-    assert isinstance(
-        trial, FrozenTrial
-    ), f"trial must be of type optuna.trial.FrozenTrial. this object has type {type(trial)}"
-
-    # get all user_metrics
-    trial_dict = trial.user_attrs.copy()
-
-    # add trial number
-    trial_dict["trial_number"] = trial.number
-
-    # add trial number
-    trial_dict["trial_params_obj"] = trial.params
-
-    # add system attributes
-    trial_dict["system_attributes"] = trial.system_attrs
-
-    return trial_dict
-
-
-def write_trial_to_json(trial, filepath: Path):
-    """write the dict representation of an optuna trial to file"""
-    write_dict_to_json(trial_to_dict(trial), filepath)
-
-
 import configargparse
 import yaml
 
 # the parsers below are based on the TabSurvey parsers in utils.py
 
 
-def get_dataset_parser():
-    """parser for dataset args only"""
+def get_experiment_parser():
+    """parser for experiment arguments"""
 
-    dataset_parser = configargparse.ArgumentParser(
+    experiment_parser = configargparse.ArgumentParser(
         config_file_parser_class=configargparse.YAMLConfigFileParser,
         formatter_class=configargparse.ArgumentDefaultsHelpFormatter,
     )
-
-    dataset_parser.add(
-        "-data_config",
+    experiment_parser.add(
+        "-experiment_config",
         required=True,
         is_config_file=True,
-        help="optional config file for dataset parser",
+        help="config file for arg parser",
     )
-
-    dataset_parser.add(
-        "--dataset", required=True, help="Name of the dataset that will be used"
-    )
-    dataset_parser.add(
-        "--objective",
+    experiment_parser.add_argument(
+        "--dataset_dir",
         required=True,
         type=str,
-        default="regression",
-        choices=["regression", "classification", "binary"],
-        help="Set the type of the task",
+        help="directory containing pre-processed dataset.",
     )
-    dataset_parser.add(
-        "--direction",
+    experiment_parser.add_argument(
+        "--output_dir",
+        required=True,
         type=str,
-        default="minimize",
-        choices=["minimize", "maximize"],
-        help="Direction of optimization.",
+        help="directory where experiment results will be written.",
     )
-
-    dataset_parser.add(
-        "--num_features",
-        type=int,
+    experiment_parser.add_argument(
+        "--model_name",
         required=True,
-        help="Set the total number of features.",
+        type=str,
+        choices=all_models,
+        help="name of the algorithm",
     )
-    dataset_parser.add(
-        "--num_classes",
-        type=int,
-        default=1,
-        help="Set the number of classes in a classification task.",
-    )
-    dataset_parser.add(
-        "--cat_idx",
-        type=int,
-        action="append",
-        help="Indices of the categorical features",
-    )
-    dataset_parser.add(
-        "--cat_dims",
-        type=int,
-        action="append",
-        help="Cardinality of the categorical features (is set "
-        "automatically, when the load_data function is used.",
-    )
-
-    dataset_parser.add("--scale", action="store_true", help="Normalize input data.")
-    dataset_parser.add(
-        "--target_encode",
-        action="store_true",
-        help="Encode the targets that they start at 0. (0, 1, 2,...)",
-    )
-    dataset_parser.add(
-        "--one_hot_encode",
-        action="store_true",
-        help="OneHotEncode the categorical features",
-    )
-
-    return dataset_parser
-
-
-def get_search_parser():
-    """parser for parameter search args only"""
-
-    search_parser = configargparse.ArgumentParser(
-        config_file_parser_class=configargparse.YAMLConfigFileParser,
-        formatter_class=configargparse.ArgumentDefaultsHelpFormatter,
-    )
-    search_parser.add(
-        "-search_config",
-        required=True,
-        is_config_file=True,
-        help="optional config file for search parser",
-    )
-    search_parser.add(
+    experiment_parser.add(
         "--use_gpu", action="store_true", help="Set to true if GPU is available"
     )
-    search_parser.add(
+    experiment_parser.add(
         "--gpu_ids",
         type=int,
         action="append",
         help="IDs of the GPUs used when data_parallel is true",
     )
-    search_parser.add(
+    experiment_parser.add(
         "--data_parallel",
         action="store_true",
         help="Distribute the training over multiple GPUs",
     )
-    search_parser.add(
+    experiment_parser.add(
         "--n_random_trials",
         type=int,
         default=10,
         help="Number of trials of random hyperparameter search to run",
     )
-    search_parser.add(
+    experiment_parser.add(
+        "--hparam_seed",
+        type=int,
+        default=0,
+        help="Random seed for generating random hyperparameters. passed to optuna RandomSampler.",
+    )
+    experiment_parser.add(
         "--n_opt_trials",
         type=int,
         default=10,
         help="Number of trials of hyperparameter optimization to run",
     )
-    search_parser.add(
+    experiment_parser.add(
         "--batch_size", type=int, default=128, help="Batch size used for training"
     )
-    search_parser.add(
+    experiment_parser.add(
         "--val_batch_size",
         type=int,
         default=128,
         help="Batch size used for training and testing",
     )
-    search_parser.add(
+    experiment_parser.add(
         "--early_stopping_rounds",
         type=int,
         default=20,
         help="Number of rounds before early stopping applies.",
     )
-    search_parser.add(
+    experiment_parser.add(
         "--epochs", type=int, default=1000, help="Max number of epochs to train."
     )
-    search_parser.add(
+    experiment_parser.add(
         "--logging_period",
         type=int,
         default=100,
         help="Number of iteration after which validation is printed.",
     )
 
-    return search_parser
+    return experiment_parser
