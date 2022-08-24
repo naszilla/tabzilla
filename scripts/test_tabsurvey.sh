@@ -16,11 +16,17 @@ SEARCH_CONFIG=./tabzilla_search_config.yml
 ##########################################################
 # define lists of datasets and models to evaluate them on
 
-MODELS=(
-  "LinearModel:$SKLEARN_ENV"
-  "KNN:$SKLEARN_ENV"
-  "DecisionTree:$SKLEARN_ENV"
-  )
+# MODELS=(
+#   "LinearModel:$SKLEARN_ENV"
+#   "KNN:$SKLEARN_ENV"
+#   "DecisionTree:$SKLEARN_ENV"
+#   )
+
+CONFIG_FILES=(
+  tabzilla_experiment_config.yml
+  tabzilla_experiment_config_1.yml
+  tabzilla_experiment_config_2.yml
+)
 
 
 DATASETS=(
@@ -30,32 +36,17 @@ DATASETS=(
 # conda init bash
 eval "$(conda shell.bash hook)"
 
-for dataset in "${DATASETS[@]}"; do
-    printf "\n----------------------------------------------------------------------------\n"
-    printf "pre-processing dataset: ${dataset}...\n"
+# run only with sklearn
+env=sklearn
 
-    conda activate openml
-
-    # pre-process dataset
-    python tabzilla_data_preprocessing.py --dataset_name ${dataset}
-
-    # this will write the dataset to directory TabSurvey/datasets/${dataset}
-    DATASET_DIR=./datasets/${dataset}
-
-    conda deactivate
-
-  for model_env in "${MODELS[@]}"; do
-
-    model="${model_env%%:*}"
-    env="${model_env##*:}"
+for config in "${CONFIG_FILES[@]}"; do
 
     printf "\n\n|----------------------------------------------------------------------------\n"
-    # printf 'Training %s on dataset %s in env %s\n\n' "$model" "$dataset" "${MODELS[$model]}"
-    printf '| Training %s on dataset %s in env %s\n\n' "$model" "$dataset" "$env"
+    printf "| Running experiment with config file ${config} with env '${env}'"
 
-    conda activate "${env}"
+    conda activate ${env}
 
-    python tabzilla_experiment.py --dataset_dir ${DATASET_DIR} --search_config ${SEARCH_CONFIG} --model_name "$model"
+    python tabzilla_experiment.py --experiment_config ${config}
 
     conda deactivate
 
