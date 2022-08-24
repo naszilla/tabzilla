@@ -1,9 +1,10 @@
 import argparse
 from pathlib import Path
 
+import tabzilla_preprocessors
+
 # Import all preprocessor modules and add them to list for them to be in list of preprocessors
 import tabzilla_preprocessors_openml
-import tabzilla_preprocessors
 
 preprocessor_modules = [tabzilla_preprocessors, tabzilla_preprocessors_openml]
 
@@ -30,14 +31,14 @@ def preprocess_dataset(dataset_name, overwrite=False, verbose=True):
     if not overwrite and dest_path.exists():
         if verbose:
             print(f"{dataset_name:<40}| Found existing folder. Skipping.")
-        return
+        return dest_path
 
     print(f"{dataset_name:<40}| Processing...")
     if dataset_name not in preprocessors:
         raise KeyError(f"Unrecognized dataset name: {dataset_name}")
     dataset = preprocessors[dataset_name]()
     dataset.write(dest_path, overwrite=overwrite)
-    return
+    return dest_path
 
 
 if __name__ == "__main__":
@@ -74,6 +75,6 @@ if __name__ == "__main__":
 
     if args.process_all:
         for dataset_name in sorted(preprocessors.keys()):
-            preprocess_dataset(dataset_name, args.overwrite)
+            _ = preprocess_dataset(dataset_name, args.overwrite)
     else:
-        preprocess_dataset(args.dataset_name, args.overwrite)
+        _ = preprocess_dataset(args.dataset_name, args.overwrite)
