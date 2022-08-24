@@ -1,9 +1,8 @@
-import numpy as np
 import typing as tp
 
+import numpy as np
 import optuna
-
-from utils.io_utils import save_predictions_to_file, save_model_to_file
+from utils.io_utils import save_model_to_file, save_predictions_to_file
 
 
 class BaseModel:
@@ -58,6 +57,14 @@ class BaseModel:
             None  # Only used by binary / multi-class-classification
         )
 
+    # added for TabZilla bookkeeping
+    def get_metadata(self):
+        return {
+            "name": self.__class__.__name__,
+            "args": self.args,
+            "params": self.params,
+        }
+
     def fit(
         self,
         X: np.ndarray,
@@ -95,7 +102,7 @@ class BaseModel:
         """
 
         # TabZilla update: always return prediction probabilities
-        self.prediction_probabilities = None
+        self.prediction_probabilities = []
 
         if self.args.objective == "regression":
             self.predictions = self.model.predict(X)
