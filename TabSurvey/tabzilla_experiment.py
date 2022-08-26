@@ -1,9 +1,6 @@
 # experiment script for tabzilla
 #
-# this script takes three inputs:
-# - a config file for search args (see tabzilla_utils.get_search_parser)
-# - a config file for dataset args (see tabzilla_utils.get_dataset_parser)
-# - the name of a model (algorithm) to train and evaluate the dataset on
+# this script runs an experiment specified by a config file
 
 import argparse
 import logging
@@ -116,12 +113,13 @@ class TabZillaObjective(object):
         # add info about the hyperparams and trial number
         result.hparam_source = self.hparam_source
         result.trial_number = self.counter
+        result.experiment_args = vars(self.experiment_args)
 
         # write result to file
         result_file = self.output_path.joinpath(
             generate_filepath(f"{self.hparam_source}_trial{self.counter}", "json")
         )
-        result.write(result_file)
+        result.write(result_file, compress=True)
 
         self.counter += 1
 
@@ -136,9 +134,8 @@ def main(experiment_args):
     model_handle = str2model(experiment_args.model_name)
 
     # create results directory if it doesn't already exist
-    output_path = (
-        Path(experiment_args.output_dir).resolve().mkdir(parents=True, exist_ok=True)
-    )
+    output_path = Path(experiment_args.output_dir).resolve()
+    output_path.mkdir(parents=True, exist_ok=True)
 
     # all results will be written to the local sqlite database.
     # if this database exists, results will be added to it--this is due to the flag load_if_exists for optuna.create_study
