@@ -61,8 +61,8 @@ class BaseModel:
     def get_metadata(self):
         return {
             "name": self.__class__.__name__,
-            "args": self.args,
             "params": self.params,
+            "args": self.args._asdict(),
         }
 
     def fit(
