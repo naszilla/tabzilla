@@ -12,8 +12,8 @@ from typing import NamedTuple
 import optuna
 from optuna.samplers import RandomSampler
 
-from models import str2model
 from models.basemodel import BaseModel
+from tabzilla_alg_handler import get_model
 from tabzilla_datasets import TabularDataset
 from tabzilla_utils import (
     cross_validation,
@@ -131,7 +131,7 @@ def main(experiment_args):
     # read dataset from folder
     dataset = TabularDataset.read(Path(experiment_args.dataset_dir).resolve())
 
-    model_handle = str2model(experiment_args.model_name)
+    model_handle = get_model(experiment_args.model_name)
 
     # create results directory if it doesn't already exist
     output_path = Path(experiment_args.output_dir).resolve()

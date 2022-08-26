@@ -1,9 +1,10 @@
-import openml
-import numpy as np
-import pandas as pd
 import functools
 
-from tabzilla_preprocessor_utils import dataset_preprocessor, cv_n_folds
+import numpy as np
+import openml
+import pandas as pd
+
+from tabzilla_preprocessor_utils import cv_n_folds, dataset_preprocessor
 
 preprocessor_dict = {}
 
