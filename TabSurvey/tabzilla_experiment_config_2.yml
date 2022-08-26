@@ -1,5 +1,5 @@
 ###### basic info - name of the model to use, and path to the dataset
-dataset_dir: ./datasets/openml__california__361089
+dataset_dir: ./datasets/openml__MiceProtein__146800
 model_name: KNN
 output_dir: ./results/
 

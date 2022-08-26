@@ -25,7 +25,7 @@ SEARCH_CONFIG=./tabzilla_search_config.yml
 CONFIG_FILES=(
   tabzilla_experiment_config.yml
   tabzilla_experiment_config_1.yml
-  tabzilla_experiment_config_2.yml
+  # tabzilla_experiment_config_2.yml
 )
 
 
