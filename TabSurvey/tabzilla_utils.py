@@ -1,8 +1,7 @@
+import gzip
 import json
 import time
 from pathlib import Path
-
-from optuna.trial import FrozenTrial
 
 from models import all_models
 from models.basemodel import BaseModel
@@ -26,7 +25,7 @@ def get_scorer(objective):
     elif objective == "binary":
         return BinScorer()
     else:
-        raise NotImplementedError('No scorer for "' + args.objective + '" implemented')
+        raise NotImplementedError('No scorer for "' + objective + '" implemented')
 
 
 class ExperimentResult:
@@ -68,30 +67,32 @@ class ExperimentResult:
         # we will set these after initialization
         self.hparam_source = None
         self.trial_number = None
+        self.experiemnt_args = None
 
-    def write(self, filepath):
+    def write(self, filepath, compress=False):
         """write all result properties to a new file. raise an exception if the file exists."""
 
         # create a dict with all output we want to store
         result_dict = {
             "dataset": self.dataset.get_metadata(),
             "model": self.model.get_metadata(),
+            "experiemnt_args": self.experiment_args,
             "hparam_source": self.hparam_source,
             "trial_number": self.trial_number,
             "timers": {name: timer.save_times for name, timer in self.timers.items()},
             "scorers": {
                 name: scorer.get_results() for name, scorer in self.scorers.items()
             },
+            "splits": [
+                {key: list(val.tolist()) for key, val in split.items()}
+                for split in self.dataset.split_indeces
+            ],
             "predictions": self.predictions,
             "probabilities": self.probabilities,
             "ground_truth": self.ground_truth,
         }
 
-        write_dict_to_json(result_dict, filepath)
-
-    def read(filepath):
-        # TODO, if needed
-        pass
+        write_dict_to_json(result_dict, filepath, compress=compress)
 
 
 def cross_validation(model: BaseModel, dataset: TabularDataset) -> ExperimentResult:
@@ -221,11 +222,15 @@ def cross_validation(model: BaseModel, dataset: TabularDataset) -> ExperimentRes
     )
 
 
-def write_dict_to_json(x: dict, filepath: Path):
+def write_dict_to_json(x: dict, filepath: Path, compress=False):
     assert not filepath.is_file(), f"file already exists: {filepath}"
     assert filepath.parent.is_dir(), f"directory does not exist: {filepath.parent}"
-    with filepath.open("w", encoding="UTF-8") as f:
-        json.dump(x, f)
+    if not compress:
+        with filepath.open("w", encoding="UTF-8") as f:
+            json.dump(x, f)
+    else:
+        with gzip.open(str(filepath) + ".gz", "wb") as f:
+            f.write(json.dumps(x).encode("UTF-8"))
 
 
 import configargparse
