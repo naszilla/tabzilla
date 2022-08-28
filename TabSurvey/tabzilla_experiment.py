@@ -20,6 +20,7 @@ from tabzilla_utils import (
     generate_filepath,
     get_experiment_parser,
     get_scorer,
+    make_archive,
 )
 
 
@@ -119,7 +120,7 @@ class TabZillaObjective(object):
         result_file = self.output_path.joinpath(
             generate_filepath(f"{self.hparam_source}_trial{self.counter}", "json")
         )
-        result.write(result_file, compress=True)
+        result.write(result_file, compress=False)
 
         self.counter += 1
 

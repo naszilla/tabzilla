@@ -1,5 +1,7 @@
 import gzip
 import json
+import os
+import shutil
 import time
 from pathlib import Path
 
@@ -230,6 +232,25 @@ def write_dict_to_json(x: dict, filepath: Path, compress=False):
     else:
         with gzip.open(str(filepath) + ".gz", "wb") as f:
             f.write(json.dumps(x).encode("UTF-8"))
+
+
+def make_archive(source, destination):
+    """
+    a helper function because shutil.make_archive is too confusing on its own. adapted from:
+    http://www.seanbehan.com/how-to-use-python-shutil-make_archive-to-zip-up-a-directory-recursively-including-the-root-folder/
+    zip the folder at "source" and write it to the file at "destination". the file type is read from arg "destination"
+
+    example use:
+    > make_archive("/source/directory", "/new/directory/archive.zip")
+    """
+
+    base = os.path.basename(destination)
+    name = base.split(".")[0]
+    format = base.split(".")[1]
+    archive_from = os.path.dirname(source)
+    archive_to = os.path.basename(source.strip(os.sep))
+    shutil.make_archive(name, format, archive_from, archive_to)
+    shutil.move("%s.%s" % (name, format), destination)
 
 
 import configargparse
