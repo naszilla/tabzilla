@@ -15,12 +15,14 @@ instance_list=()
 ###################
 # define parameters
 
-alg_list=(
-    KNN
-    DecisionTree
-)
 
-dataset_list=(
+MODELS_ENVS=(
+  "LinearModel:$SKLEARN_ENV"
+  "KNN:$SKLEARN_ENV"
+  "DecisionTree:$SKLEARN_ENV"
+  )
+
+DATASETS=(
     openml__california__361089
     openml__MiceProtein_146800
 )
@@ -35,10 +37,14 @@ MAX_PROCESSES=10
 # run experiments
 
 num_experiments=0
-for i in ${!alg_list[@]};
+for i in ${!MODELS_ENVS[@]};
 do
-  for j in ${!dataset_list[@]};
+  for j in ${!DATASETS[@]};
   do
+    model_env=${MODELS_ENVS[i]}
+    model="${model_env%%:*}"
+    env="${model_env##*:}"
+
 
     instance_name=${instance_base}-${i}-${j}
 
@@ -47,7 +53,7 @@ do
     # $2 = dataset name
     # $3 = env name
     # $4 = instance name
-    run_experiment "${alg_list[i]}" ${dataset_list[j]} ${instance_base}-${i}-${j} >> ${LOG_DIR}/log_${i}_${j}_$(date +"%m%d%y_%H%M%S").txt 2>&1 &
+    run_experiment "${model}" ${DATASETS[j]} ${env} ${instance_base}-${i}-${j} >> ${LOG_DIR}/log_${i}_${j}_$(date +"%m%d%y_%H%M%S").txt 2>&1 &
     num_experiments=$((num_experiments + 1))
 
     # add instance name to the instance list
