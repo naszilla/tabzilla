@@ -33,7 +33,7 @@ gcloud compute ssh --ssh-flag="-A" ${instance} --zone=${zone} --project=${projec
 
 echo "finished updating code."
 
-# stop the instance - better writing
+# stop the instance
 gcloud compute instances stop $instance
 
 sleep 10

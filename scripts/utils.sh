@@ -7,6 +7,7 @@ image_family=tabzilla
 service_account=default-compute-instance@research-collab-naszilla.iam.gserviceaccount.com
 zone=us-central1-a
 project=research-collab-naszilla
+machine_type=n1-highmem-2
 
 run_experiment() {
 
@@ -38,7 +39,7 @@ run_experiment() {
     # attempt to create instance
     gcloud compute instances create $instance_name --zone=$zone \
     --project=$project --image-family=$image_family \
-    --machine-type=n1-highmem-2 \
+    --machine-type=${machine_type} \
     --service-account $service_account \
     --scopes=https://www.googleapis.com/auth/devstorage.read_write
 

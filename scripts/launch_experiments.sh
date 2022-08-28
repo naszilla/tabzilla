@@ -15,8 +15,18 @@ instance_list=()
 ###################
 # define parameters
 
+alg_list=(
+    KNN
+    DecisionTree
+)
+
+dataset_list=(
+    openml__california__361089
+    openml__MiceProtein_146800
+)
+
 # base name for the gcloud instances
-instance_base=dcm
+instance_base=tztest
 
 # maximum number of experiments (background processes) that can be running
 MAX_PROCESSES=10
