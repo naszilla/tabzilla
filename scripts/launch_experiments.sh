@@ -42,7 +42,12 @@ do
 
     instance_name=${instance_base}-${i}-${j}
 
-    run_experiment "${arg_str}" ${split_path_on_bucket} ${instance_base}-${i}-${j} >> ${LOG_DIR}/log_${i}_${j}_$(date +"%m%d%y_%H%M%S").txt 2>&1 &
+    # args:
+    # $1 = model name
+    # $2 = dataset name
+    # $3 = env name
+    # $4 = instance name
+    run_experiment "${alg_list[i]}" ${dataset_list[j]} ${instance_base}-${i}-${j} >> ${LOG_DIR}/log_${i}_${j}_$(date +"%m%d%y_%H%M%S").txt 2>&1 &
     num_experiments=$((num_experiments + 1))
 
     # add instance name to the instance list
