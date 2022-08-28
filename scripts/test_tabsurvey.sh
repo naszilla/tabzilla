@@ -12,21 +12,19 @@ KERAS_ENV="tensorflow"
 # search parameters
 SEARCH_CONFIG=./tabzilla_search_config.yml
 
+# all datasets should be in this folder. the dataset folder should be in ${DATASET_BASE_DIR}/<dataset-name>
+DATASET_BASE_DIR=./datasets
 
 ##########################################################
 # define lists of datasets and models to evaluate them on
 
-# MODELS=(
-#   "LinearModel:$SKLEARN_ENV"
-#   "KNN:$SKLEARN_ENV"
-#   "DecisionTree:$SKLEARN_ENV"
-#   )
+MODELS_ENVS=(
+  "LinearModel:$SKLEARN_ENV"
+  "KNN:$SKLEARN_ENV"
+  "DecisionTree:$SKLEARN_ENV"
+  )
 
-CONFIG_FILES=(
-  tabzilla_experiment_config.yml
-  tabzilla_experiment_config_1.yml
-  # tabzilla_experiment_config_2.yml
-)
+CONFIG_FILE=tabzilla_experiment_config.yml
 
 
 DATASETS=(
@@ -36,20 +34,23 @@ DATASETS=(
 # conda init bash
 eval "$(conda shell.bash hook)"
 
-# run only with sklearn
-env=sklearn
+for dataset in "${DATASETS[@]}"; do
+  printf "\n|----------------------------------------------------------------------------\n"
+  printf "| starting dataset ${dataset}\n"
+  for model_env in "${MODELS_ENVS[@]}"; do
 
-for config in "${CONFIG_FILES[@]}"; do
+      model="${model_env%%:*}"
+      env="${model_env##*:}"
 
-    printf "\n\n|----------------------------------------------------------------------------\n"
-    printf "| Running experiment with config file ${config} with env '${env}'"
+      printf "\n||----------------------------------------------------------------------------\n"
+      printf '|| Training %s on dataset %s in env %s\n\n' "$model" "$dataset" "$env"
 
-    conda activate ${env}
+      conda activate ${env}
 
-    python tabzilla_experiment.py --experiment_config ${config}
+      dataset_dir=${DATASET_BASE_DIR}/${dataset}
+      python tabzilla_experiment.py --experiment_config ${CONFIG_FILE} --dataset_dir ${dataset_dir} --model_name ${model}
 
-    conda deactivate
+      conda deactivate
 
   done
-
 done

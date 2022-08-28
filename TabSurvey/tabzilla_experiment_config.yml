@@ -1,6 +1,4 @@
-###### basic info - name of the model to use, and path to the dataset
-dataset_dir: ./datasets/openml__california__361089
-model_name: KNN
+###### directory where results will be written
 output_dir: ./results/
 
 ###### number of trials for hyperparameter search & optimization

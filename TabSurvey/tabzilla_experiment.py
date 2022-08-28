@@ -13,7 +13,7 @@ import optuna
 from optuna.samplers import RandomSampler
 
 from models.basemodel import BaseModel
-from tabzilla_alg_handler import get_model
+from tabzilla_alg_handler import ALL_MODELS, get_model
 from tabzilla_datasets import TabularDataset
 from tabzilla_utils import (
     cross_validation,
@@ -126,12 +126,12 @@ class TabZillaObjective(object):
         return result.scorers["val"].get_objective_result()
 
 
-def main(experiment_args):
+def main(experiment_args, model_name, dataset_dir):
 
     # read dataset from folder
-    dataset = TabularDataset.read(Path(experiment_args.dataset_dir).resolve())
+    dataset = TabularDataset.read(Path(dataset_dir).resolve())
 
-    model_handle = get_model(experiment_args.model_name)
+    model_handle = get_model(model_name)
 
     # create results directory if it doesn't already exist
     output_path = Path(experiment_args.output_dir).resolve()
@@ -141,7 +141,7 @@ def main(experiment_args):
     # if this database exists, results will be added to it--this is due to the flag load_if_exists for optuna.create_study
     # NOTE: study_name should always be equivalent ot the database file name. this is necessary for reading the study database.
     optuna.logging.get_logger("optuna").addHandler(logging.StreamHandler(sys.stdout))
-    study_name = experiment_args.model_name + "_" + dataset.name
+    study_name = model_name + "_" + dataset.name
     storage_name = "sqlite:///{}.db".format(study_name)
 
     if experiment_args.n_random_trials > 0:
@@ -207,6 +207,19 @@ if __name__ == "__main__":
         help="config file for parameter experiment args",
     )
 
+    parser.add_argument(
+        "--dataset_dir",
+        required=True,
+        type=str,
+        help="directory containing pre-processed dataset.",
+    )
+    parser.add_argument(
+        "--model_name",
+        required=True,
+        type=str,
+        choices=ALL_MODELS,
+        help="name of the algorithm",
+    )
     args = parser.parse_args()
     print(f"ARGS: {args}")
 
@@ -218,4 +231,4 @@ if __name__ == "__main__":
     )
     print(f"EXPERIMENT ARGS: {experiment_args}")
 
-    main(experiment_args)
+    main(experiment_args, args.model_name, args.dataset_dir)

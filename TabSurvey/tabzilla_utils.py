@@ -3,7 +3,6 @@ import json
 import time
 from pathlib import Path
 
-from models import all_models
 from models.basemodel import BaseModel
 from tabzilla_data_processing import process_data
 from tabzilla_datasets import TabularDataset
@@ -253,23 +252,10 @@ def get_experiment_parser():
         help="config file for arg parser",
     )
     experiment_parser.add_argument(
-        "--dataset_dir",
-        required=True,
-        type=str,
-        help="directory containing pre-processed dataset.",
-    )
-    experiment_parser.add_argument(
         "--output_dir",
         required=True,
         type=str,
         help="directory where experiment results will be written.",
-    )
-    experiment_parser.add_argument(
-        "--model_name",
-        required=True,
-        type=str,
-        choices=all_models,
-        help="name of the algorithm",
     )
     experiment_parser.add(
         "--use_gpu", action="store_true", help="Set to true if GPU is available"
