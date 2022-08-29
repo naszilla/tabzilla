@@ -30,6 +30,12 @@ MODEL_NAME=NONE
 # name of the dataset
 DATASET_NAME=NONE
 
+#########################################################
+# prepare conda, in case it has not already been prepared
+
+source /opt/conda/bin/activate
+conda init
+
 ################
 # run experiment
 
