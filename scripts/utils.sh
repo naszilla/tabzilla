@@ -120,12 +120,15 @@ sync_logs(){
   # $1 = path to log files. the contents of this directory will be added to the gcloud bucket tabzilla-results/logs
   # $2 = experiment name
   echo "syncing log files from $1 for experiment $2 to gcloud..."
-  
+
+  # new name for the zip file
+  zip_name=$2_logs_$(date +"%m%d%y_%H%M%S").zip
+
   # zip logs
-  zip -r $2_logs.zip $1
+  zip -jr ${zip_name} $1
 
   # copy to gcloud
-  gsutil cp $2_logs.zip gs://tabzilla-results/logs/$2_logs.zip
+  gsutil cp ${zip_name} gs://tabzilla-results/logs/${zip_name}
 }
 
 delete_instances() {

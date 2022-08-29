@@ -70,7 +70,7 @@ cd /home/shared/tabzilla/TabSurvey
 python tabzilla_experiment.py --experiment_config ${CONFIG_FILE} --dataset_dir ${DATSET_DIR} --model_name ${MODEL_NAME}
 
 # zip results
-zip -r results.zip ./results
+zip -jr results.zip ./results
 
 # add a timestamp and a random string to the end of the filename, to avoid collisions
 result_file=${EXPERIMENT_NAME}_$(date +"%m%d%y_%H%M%S")_$(openssl rand -hex 2).zip
