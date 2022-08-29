@@ -40,7 +40,7 @@ LOG_DIR=${PWD}/logs
 # set trap
 # this will sync the log files, and delete all instances
 
-trap "sync_logs ${LOG_DIR}; delete_instances" EXIT
+trap "sync_logs ${LOG_DIR} ${experiment_name}; delete_instances" EXIT
 INSTANCE_LIST=()
 
 # end: bookkeeping
