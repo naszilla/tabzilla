@@ -39,6 +39,16 @@ gcloud beta compute instances create ${instance_name} \
 --scopes=https://www.googleapis.com/auth/devstorage.read_write
 ```
 
+This should return something like the following:
+
+```
+Created [https://www.googleapis.com/compute/v1/projects/research-collab-naszilla/zones/us-central1-a/instances/dcm-tabzilla].
+NAME          ZONE           MACHINE_TYPE   PREEMPTIBLE  INTERNAL_IP  EXTERNAL_IP      STATUS
+############  us-central1-a  n1-standard-1               xx.xxx.x.xx  123.456.789.000  RUNNING
+```
+
+**Pro tip!!** if you're using an IDE that lets you ssh into a remote machine (like Visual Studio Code), **you can ssh into your GCP instance using the IDE, using the `EXTERNAL_IP` address printed above**. This allows you to use the instance more easily for development purposes.
+
 2. SSH into the instance, using flag `-A` for agent forwarding
 
 ```
@@ -56,14 +66,56 @@ should return:
 # conda environments:
 #
 base                  *  /opt/conda
-base                     /opt/conda/envs/openml
 gbdt                     /opt/conda/envs/gbdt
+openml                   /opt/conda/envs/openml
 sklearn                  /opt/conda/envs/sklearn
 tensorflow               /opt/conda/envs/tensorflow
 torch                    /opt/conda/envs/torch
 ```
 
-3. Run a test script:
+3. Go to the shared tabzilla directory, and update it if needed.
+
+```
+cd /home/shared/tabzilla/
+git pull
+```
+
+4. Look at the datasets that are currently pre-processed on this image:
+
+```
+ls /home/shared/tabzilla/TabSurvey/datasets
+```
+
+this should print something like:
+
+```
+openml__APSFailure__168868                        openml__ilpd__9971
+openml__Amazon_employee_access__34539             openml__isolet__3481
+openml__Australian__146818                        openml__jannis__168330
+openml__Bioresponse__9910                         openml__jasmine__168911
+openml__CIFAR_10__167124                          openml__jm1__3904
+...
+```
+
+5. Run an experiment!
+
+First, modify the script `/home/shared/tabzilla/scripts/test_tabzilla_on_instance.sh` to specify an ML model, conda environment, and dataset name. You can use any dataset already on the instance (see previous step). You need to modify the following three lines:
+
+```
+# define the conda env that should be used {sklearn | gbdt | torch | tensorflow}
+ENV_NAME=sklearn
+
+# name of the model/algorithm
+MODEL_NAME=KNN
+
+# name of the dataset
+DATASET_NAME=openml__california__361089
+```
+
+```
+cd /home/shared/tabzilla/scripts
+```
+
 
 (you might need to chmod it first..):
 
@@ -73,20 +125,5 @@ torch                    /opt/conda/envs/torch
 > ./scripts/test_tabsurvey.sh
 ```
 
-This should print output from the TabSurvey train/test cycles:
-
-```commandline
-----------------------------------------------------------------------------
-Training DecisionTree with config/adult.yml in env sklearn
-
-Namespace(config='config/adult.yml', model_name='DecisionTree', dataset='Adult', objective='binary', use_gpu=False, gpu_ids=[0, 1], data_parallel=True, optimize_hyperparameters=False, n_trials=2, direction='maximize', num_splits=5, shuffle=True, seed=221, scale=True, target_encode=True, one_hot_encode=False, batch_size=128, val_batch_size=256, early_stopping_rounds=20, epochs=3, logging_period=100, num_features=14, num_classes=1, cat_idx=[1, 3, 5, 6, 7, 8, 9, 13], cat_dims=[9, 16, 7, 15, 6, 5, 2, 42])
-Train model with given hyperparameters
-Loading dataset Adult...
-Dataset loaded!
-(32561, 14)
-Scaling the data...
-{'Log Loss - mean': 0.4087199772743019, 'Log Loss - std': 0.0, 'AUC - mean': 0.8968605810185616, 'AUC - std': 0.0, 
-...
-```
 
 
