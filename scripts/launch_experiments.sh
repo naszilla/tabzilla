@@ -61,8 +61,8 @@ do
     echo "ENV: ${env}"
     echo "DATASET: ${DATASETS[j]}"
 
-    echo "run_experiment "${model}" ${DATASETS[j]} ${env} ${instance_base}-${i}-${j} >> ${LOG_DIR}/log_${i}_${j}_$(date +"%m%d%y_%H%M%S").txt 2>&1 &
-    num_experiments=$((num_experiments + 1))"
+    run_experiment "${model}" ${DATASETS[j]} ${env} ${instance_base}-${i}-${j} >> ${LOG_DIR}/log_${i}_${j}_$(date +"%m%d%y_%H%M%S").txt 2>&1 &
+    num_experiments=$((num_experiments + 1))
 
     # add instance name to the instance list
     INSTANCE_LIST+=("${instance_name}")
