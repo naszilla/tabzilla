@@ -10,7 +10,7 @@ source utils.sh
 mkdir ${PWD}/logs
 LOG_DIR=${PWD}/logs
 trap "sync_logs ${LOG_DIR}; delete_instances" EXIT
-instance_list=()
+INSTANCE_LIST=()
 
 ###################
 # define parameters
@@ -65,7 +65,7 @@ do
     num_experiments=$((num_experiments + 1))"
 
     # add instance name to the instance list
-    instance_list+=("${instance_name}")
+    INSTANCE_LIST+=("${instance_name}")
 
     echo "launched instance ${instance_base}-${i}-${j}. (job number ${num_experiments})"
     sleep 1
