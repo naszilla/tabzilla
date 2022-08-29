@@ -69,7 +69,6 @@ General parameters for each experiment are read from a yml config file, by the p
                         Number of iteration after which validation is printed. (default: 100)
 ```
 
-
 # Datasets
 
 **Note:** Our code downloads datasets from [OpenML](https://www.openml.org/), so you will need to install the openml python module. If this code hangs or raises an error when downloading datasets, you may need to create an OpenML account (on their website) and authenticate your local machine in order to download datasets. We have no idea why, but authentication is required for some users and not for others. If you run into any issues, please follow [these installation and authentication instructions](https://openml.github.io/openml-python/main/examples/20_basic/introduction_tutorial.html#sphx-glr-examples-20-basic-introduction-tutorial-py).  

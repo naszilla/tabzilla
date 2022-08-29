@@ -15,6 +15,10 @@ instance_list=()
 ###################
 # define parameters
 
+SKLEARN_ENV="sklearn"
+GBDT_ENV="gbdt"
+TORCH_ENV="torch"
+KERAS_ENV="tensorflow"
 
 MODELS_ENVS=(
   "LinearModel:$SKLEARN_ENV"

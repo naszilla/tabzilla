@@ -38,13 +38,14 @@ fi
 ###############
 # prepare conda
 
-source /home/shared/miniconda3/bin/activate
+source /opt/conda/bin/activate
 conda init
+
 
 ################
 # run experiment
 
-printf 'running experiment with model %s on dataset %s in env %s\n\n' "$model" "$dataset" "$env"
+printf 'running experiment with model %s on dataset %s in env %s\n\n' "$MODEL_NAME" "$DATASET_NAME" "$ENV_NAME"
 
 # use the env specified in ENV_NAME
 conda activate ${ENV_NAME}
