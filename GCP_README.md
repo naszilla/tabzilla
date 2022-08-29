@@ -1,6 +1,6 @@
 **Intended for internal use** 
 
-This document describes how to set up a GCP instance and run a basic experiment with TabSurvey.
+This document describes how to set up a GCP instance and run a basic experiment with TabZilla.
 
 1. Make sure you have GCP [command line tools](https://cloud.google.com/sdk/gcloud) installed 
 
@@ -17,21 +17,24 @@ this should print something like:
 
 See [this link]([agent forwarding to authenticate your github account](https://docs.github.com/en/developers/overview/using-ssh-agent-forwarding)) for troubleshooting.
 
-4. Create a GCP instance using the image `tabsurvey`:
+4. Create a GCP instance from the `tabzilla` family:
 
 ```
-image_name=tabsurvey
 zone=us-central1-a
 project=research-collab-naszilla
+family=tabzilla
 
-# name of the instance to create
-instance_name=test-instance
-
-# machine type
+# machine type (change if you'd like)
 machine_type=n1-highmem-2
 
-gcloud compute instances create ${test-instance} --zone=${zone} \
---project=${project} --image=${image_name} \
+# the name of the instance you will create
+instance_name=<MY-INSTANCE-NAME>
+
+# create an instance from the latest tabzilla-family image
+gcloud beta compute instances create ${instance_name} \
+--zone=${zone} \
+--project=${project} \
+--image-family=${family} \
 --machine-type=${machine_type} \
 --scopes=https://www.googleapis.com/auth/devstorage.read_write
 ```
@@ -53,22 +56,16 @@ should return:
 # conda environments:
 #
 base                  *  /opt/conda
+base                     /opt/conda/envs/openml
 gbdt                     /opt/conda/envs/gbdt
 sklearn                  /opt/conda/envs/sklearn
 tensorflow               /opt/conda/envs/tensorflow
 torch                    /opt/conda/envs/torch
 ```
 
-5. In the instance, clone the tabzilla repo:
+3. Run a test script:
 
-```commandline
-> cd
-> git clone git@github.com:naszilla/tabzilla.git
-```
-
-6. Run a test script:
-
-(you probably need to chmod it first..):
+(you might need to chmod it first..):
 
 ```commandline
 > cd ~/tabzilla

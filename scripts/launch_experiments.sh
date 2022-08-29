@@ -41,10 +41,9 @@ for i in ${!MODELS_ENVS[@]};
 do
   for j in ${!DATASETS[@]};
   do
-    model_env=${MODELS_ENVS[i]}
+    model_env="${MODELS_ENVS[i]}"
     model="${model_env%%:*}"
     env="${model_env##*:}"
-
 
     instance_name=${instance_base}-${i}-${j}
 
@@ -53,12 +52,13 @@ do
     # $2 = dataset name
     # $3 = env name
     # $4 = instance name
+    echo "MODEL_ENV: ${model_env}"
     echo "MODEL: ${model}"
     echo "ENV: ${env}"
     echo "DATASET: ${DATASETS[j]}"
 
-    run_experiment "${model}" ${DATASETS[j]} ${env} ${instance_base}-${i}-${j} >> ${LOG_DIR}/log_${i}_${j}_$(date +"%m%d%y_%H%M%S").txt 2>&1 &
-    num_experiments=$((num_experiments + 1))
+    echo "run_experiment "${model}" ${DATASETS[j]} ${env} ${instance_base}-${i}-${j} >> ${LOG_DIR}/log_${i}_${j}_$(date +"%m%d%y_%H%M%S").txt 2>&1 &
+    num_experiments=$((num_experiments + 1))"
 
     # add instance name to the instance list
     instance_list+=("${instance_name}")
