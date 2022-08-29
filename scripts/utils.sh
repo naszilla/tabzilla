@@ -9,21 +9,30 @@ zone=us-central1-a
 project=research-collab-naszilla
 machine_type=n1-highmem-2
 
+# conda envs
+SKLEARN_ENV="sklearn"
+GBDT_ENV="gbdt"
+TORCH_ENV="torch"
+KERAS_ENV="tensorflow"
+
 run_experiment() {
 
   # $1 = model name
   # $2 = dataset name
   # $3 = env name
   # $4 = instance name
+  # $5 = experiment name
   model_name="$1"
   dataset_name="$2"
   env_name="$3"
   instance_name="$4"
+  experiment_name="$5"
 
   echo "run_experiment: model_name: ${model_name}"
   echo "run_experiment: dataset_name: ${dataset_name}"
   echo "run_experiment: env_name: ${env_name}"
   echo "run_experiment: instance_name: ${instance_name}"
+  echo "run_experiment: experiment_name: ${experiment_name}"
 
   # set a return trap to delete the instance when this function returns
   trap "echo deleting instance ${instance_name}...; printf \"Y\" | gcloud compute instances delete ${instance_name} --zone=${zone} --project=${project}" RETURN
@@ -80,6 +89,7 @@ run_experiment() {
       export ENV_NAME=\"${env_name}\"; \
       export MODEL_NAME=${model_name}; \
       export DATASET_NAME=${dataset_name}; \
+      export EXPERIMENT_NAME=${experiment_name}; \
       chmod +x ${instance_script}; \
       /bin/bash ${instance_script}"
 
@@ -107,9 +117,15 @@ run_experiment() {
 }
 
 sync_logs(){
-  # $1 = path to log files. the contents of this directory will be added to the gcloud bucket reczilla-results/inbox/logs
-  echo "syncing log files from $1 to gcloud..."
-  gsutil -m rsync $1 gs://tabzilla-results/logs
+  # $1 = path to log files. the contents of this directory will be added to the gcloud bucket tabzilla-results/logs
+  # $2 = experiment name
+  echo "syncing log files from $1 for experiment $2 to gcloud..."
+  
+  # zip logs
+  zip -r $2_logs.zip $1
+
+  # copy to gcloud
+  gsutil cp $2_logs.zip gs://tabzilla-results/logs/$2_logs.zip
 }
 
 delete_instances() {

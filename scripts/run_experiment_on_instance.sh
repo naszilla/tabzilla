@@ -11,6 +11,7 @@ set -e
 #  - ENV_NAME <- the conda env that should be used (this should go with the model)
 #  - MODEL_NAME <- name of the ML model to use
 #  - DATASET_NAME <- the name of the dataset to use for the experiment
+#  - EXPERIMENT_NAME <- name of the experiment. this will be appended to the result file name
 #
 ###############################################################################################################
 
@@ -33,6 +34,12 @@ if [ -n "$DATASET_NAME" ]; then
   echo "DATASET_NAME: $DATASET_NAME"
 else
   echo "DATASET_NAME string not defined" 1>&2
+fi
+
+if [ -n "$EXPERIMENT_NAME" ]; then
+  echo "EXPERIMENT_NAME: $EXPERIMENT_NAME"
+else
+  echo "EXPERIMENT_NAME string not defined" 1>&2
 fi
 
 ###############
@@ -66,8 +73,9 @@ python tabzilla_experiment.py --experiment_config ${CONFIG_FILE} --dataset_dir $
 zip -r results.zip ./results
 
 # add a timestamp and a random string to the end of the filename, to avoid collisions
-result_file=result_$(date +"%m%d%y_%H%M%S")_$(openssl rand -hex 2).zip
+result_file=${EXPERIMENT_NAME}_$(date +"%m%d%y_%H%M%S")_$(openssl rand -hex 2).zip
 mv ./results.zip ./${result_file}
+
 
 ###############################
 # save results to gcloud bucket

@@ -3,22 +3,8 @@
 # load functions
 source utils.sh
 
-###################
-# set trap
-# this will sync the log files, and delete all instances
-
-mkdir ${PWD}/logs
-LOG_DIR=${PWD}/logs
-trap "sync_logs ${LOG_DIR}; delete_instances" EXIT
-INSTANCE_LIST=()
-
-###################
-# define parameters
-
-SKLEARN_ENV="sklearn"
-GBDT_ENV="gbdt"
-TORCH_ENV="torch"
-KERAS_ENV="tensorflow"
+##############################
+# begin: EXPERIMENT PARAMETERS
 
 MODELS_ENVS=(
   "LinearModel:$SKLEARN_ENV"
@@ -34,8 +20,32 @@ DATASETS=(
 # base name for the gcloud instances
 instance_base=tztest
 
+# experiment name (will be appended to results files)
+experiment_name=test-experiment
+
 # maximum number of experiments (background processes) that can be running
 MAX_PROCESSES=10
+
+# end: EXPERIMENT PARAMETERS
+############################
+
+####################
+# begin: bookkeeping
+
+# make a log directory
+mkdir ${PWD}/logs
+LOG_DIR=${PWD}/logs
+
+###################
+# set trap
+# this will sync the log files, and delete all instances
+
+trap "sync_logs ${LOG_DIR}; delete_instances" EXIT
+INSTANCE_LIST=()
+
+# end: bookkeeping
+##################
+
 
 #################
 # run experiments
@@ -56,12 +66,14 @@ do
     # $2 = dataset name
     # $3 = env name
     # $4 = instance name
+    # $5 = experiment name
     echo "MODEL_ENV: ${model_env}"
     echo "MODEL: ${model}"
     echo "ENV: ${env}"
     echo "DATASET: ${DATASETS[j]}"
+    echo "EXPERIMENT_NAME: ${experiment_name}"
 
-    run_experiment "${model}" ${DATASETS[j]} ${env} ${instance_base}-${i}-${j} >> ${LOG_DIR}/log_${i}_${j}_$(date +"%m%d%y_%H%M%S").txt 2>&1 &
+    run_experiment "${model}" ${DATASETS[j]} ${env} ${instance_base}-${i}-${j} ${experiment_name} >> ${LOG_DIR}/log_${i}_${j}_$(date +"%m%d%y_%H%M%S").txt 2>&1 &
     num_experiments=$((num_experiments + 1))
 
     # add instance name to the instance list
