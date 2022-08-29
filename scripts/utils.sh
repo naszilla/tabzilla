@@ -113,10 +113,9 @@ sync_logs(){
 }
 
 delete_instances() {
-  # $1 = name of list of instance names. all of these instances will be deleted
+  # deletes all instances in global variable INSTANCE_LIST
   echo "attempting to delete all instances..."
-  local instance_list=$1
-  for i in "${instance_list[@]}";
+  for i in "${INSTANCE_LIST[@]}";
     do
         echo "deleting instance: $i"
         printf "Y" | gcloud compute instances delete $i --zone=${zone} --project=${project}

@@ -9,7 +9,7 @@ source utils.sh
 
 mkdir ${PWD}/logs
 LOG_DIR=${PWD}/logs
-trap "sync_logs ${LOG_DIR}; delete_instances instance_list" EXIT
+trap "sync_logs ${LOG_DIR}; delete_instances" EXIT
 instance_list=()
 
 ###################
