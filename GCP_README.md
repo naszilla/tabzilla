@@ -2,9 +2,9 @@
 
 This document describes how to set up a GCP instance and run a basic experiment with TabZilla.
 
-1. Make sure you have GCP [command line tools](https://cloud.google.com/sdk/gcloud) installed 
+## 1. Make sure you have GCP [command line tools](https://cloud.google.com/sdk/gcloud) installed 
 
-2. Make sure you can authenticate on github over ssh (see [here](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/testing-your-ssh-connection)). You might need to create an SSH key and add it to your github account. To check, run:
+## 2. Make sure you can authenticate on github over ssh (see [here](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/testing-your-ssh-connection)). You might need to create an SSH key and add it to your github account. To check, run:
 ```commandline
 > ssh -T git@github.com
 ```
@@ -17,7 +17,7 @@ this should print something like:
 
 See [this link]([agent forwarding to authenticate your github account](https://docs.github.com/en/developers/overview/using-ssh-agent-forwarding)) for troubleshooting.
 
-4. Create a GCP instance from the `tabzilla` family:
+## 3. Create a GCP instance from the `tabzilla` family:
 
 ```
 zone=us-central1-a
@@ -49,7 +49,7 @@ NAME          ZONE           MACHINE_TYPE   PREEMPTIBLE  INTERNAL_IP  EXTERNAL_I
 
 **Pro tip!!** if you're using an IDE that lets you ssh into a remote machine (like Visual Studio Code), **you can ssh into your GCP instance using the IDE, using the `EXTERNAL_IP` address printed above**. This allows you to use the instance more easily for development purposes.
 
-2. SSH into the instance, using flag `-A` for agent forwarding
+## 4. SSH into the instance, using flag `-A` for agent forwarding
 
 ```
 gcloud compute ssh --ssh-flag="-A" --zone ${zone} ${instance_name}  --project ${project}
@@ -73,14 +73,14 @@ tensorflow               /opt/conda/envs/tensorflow
 torch                    /opt/conda/envs/torch
 ```
 
-3. Go to the shared tabzilla directory, and update it if needed.
+## 5. Go to the shared tabzilla directory, and update it if needed.
 
 ```commandline
 cd /home/shared/tabzilla/
 git pull
 ```
 
-4. Look at the datasets that are currently pre-processed on this image:
+## 6. Look at the datasets that are currently pre-processed on this image:
 
 ```commandline
 ls /home/shared/tabzilla/TabSurvey/datasets
@@ -97,7 +97,7 @@ openml__CIFAR_10__167124                          openml__jm1__3904
 ...
 ```
 
-5. Run an experiment!
+## 7. Run an experiment!
 
 First, modify the script `/home/shared/tabzilla/scripts/test_tabzilla_on_instance.sh` to specify an ML model, conda environment, and dataset name. You can use any dataset already on the instance (see previous step). You need to modify the following three lines:
 
