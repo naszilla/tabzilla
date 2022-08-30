@@ -170,7 +170,7 @@ class TabularDataset(object):
 
         # read data
         with gzip.GzipFile(X_path, "r") as f:
-            X = np.load(f)
+            X = np.load(f, allow_pickle=True)
         with gzip.GzipFile(y_path, "r") as f:
             y = np.load(f)
         with gzip.GzipFile(split_indeces_path, "rb") as f:
