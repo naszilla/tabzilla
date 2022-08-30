@@ -62,7 +62,7 @@ LOG_DIR=${PWD}/logs
 # set trap
 # this will sync the log files, and delete all instances
 
-# trap "sync_logs ${LOG_DIR} ${experiment_name}; delete_instances" EXIT
+trap "sync_logs ${LOG_DIR} ${experiment_name}; delete_instances" EXIT
 INSTANCE_LIST=()
 
 # end: bookkeeping
@@ -95,7 +95,7 @@ do
     echo "DATASET: ${DATASETS[j]}"
     echo "EXPERIMENT_NAME: ${experiment_name}"
 
-    # run_experiment "${model}" ${DATASETS[j]} ${env} ${instance_base}-${i}-${j} ${experiment_name} >> ${LOG_DIR}/log_${i}_${j}_$(date +"%m%d%y_%H%M%S").txt 2>&1 &
+    run_experiment "${model}" ${DATASETS[j]} ${env} ${instance_base}-${i}-${j} ${experiment_name} >> ${LOG_DIR}/log_${i}_${j}_$(date +"%m%d%y_%H%M%S").txt 2>&1 &
     num_experiments=$((num_experiments + 1))
 
     # add instance name to the instance list
