@@ -141,7 +141,7 @@ class BaseModelTorch(BaseModel):
         # tabzilla update: return prediction probabilities
         if self.args.objective == "regression":
             self.predictions = self.predict_helper(X)
-            probs = None
+            probs = np.array([])
         else:
             self.predict_proba(X)
             self.predictions = np.argmax(self.prediction_probabilities, axis=1)
