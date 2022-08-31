@@ -122,7 +122,8 @@ class BaseModelTorch(BaseModel):
                 min_val_loss_idx = epoch
 
                 # Save the currently best model
-                self.save_model(filename_extension="best", directory="tmp")
+                # tabzilla: don't save the model...
+                # self.save_model(filename_extension="best", directory="tmp")
 
             if min_val_loss_idx + self.args.early_stopping_rounds < epoch:
                 print(
