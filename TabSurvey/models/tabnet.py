@@ -21,7 +21,8 @@ class TabNet(BaseModelTorch):
         self.params["cat_idxs"] = args.cat_idx
         self.params["cat_dims"] = args.cat_dims
 
-        self.params["device_name"] = self.device
+        # TabZilla: remove device from params, since it is never used
+        # self.params["device_name"] = self.device
 
         if args.objective == "regression":
             self.model = TabNetRegressor(**self.params)
