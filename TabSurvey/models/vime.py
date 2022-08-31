@@ -1,34 +1,38 @@
 import numpy as np
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from torch.utils.data import TensorDataset, DataLoader
-
-from models.basemodel_torch import BaseModelTorch
+from torch.utils.data import DataLoader, TensorDataset
 from utils.io_utils import get_output_path
 
-'''
+from models.basemodel_torch import BaseModelTorch
+
+"""
     VIME: Extending the Success of Self- and Semi-supervised Learning to Tabular Domain
     (https://proceedings.neurips.cc/paper/2020/hash/7d97667a3e056acab9aaf653807b4a03-Abstract.html)
     
     Custom implementation using PyTorch.
     See the original implementation using Tensorflow: https://github.com/jsyoon0823/VIME
-'''
+"""
 
 
 class VIME(BaseModelTorch):
-
     def __init__(self, params, args):
         super().__init__(params, args)
 
         self.model_self = VIMESelf(args.num_features).to(self.device)
-        self.model_semi = VIMESemi(args, args.num_features, args.num_classes).to(self.device)
+        self.model_semi = VIMESemi(args, args.num_features, args.num_classes).to(
+            self.device
+        )
 
         if self.args.data_parallel:
-            self.model_self = nn.DataParallel(self.model_self, device_ids=self.args.gpu_ids)
-            self.model_semi = nn.DataParallel(self.model_semi, device_ids=self.args.gpu_ids)
+            self.model_self = nn.DataParallel(
+                self.model_self, device_ids=self.args.gpu_ids
+            )
+            self.model_semi = nn.DataParallel(
+                self.model_semi, device_ids=self.args.gpu_ids
+            )
 
         print("On Device:", self.device)
 
@@ -47,8 +51,16 @@ class VIME(BaseModelTorch):
         else:
             self.encoder_layer = self.model_self.input_layer
 
-        loss_history, val_loss_history = self.fit_semi(X, y, X, X_val, y_val, p_m=self.params["p_m"],
-                                                       K=self.params["K"], beta=self.params["beta"])
+        loss_history, val_loss_history = self.fit_semi(
+            X,
+            y,
+            X,
+            X_val,
+            y_val,
+            p_m=self.params["p_m"],
+            K=self.params["K"],
+            beta=self.params["beta"],
+        )
 
         self.load_model(filename_extension="best", directory="tmp")
         return loss_history, val_loss_history
@@ -61,8 +73,12 @@ class VIME(BaseModelTorch):
         X = torch.tensor(X).float()
 
         test_dataset = TensorDataset(X)
-        test_loader = DataLoader(dataset=test_dataset, batch_size=self.args.val_batch_size, shuffle=False,
-                                 num_workers=2)
+        test_loader = DataLoader(
+            dataset=test_dataset,
+            batch_size=self.args.val_batch_size,
+            shuffle=False,
+            num_workers=2,
+        )
 
         predictions = []
 
@@ -99,7 +115,12 @@ class VIME(BaseModelTorch):
         m_label = torch.tensor(m_label).float()
         X = torch.tensor(X).float()
         train_dataset = TensorDataset(x_tilde, m_label, X)
-        train_loader = DataLoader(dataset=train_dataset, batch_size=self.args.batch_size, shuffle=True, num_workers=2)
+        train_loader = DataLoader(
+            dataset=train_dataset,
+            batch_size=self.args.batch_size,
+            shuffle=True,
+            num_workers=2,
+        )
 
         for epoch in range(10):
             for batch_X, batch_mask, batch_feat in train_loader:
@@ -138,11 +159,18 @@ class VIME(BaseModelTorch):
         optimizer = optim.AdamW(self.model_semi.parameters())
 
         train_dataset = TensorDataset(X, y, x_unlab)
-        train_loader = DataLoader(dataset=train_dataset, batch_size=self.args.batch_size, shuffle=True, num_workers=2,
-                                  drop_last=True)
+        train_loader = DataLoader(
+            dataset=train_dataset,
+            batch_size=self.args.batch_size,
+            shuffle=True,
+            num_workers=2,
+            drop_last=True,
+        )
 
         val_dataset = TensorDataset(X_val, y_val)
-        val_loader = DataLoader(dataset=val_dataset, batch_size=self.args.val_batch_size, shuffle=False)
+        val_loader = DataLoader(
+            dataset=val_dataset, batch_size=self.args.val_batch_size, shuffle=False
+        )
 
         min_val_loss = float("inf")
         min_val_loss_idx = 0
@@ -161,11 +189,16 @@ class VIME(BaseModelTorch):
                     m_batch = mask_generator(p_m, batch_unlab)
                     _, batch_unlab_tmp = pretext_generator(m_batch, batch_unlab)
 
-                    batch_unlab_encoded = self.encoder_layer(batch_unlab_tmp.float().to(self.device))
+                    batch_unlab_encoded = self.encoder_layer(
+                        batch_unlab_tmp.float().to(self.device)
+                    )
                     yv_hat = self.model_semi(batch_unlab_encoded)
                     yv_hats[rep] = yv_hat
 
-                if self.args.objective == "regression" or self.args.objective == "binary":
+                if (
+                    self.args.objective == "regression"
+                    or self.args.objective == "binary"
+                ):
                     y_hat = y_hat.squeeze()
 
                 y_loss = loss_func_supervised(y_hat, batch_y.to(self.device))
@@ -184,7 +217,10 @@ class VIME(BaseModelTorch):
                 batch_val_X_encoded = self.encoder_layer(batch_val_X.to(self.device))
                 y_hat = self.model_semi(batch_val_X_encoded)
 
-                if self.args.objective == "regression" or self.args.objective == "binary":
+                if (
+                    self.args.objective == "regression"
+                    or self.args.objective == "binary"
+                ):
                     y_hat = y_hat.squeeze()
 
                 val_loss += loss_func_supervised(y_hat, batch_val_y.to(self.device))
@@ -199,7 +235,8 @@ class VIME(BaseModelTorch):
                 min_val_loss = val_loss
                 min_val_loss_idx = epoch
 
-                self.save_model(filename_extension="best", directory="tmp")
+                # tabzilla: again, don't save the model...
+                # self.save_model(filename_extension="best", directory="tmp")
 
             if min_val_loss_idx + self.args.early_stopping_rounds < epoch:
                 print("Early stopping applies.")
@@ -208,33 +245,56 @@ class VIME(BaseModelTorch):
         return loss_history, val_loss_history
 
     def save_model(self, filename_extension="", directory="models"):
-        filename_self = get_output_path(self.args, directory=directory, filename="m_self", extension=filename_extension,
-                                        file_type="pt")
+        filename_self = get_output_path(
+            self.args,
+            directory=directory,
+            filename="m_self",
+            extension=filename_extension,
+            file_type="pt",
+        )
         torch.save(self.model_self.state_dict(), filename_self)
 
-        filename_semi = get_output_path(self.args, directory=directory, filename="m_semi", extension=filename_extension,
-                                        file_type="pt")
+        filename_semi = get_output_path(
+            self.args,
+            directory=directory,
+            filename="m_semi",
+            extension=filename_extension,
+            file_type="pt",
+        )
         torch.save(self.model_semi.state_dict(), filename_semi)
 
     def load_model(self, filename_extension="", directory="models"):
-        filename_self = get_output_path(self.args, directory=directory, filename="m_self", extension=filename_extension,
-                                        file_type="pt")
+        filename_self = get_output_path(
+            self.args,
+            directory=directory,
+            filename="m_self",
+            extension=filename_extension,
+            file_type="pt",
+        )
         state_dict = torch.load(filename_self)
         self.model_self.load_state_dict(state_dict)
 
-        filename_semi = get_output_path(self.args, directory=directory, filename="m_semi", extension=filename_extension,
-                                        file_type="pt")
+        filename_semi = get_output_path(
+            self.args,
+            directory=directory,
+            filename="m_semi",
+            extension=filename_extension,
+            file_type="pt",
+        )
         state_dict = torch.load(filename_semi)
         self.model_semi.load_state_dict(state_dict)
 
     def get_model_size(self):
-        self_size = sum(t.numel() for t in self.model_self.parameters() if t.requires_grad)
-        semi_size = sum(t.numel() for t in self.model_semi.parameters() if t.requires_grad)
+        self_size = sum(
+            t.numel() for t in self.model_self.parameters() if t.requires_grad
+        )
+        semi_size = sum(
+            t.numel() for t in self.model_semi.parameters() if t.requires_grad
+        )
         return self_size + semi_size
 
 
 class VIMESelf(nn.Module):
-
     def __init__(self, input_dim):
         super().__init__()
 
@@ -253,7 +313,6 @@ class VIMESelf(nn.Module):
 
 
 class VIMESemi(nn.Module):
-
     def __init__(self, args, input_dim, output_dim, hidden_dim=100, n_layers=5):
         super().__init__()
         self.args = args
@@ -261,7 +320,9 @@ class VIMESemi(nn.Module):
         self.input_layer = nn.Linear(input_dim, hidden_dim)
 
         self.layers = nn.ModuleList()
-        self.layers.extend([nn.Linear(hidden_dim, hidden_dim) for _ in range(n_layers - 1)])
+        self.layers.extend(
+            [nn.Linear(hidden_dim, hidden_dim) for _ in range(n_layers - 1)]
+        )
 
         self.output_layer = nn.Linear(hidden_dim, output_dim)
 
@@ -279,9 +340,9 @@ class VIMESemi(nn.Module):
         return out
 
 
-'''
+"""
     VIME code copied from: https://github.com/jsyoon0823/VIME
-'''
+"""
 
 
 def mask_generator(p_m, x):
