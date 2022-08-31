@@ -17,6 +17,12 @@ def generate_filepath(name, extension):
     timestr = time.strftime("%Y%m%d_%H%M%S")
     return (name + "_%s." + extension) % timestr
 
+def is_jsonable(x):
+    try:
+        json.dumps(x)
+        return True
+    except (TypeError, OverflowError):
+        return False
 
 def get_scorer(objective):
     if objective == "regression":
@@ -88,10 +94,15 @@ class ExperimentResult:
                 {key: list(val.tolist()) for key, val in split.items()}
                 for split in self.dataset.split_indeces
             ],
-            "predictions": self.predictions.tolist(),
-            "probabilities": self.probabilities.tolist(),
-            "ground_truth": self.ground_truth.tolist(),
+            # TODO: check that all values in this dict are serializable...
+            "predictions": self.predictions,
+            "probabilities": self.probabilities,
+            "ground_truth": self.ground_truth,
         }
+
+        for k, v in result_dict.items():
+            if not is_jsonable(v):
+                raise Exception(f"value at key '{k}' is not json serializable: {v}")
 
         write_dict_to_json(result_dict, filepath, compress=compress)
 
@@ -198,19 +209,19 @@ def cross_validation(model: BaseModel, dataset: TabularDataset) -> ExperimentRes
         # store predictions & ground truth
 
         # train
-        predictions["train"].append(list(train_predictions))
-        probabilities["train"].append(list(train_probs))
-        ground_truth["train"].append(list(y_train))
+        predictions["train"].append(train_predictions.tolist())
+        probabilities["train"].append(train_probs.tolist())
+        ground_truth["train"].append(y_train.tolist())
 
         # val
-        predictions["val"].append(list(val_predictions))
-        probabilities["val"].append(list(val_probs))
-        ground_truth["val"].append(list(y_val))
+        predictions["val"].append(val_predictions.tolist())
+        probabilities["val"].append(val_probs.tolist())
+        ground_truth["val"].append(y_val.tolist())
 
         # test
-        predictions["test"].append(list(test_predictions))
-        probabilities["test"].append(list(test_probs))
-        ground_truth["test"].append(list(y_test))
+        predictions["test"].append(test_predictions.tolist())
+        probabilities["test"].append(test_probs.tolist())
+        ground_truth["test"].append(y_test.tolist())
 
     return ExperimentResult(
         dataset=dataset,
