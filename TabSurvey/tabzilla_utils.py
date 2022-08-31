@@ -88,9 +88,9 @@ class ExperimentResult:
                 {key: list(val.tolist()) for key, val in split.items()}
                 for split in self.dataset.split_indeces
             ],
-            "predictions": self.predictions,
-            "probabilities": self.probabilities,
-            "ground_truth": self.ground_truth,
+            "predictions": self.predictions.tolist(),
+            "probabilities": self.probabilities.tolist(),
+            "ground_truth": self.ground_truth.tolist(),
         }
 
         write_dict_to_json(result_dict, filepath, compress=compress)
