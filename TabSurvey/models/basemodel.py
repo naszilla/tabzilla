@@ -102,7 +102,7 @@ class BaseModel:
         """
 
         # TabZilla update: always return prediction probabilities
-        self.prediction_probabilities = []
+        self.prediction_probabilities = np.array([])
 
         if self.args.objective == "regression":
             self.predictions = self.model.predict(X)
