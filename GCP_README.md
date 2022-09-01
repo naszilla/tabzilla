@@ -44,7 +44,7 @@ This should return something like the following:
 ```
 Created [https://www.googleapis.com/compute/v1/projects/research-collab-naszilla/zones/us-central1-a/instances/dcm-tabzilla].
 NAME          ZONE           MACHINE_TYPE   PREEMPTIBLE  INTERNAL_IP  EXTERNAL_IP      STATUS
-############  us-central1-a  n1-standard-1               xx.xxx.x.xx  123.456.789.000  RUNNING
+############  us-central1-a  n1-standard-1               xx.xxx.x.xx  xxx.xxx.xxx.xxx  RUNNING
 ```
 
 **Pro tip!!** if you're using an IDE that lets you ssh into a remote machine (like Visual Studio Code), **you can ssh into your GCP instance using the IDE, using the `EXTERNAL_IP` address printed above**. This allows you to use the instance more easily for development purposes.
