@@ -29,26 +29,35 @@ Different algorithms require different environments. (TBD)
 
 We modified the TabSurvey code in order to run experiments to generate results for our meta-learning tasks. The script [`TabSurvey/tabzilla_experiment.py`](TabSurvey/tabzilla_experiment.py) runs these experiments (this is adapted from the script [`TabSurvey/train.py`](TabSurvey/train.py)).
 
-Similar to `test.py`, this script writes a database of various results from each train/test cycle, which are recorded and written via [optuna](https://optuna.org/).
+Similar to `train.py`, this script writes a database of various results from each train/test cycle, which are recorded and written via [optuna](https://optuna.org/).
 
 ## `TabSurvey/tabzilla_experiment.py`
 
-Each ccall to `tabzilla_experiment.py` runs a hyperparameter search for a single algorithm on a single dataset. There are three inputs to this script: the dataset and general parameters (including hyperparameter search params) are passed using their own yml config files; the algorihtm name is passed as a string. 
+Each call to `tabzilla_experiment.py` runs a hyperparameter search for a single algorithm on a single dataset. There are three inputs to this script: the dataset and general parameters (including hyperparameter search params) are passed using their own yml config files; the algorihtm name is passed as a string. 
 
 The three inputs are:
-- `--dataset_config`: a yml config file specifying the dataset (see section "Datasets" below)
-- `--general_config`: a yml config file specifying general parameters of the experiment (see section "General Parameters" below)
-- `--model_name`: a string indicating the model to evaluate. The list of models is imported from `TabSurvey.models.all_models`.
+- `--experiment_config`: a yml config file specifying general parameters of the experiment. Our default config file is here: [`TabSurvey/tabzilla_experiment_config.yml`](TabSurvey/tabzilla_experiment_config.yml) 
+- `--model_name`: a string indicating the model to evaluate. The list of valid model names is the set of keys for dictionary `ALL_MODELS` in file [`TabSurvey/tabzilla_alg_handler.py`](TabSurvey/tabzilla_alg_handler.py)
+- `--dataset_dir`: the directory of the processed dataset to use. This directory should be created 
 
-## General Parameters
 
-General parameters for each experiment are read from a yml config file, by the parser returned by [`TabSurvey.tabzilla_utils.get_general_parser`](TabSurvey/tabzilla_utils.py). Below is a description of each of the general parameters read by this parser. An example config file can be found in: [TabSurvey/tabsurvey_search_config.yml](TabSurvey/tabsurvey_search_config.yml).
+## Experiment Config Parametesr
+
+General parameters for each experiment are read from a yml config file, by the parser returned by [`TabSurvey.tabzilla_utils.get_general_parser`](TabSurvey/tabzilla_utils.py). Below is a description of each of the general parameters read by this parser. For debugging, you can use the example config file here: [TabSurvey/tabzilla_experiment_config.yml](TabSurvey/tabzilla_experiment_config.yml).
 
 **General config parameters**
 ```
+  --output_dir OUTPUT_DIR
+                        directory where experiment results will be written. (default: None)
   --use_gpu             Set to true if GPU is available (default: False)
   --gpu_ids GPU_IDS     IDs of the GPUs used when data_parallel is true (default: None)
   --data_parallel       Distribute the training over multiple GPUs (default: False)
+  --n_random_trials N_RANDOM_TRIALS
+                        Number of trials of random hyperparameter search to run (default: 10)
+  --hparam_seed HPARAM_SEED
+                        Random seed for generating random hyperparameters. passed to optuna RandomSampler. (default: 0)
+  --n_opt_trials N_OPT_TRIALS
+                        Number of trials of hyperparameter optimization to run (default: 10)
   --batch_size BATCH_SIZE
                         Batch size used for training (default: 128)
   --val_batch_size VAL_BATCH_SIZE
@@ -59,7 +68,6 @@ General parameters for each experiment are read from a yml config file, by the p
   --logging_period LOGGING_PERIOD
                         Number of iteration after which validation is printed. (default: 100)
 ```
-
 
 # Datasets
 

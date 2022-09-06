@@ -1,15 +1,37 @@
 #!/bin/bash
 
 # load functions
-source utils.sh
+source ../utils.sh
 
 ##############################
 # begin: EXPERIMENT PARAMETERS
 
+# you can produce this model in python using:
+# from tabzilla_alg_handler import ALL_MODELS
+# for k,v in ALL_MODELS.items(): print(f"{k}:{v[0]}")
 MODELS_ENVS=(
-  "LinearModel:$SKLEARN_ENV"
-  "KNN:$SKLEARN_ENV"
-  "DecisionTree:$SKLEARN_ENV"
+  LinearModel:$SKLEARN_ENV
+  KNN:$SKLEARN_ENV
+  SVM:$SKLEARN_ENV
+  DecisionTree:$SKLEARN_ENV
+  RandomForest:$SKLEARN_ENV
+  XGBoost:$GBDT_ENV
+  CatBoost:$GBDT_ENV
+  LightGBM:$GBDT_ENV
+  MLP:$TORCH_ENV
+  ModelTree:$TORCH_ENV
+  TabNet:$TORCH_ENV
+  VIME:$TORCH_ENV
+  TabTransformer:$TORCH_ENV
+  NODE:$TORCH_ENV
+  DeepGBM:$TORCH_ENV
+  STG:$TORCH_ENV
+  NAM:$TORCH_ENV
+  DeepFM:$TORCH_ENV
+  SAINT:$TORCH_ENV
+  DANet:$TORCH_ENV
+  RLN:$KERAS_ENV
+  DNFNet:$KERAS_ENV
   )
 
 DATASETS=(
@@ -18,10 +40,10 @@ DATASETS=(
 )
 
 # base name for the gcloud instances
-instance_base=tztest
+instance_base=all-algs
 
 # experiment name (will be appended to results files)
-experiment_name=test-experiment
+experiment_name=all-algs
 
 # maximum number of experiments (background processes) that can be running
 MAX_PROCESSES=10

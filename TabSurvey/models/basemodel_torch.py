@@ -1,21 +1,22 @@
-from models.basemodel import BaseModel
-
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import TensorDataset, DataLoader
-
-import numpy as np
-
+from torch.utils.data import DataLoader, TensorDataset
 from utils.io_utils import get_output_path
+
+from models.basemodel import BaseModel
 
 
 class BaseModelTorch(BaseModel):
-
     def __init__(self, params, args):
         super().__init__(params, args)
         self.device = self.get_device()
-        self.gpus = args.gpu_ids if args.use_gpu and torch.cuda.is_available() and args.data_parallel else None
+        self.gpus = (
+            args.gpu_ids
+            if args.use_gpu and torch.cuda.is_available() and args.data_parallel
+            else None
+        )
 
     def to_device(self):
         if self.args.data_parallel:
@@ -27,16 +28,20 @@ class BaseModelTorch(BaseModel):
     def get_device(self):
         if self.args.use_gpu and torch.cuda.is_available():
             if self.args.data_parallel:
-                device = "cuda"  # + ''.join(str(i) + ',' for i in self.args.gpu_ids)[:-1]
+                device = (
+                    "cuda"  # + ''.join(str(i) + ',' for i in self.args.gpu_ids)[:-1]
+                )
             else:
-                device = 'cuda'
+                device = "cuda"
         else:
-            device = 'cpu'
+            device = "cpu"
 
         return torch.device(device)
 
     def fit(self, X, y, X_val=None, y_val=None):
-        optimizer = optim.AdamW(self.model.parameters(), lr=self.params["learning_rate"])
+        optimizer = optim.AdamW(
+            self.model.parameters(), lr=self.params["learning_rate"]
+        )
 
         X = torch.tensor(X).float()
         X_val = torch.tensor(X_val).float()
@@ -56,11 +61,17 @@ class BaseModelTorch(BaseModel):
             y_val = y_val.float()
 
         train_dataset = TensorDataset(X, y)
-        train_loader = DataLoader(dataset=train_dataset, batch_size=self.args.batch_size, shuffle=True,
-                                  num_workers=4)
+        train_loader = DataLoader(
+            dataset=train_dataset,
+            batch_size=self.args.batch_size,
+            shuffle=True,
+            num_workers=4,
+        )
 
         val_dataset = TensorDataset(X_val, y_val)
-        val_loader = DataLoader(dataset=val_dataset, batch_size=self.args.val_batch_size, shuffle=True)
+        val_loader = DataLoader(
+            dataset=val_dataset, batch_size=self.args.val_batch_size, shuffle=True
+        )
 
         min_val_loss = float("inf")
         min_val_loss_idx = 0
@@ -73,7 +84,10 @@ class BaseModelTorch(BaseModel):
 
                 out = self.model(batch_X.to(self.device))
 
-                if self.args.objective == "regression" or self.args.objective == "binary":
+                if (
+                    self.args.objective == "regression"
+                    or self.args.objective == "binary"
+                ):
                     out = out.squeeze()
 
                 loss = loss_func(out, batch_y.to(self.device))
@@ -89,7 +103,10 @@ class BaseModelTorch(BaseModel):
             for val_i, (batch_val_X, batch_val_y) in enumerate(val_loader):
                 out = self.model(batch_val_X.to(self.device))
 
-                if self.args.objective == "regression" or self.args.objective == "binary":
+                if (
+                    self.args.objective == "regression"
+                    or self.args.objective == "binary"
+                ):
                     out = out.squeeze()
 
                 val_loss += loss_func(out, batch_val_y.to(self.device))
@@ -105,10 +122,14 @@ class BaseModelTorch(BaseModel):
                 min_val_loss_idx = epoch
 
                 # Save the currently best model
-                self.save_model(filename_extension="best", directory="tmp")
+                # tabzilla: don't save the model...
+                # self.save_model(filename_extension="best", directory="tmp")
 
             if min_val_loss_idx + self.args.early_stopping_rounds < epoch:
-                print("Validation loss has not improved for %d steps!" % self.args.early_stopping_rounds)
+                print(
+                    "Validation loss has not improved for %d steps!"
+                    % self.args.early_stopping_rounds
+                )
                 print("Early stopping applies.")
                 break
 
@@ -117,13 +138,16 @@ class BaseModelTorch(BaseModel):
         return loss_history, val_loss_history
 
     def predict(self, X):
+        # tabzilla update: return prediction probabilities
         if self.args.objective == "regression":
             self.predictions = self.predict_helper(X)
+            probs = np.array([])
         else:
             self.predict_proba(X)
             self.predictions = np.argmax(self.prediction_probabilities, axis=1)
+            probs = self.prediction_probabilities
 
-        return self.predictions
+        return self.predictions, probs
 
     def predict_proba(self, X: np.ndarray) -> np.ndarray:
         probas = self.predict_helper(X)
@@ -140,8 +164,12 @@ class BaseModelTorch(BaseModel):
 
         X = torch.tensor(X).float()
         test_dataset = TensorDataset(X)
-        test_loader = DataLoader(dataset=test_dataset, batch_size=self.args.val_batch_size, shuffle=False,
-                                 num_workers=2)
+        test_loader = DataLoader(
+            dataset=test_dataset,
+            batch_size=self.args.val_batch_size,
+            shuffle=False,
+            num_workers=2,
+        )
         predictions = []
         with torch.no_grad():
             for batch_X in test_loader:
@@ -154,13 +182,23 @@ class BaseModelTorch(BaseModel):
         return np.concatenate(predictions)
 
     def save_model(self, filename_extension="", directory="models"):
-        filename = get_output_path(self.args, directory=directory, filename="m", extension=filename_extension,
-                                   file_type="pt")
+        filename = get_output_path(
+            self.args,
+            directory=directory,
+            filename="m",
+            extension=filename_extension,
+            file_type="pt",
+        )
         torch.save(self.model.state_dict(), filename)
 
     def load_model(self, filename_extension="", directory="models"):
-        filename = get_output_path(self.args, directory=directory, filename="m", extension=filename_extension,
-                                   file_type="pt")
+        filename = get_output_path(
+            self.args,
+            directory=directory,
+            filename="m",
+            extension=filename_extension,
+            file_type="pt",
+        )
         state_dict = torch.load(filename)
         self.model.load_state_dict(state_dict)
 

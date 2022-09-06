@@ -2,7 +2,8 @@
 set -e
 
 ###############################################################################################################
-# This script runs a single experiment on a gcloud instance.
+# This script runs a single experiment on a gcloud instance, on an ad-hoc basis.
+
 # This instance needs to have a (not-necessarily-updated) TabZilla codebase in /home/shared/tabzilla
 #
 # NOTE: this script requires that two environment variables are defined
@@ -11,43 +12,29 @@ set -e
 #  - ENV_NAME <- the conda env that should be used (this should go with the model)
 #  - MODEL_NAME <- name of the ML model to use
 #  - DATASET_NAME <- the name of the dataset to use for the experiment
-#  - EXPERIMENT_NAME <- name of the experiment. this will be appended to the result file name
 #
 ###############################################################################################################
+
+# run from this directory
+cd /home/shared/tabzilla/TabSurvey
 
 #############################################
 # make sure environment variables are defined
 
-if [ -n "$ENV_NAME" ]; then
-  echo "ENV_NAME: $ENV_NAME"
-else
-  echo "ENV_NAME string not defined" 1>&2
-fi
+# define the conda env that should be used {sklearn | gbdt | torch | tensorflow}
+ENV_NAME=NONE
 
-if [ -n "$MODEL_NAME" ]; then
-  echo "MODEL_NAME: $MODEL_NAME"
-else
-  echo "MODEL_NAME not defined" 1>&2
-fi
+# name of the model/algorithm
+MODEL_NAME=NONE
 
-if [ -n "$DATASET_NAME" ]; then
-  echo "DATASET_NAME: $DATASET_NAME"
-else
-  echo "DATASET_NAME string not defined" 1>&2
-fi
+# name of the dataset
+DATASET_NAME=NONE
 
-if [ -n "$EXPERIMENT_NAME" ]; then
-  echo "EXPERIMENT_NAME: $EXPERIMENT_NAME"
-else
-  echo "EXPERIMENT_NAME string not defined" 1>&2
-fi
-
-###############
-# prepare conda
+#########################################################
+# prepare conda, in case it has not already been prepared
 
 source /opt/conda/bin/activate
 conda init
-
 
 ################
 # run experiment
@@ -57,27 +44,15 @@ printf 'running experiment with model %s on dataset %s in env %s\n\n' "$MODEL_NA
 # use the env specified in ENV_NAME
 conda activate ${ENV_NAME}
 
-# search parameters
+# search parameters - this is the default
 CONFIG_FILE=tabzilla_experiment_config.yml
 
 # all datasets should be in this folder. the dataset folder should be in ${DATASET_BASE_DIR}/<dataset-name>
 DATASET_BASE_DIR=./datasets
 DATSET_DIR=${DATASET_BASE_DIR}/${DATASET_NAME}
 
-# run the experiment using command line args
-cd /home/shared/tabzilla/TabSurvey
-
 python tabzilla_experiment.py --experiment_config ${CONFIG_FILE} --dataset_dir ${DATSET_DIR} --model_name ${MODEL_NAME}
 
-# zip results
-zip -jr results.zip ./results
-
-# add a timestamp and a random string to the end of the filename, to avoid collisions
-result_file=${EXPERIMENT_NAME}_$(date +"%m%d%y_%H%M%S")_$(openssl rand -hex 2).zip
-mv ./results.zip ./${result_file}
-
-
-###############################
-# save results to gcloud bucket
-
-gsutil cp ./${result_file} gs://tabzilla-results/inbox/${DATASET_NAME}/${MODEL_NAME}/${result_file}
+# results will be written to /home/shared/tabzilla/TabSurvey/results
+# you can zip them if you'd like:
+# > zip -r results.zip ./results
