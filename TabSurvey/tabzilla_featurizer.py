@@ -3,8 +3,8 @@ from pymfe.mfe import MFE
 import pandas as pd
 from tqdm import tqdm
 
-from TabSurvey.tabzilla_datasets import TabularDataset
-from TabSurvey.tabzilla_data_processing import process_data
+from tabzilla_datasets import TabularDataset
+from tabzilla_data_processing import process_data
 
 groups = [
     'landmarking',
