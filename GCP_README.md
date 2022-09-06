@@ -15,7 +15,7 @@ this should print something like:
 > provide shell access.
 ```
 
-See [this link]([agent forwarding to authenticate your github account](https://docs.github.com/en/developers/overview/using-ssh-agent-forwarding)) for troubleshooting.
+See [this link](https://docs.github.com/en/developers/overview/using-ssh-agent-forwarding) for troubleshooting.
 
 ## 3. Create a GCP instance from the `tabzilla` family:
 
