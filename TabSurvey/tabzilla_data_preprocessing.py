@@ -1,5 +1,6 @@
 import argparse
 from pathlib import Path
+import sys
 
 import tabzilla_preprocessors
 
@@ -65,6 +66,7 @@ if __name__ == "__main__":
         for i, dataset_name in enumerate(sorted(preprocessors.keys())):
             print(f"{i + 1}: {dataset_name} ")
         print("------------------------")
+        sys.exit()
 
     if args.dataset_name is not None and args.process_all:
         raise RuntimeError(

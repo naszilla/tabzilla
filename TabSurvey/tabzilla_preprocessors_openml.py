@@ -33,7 +33,11 @@ openml_tasks = [
 
 with open(easy_import_task_file, "r") as f:
     for line in f:
-        task_id = int(line.strip())
+        processed = line.strip()
+        # Ignore empty lines
+        if not processed:
+            continue
+        task_id = int(processed)
         openml_tasks.append({"openml_task_id": task_id})
 
 
