@@ -36,6 +36,7 @@ class TabZillaObjective(object):
         dataset: TabularDataset,
         experiment_args: NamedTuple,
         hparam_source: str,
+        training_time_limit: int,
     ):
         #  BaseModel handle that will be initialized and trained
         self.model_handle = model_handle
@@ -55,6 +56,9 @@ class TabZillaObjective(object):
 
         # to keep track of the number of evaluations, separate from the trial number
         self.counter = 0
+
+        # time limit for each training cycle
+        self.time_limit = training_time_limit
 
     def __call__(self, trial):
 
@@ -109,7 +113,7 @@ class TabZillaObjective(object):
         model = self.model_handle(trial_params, args)
 
         # Cross validate the chosen hyperparameters
-        result = cross_validation(model, self.dataset)
+        result = cross_validation(model, self.dataset, self.time_limit)
 
         # add info about the hyperparams and trial number
         result.hparam_source = self.hparam_source
@@ -151,6 +155,7 @@ def main(experiment_args, model_name, dataset_dir):
             dataset=dataset,
             experiment_args=experiment_args,
             hparam_source=f"random_seed{experiment_args.hparam_seed}",
+            training_time_limit=experiment_args.training_time_limit,
         )
 
         print(
@@ -175,6 +180,7 @@ def main(experiment_args, model_name, dataset_dir):
             dataset=dataset,
             experiment_args=experiment_args,
             hparam_source="optimization",
+            training_time_limit=experiment_args.training_time_limit,
         )
 
         print(

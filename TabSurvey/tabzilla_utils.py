@@ -17,12 +17,14 @@ def generate_filepath(name, extension):
     timestr = time.strftime("%Y%m%d_%H%M%S")
     return (name + "_%s." + extension) % timestr
 
+
 def is_jsonable(x):
     try:
         json.dumps(x)
         return True
     except (TypeError, OverflowError):
         return False
+
 
 def get_scorer(objective):
     if objective == "regression":
@@ -107,7 +109,9 @@ class ExperimentResult:
         write_dict_to_json(result_dict, filepath, compress=compress)
 
 
-def cross_validation(model: BaseModel, dataset: TabularDataset) -> ExperimentResult:
+def cross_validation(
+    model: BaseModel, dataset: TabularDataset, time_limit
+) -> ExperimentResult:
     """
     takes a BaseModel and TabularDataset as input, and trains and evaluates the model using cross validation with all
     folds specified in the dataset property split_indeces
@@ -183,6 +187,7 @@ def cross_validation(model: BaseModel, dataset: TabularDataset) -> ExperimentRes
             y_train,
             X_test,
             y_test,
+            time_limit=time_limit,
         )
         timers["train"].end()
 
@@ -288,6 +293,12 @@ def get_experiment_parser():
         required=True,
         type=str,
         help="directory where experiment results will be written.",
+    )
+    experiment_parser.add_argument(
+        "--training_time_limit",
+        required=True,
+        type=int,
+        help="time limit for training the algorithm on a single training split.",
     )
     experiment_parser.add(
         "--use_gpu", action="store_true", help="Set to true if GPU is available"

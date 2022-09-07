@@ -65,12 +65,14 @@ class BaseModel:
             "args": self.args._asdict(),
         }
 
+    # TabZilla: add time limit to fit method
     def fit(
         self,
         X: np.ndarray,
         y: np.ndarray,
         X_val: tp.Union[None, np.ndarray] = None,
         y_val: tp.Union[None, np.ndarray] = None,
+        time_limit: int = None,
     ) -> tp.Tuple[list, list]:
         """Trains the model.
 
@@ -86,6 +88,11 @@ class BaseModel:
         :param y_val: labels of validation data
         :return: loss history, validation loss history
         """
+
+        if time_limit is not None:
+            print(
+                "WARNING: time limit will not be enforced. This has not yet been implemented for general models."
+            )
 
         self.model.fit(X, y)
 

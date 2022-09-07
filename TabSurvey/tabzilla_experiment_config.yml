@@ -17,3 +17,4 @@ val_batch_size: 256
 early_stopping_rounds: 20
 epochs: 1000
 logging_period: 100
+training_time_limit: 60
