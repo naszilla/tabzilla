@@ -1,3 +1,5 @@
+import time
+
 import numpy as np
 import torch
 import torch.nn as nn
@@ -38,7 +40,8 @@ class BaseModelTorch(BaseModel):
 
         return torch.device(device)
 
-    def fit(self, X, y, X_val=None, y_val=None):
+    # TabZilla: added a time limit
+    def fit(self, X, y, X_val=None, y_val=None, time_limit=600):
         optimizer = optim.AdamW(
             self.model.parameters(), lr=self.params["learning_rate"]
         )
@@ -79,6 +82,7 @@ class BaseModelTorch(BaseModel):
         loss_history = []
         val_loss_history = []
 
+        start_time = time.time()
         for epoch in range(self.args.epochs):
             for i, (batch_X, batch_y) in enumerate(train_loader):
 
@@ -131,6 +135,13 @@ class BaseModelTorch(BaseModel):
                     % self.args.early_stopping_rounds
                 )
                 print("Early stopping applies.")
+                break
+
+            runtime = time.time() - start_time
+            if runtime > time_limit:
+                print(
+                    f"Runtime has exceeded time limit of {time_limit} seconds. Stopping fit."
+                )
                 break
 
         # Load best model
