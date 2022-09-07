@@ -51,14 +51,14 @@ class KNN(BaseModel):
         elif args.objective == "classification" or args.objective == "binary":
             self.model = neighbors.KNeighborsClassifier(n_neighbors=params["n_neighbors"], n_jobs=-1)
 
-    def fit(self, X, y, X_val=None, y_val=None):
+    def fit(self, X, y, X_val=None, y_val=None, time_limit=None):
         max_samples = 10000
         if X.shape[0] > max_samples:
             idx = random.sample(list(range(X.shape[0])), max_samples)
             X = X[idx]
             y = y[idx]
 
-        return super().fit(X, y, X_val, y_val)
+        return super().fit(X, y, X_val, y_val, time_limit=time_limit)
 
     @classmethod
     def define_trial_parameters(cls, trial, args):
