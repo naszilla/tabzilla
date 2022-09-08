@@ -57,7 +57,8 @@ class DANet(BaseModelTorch):
 
         print(self.model)
 
-    def fit(self, X, y, X_val=None, y_val=None):
+    # TabZilla: add time limit
+    def fit(self, X, y, X_val=None, y_val=None, time_limit=None):
 
         X = np.array(X, dtype=np.float)
         X_val = np.array(X_val, dtype=np.float)
@@ -80,7 +81,8 @@ class DANet(BaseModelTorch):
             batch_size=self.args.batch_size, virtual_batch_size=self.args.batch_size,
             logname=self.logname,
             # resume_dir=self.train_config['resume_dir'],
-            n_gpu=self.n_gpu
+            n_gpu=self.n_gpu,
+            time_limit=time_limit,
         )
 
         return self.model.history["loss"], self.model.history["valid_" + self.eval_metric[0]]

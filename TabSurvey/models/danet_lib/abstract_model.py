@@ -26,6 +26,7 @@ from models.danet_lib.model.DANet import DANet
 from models.danet_lib.model.AcceleratedModule import AcceleratedCreator
 from sklearn.base import BaseEstimator
 from sklearn.utils import check_array
+import time
 
 @dataclass
 class DANsModel(BaseEstimator):
@@ -56,6 +57,7 @@ class DANsModel(BaseEstimator):
         if self.verbose != 0:
             print(f"Device used : {self.device}")
 
+    # TabZilla: add time limit
     def fit(
         self,
         X_train,
@@ -71,7 +73,8 @@ class DANsModel(BaseEstimator):
         callbacks=None,
         logname=None,
         resume_dir=None,
-        n_gpu=1
+        n_gpu=1,
+        time_limit=None,
     ):
         """Train a neural network stored in self.network
         Using train_dataloader for training data and
@@ -143,6 +146,7 @@ class DANsModel(BaseEstimator):
         best_value = -float('inf') if self._task == 'classification' else float('inf')
 
         print("===> Start training ...")
+        training_start_time = time.time()
         for epoch_idx in range(start_epoch, self.max_epochs + 1):
             self.epoch = epoch_idx
             # Call method on_epoch_begin for all callbacks
@@ -161,7 +165,12 @@ class DANsModel(BaseEstimator):
             print('LR: ' + str(self._optimizer.param_groups[0]['lr']))
             if self._stop_training:
                 break
-
+            
+            train_time = time.time() - training_start_time
+            if train_time > time_limit:
+                print(f"Training time has exceeded time limit of {time_limit} seconds. Stopping training.")
+                break 
+                
         # Call method on_train_end for all callbacks
         self._callback_container.on_train_end()
         self.network.eval()
