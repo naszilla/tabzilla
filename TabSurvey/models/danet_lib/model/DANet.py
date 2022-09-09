@@ -53,7 +53,8 @@ class AbstractLayer(nn.Module):
     def forward(self, x):
         b = x.size(0)
         x = self.masker(x)  # [B, D] -> [B, k, D]
-        x = self.fc(x.view(b, -1, 1))  # [B, k, D] -> [B, k * D, 1] -> [B, k * (2 * D'), 1]
+        #x = self.fc(x.view(b, -1, 1))  # [B, k, D] -> [B, k * D, 1] -> [B, k * (2 * D'), 1]
+        x = self.fc(x.reshape(b, -1, 1))  # [B, k, D] -> [B, k * D, 1] -> [B, k * (2 * D'), 1]
         x = self.bn(x)
         chunks = x.chunk(self.k, 1)  # k * [B, 2 * D', 1]
         x = sum([F.relu(torch.sigmoid(x_[:, :self.base_output_dim, :]) * x_[:, self.base_output_dim:, :]) for x_ in chunks])  # k * [B, D', 1] -> [B, D', 1]
