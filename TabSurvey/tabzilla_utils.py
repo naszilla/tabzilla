@@ -17,12 +17,14 @@ def generate_filepath(name, extension):
     timestr = time.strftime("%Y%m%d_%H%M%S")
     return (name + "_%s." + extension) % timestr
 
+
 def is_jsonable(x):
     try:
         json.dumps(x)
         return True
     except (TypeError, OverflowError):
         return False
+
 
 def get_scorer(objective):
     if objective == "regression":
@@ -75,6 +77,7 @@ class ExperimentResult:
         self.hparam_source = None
         self.trial_number = None
         self.experiemnt_args = None
+        self.exception = None
 
     def write(self, filepath, compress=False):
         """write all result properties to a new file. raise an exception if the file exists."""
@@ -94,10 +97,10 @@ class ExperimentResult:
                 {key: list(val.tolist()) for key, val in split.items()}
                 for split in self.dataset.split_indeces
             ],
-            # TODO: check that all values in this dict are serializable...
             "predictions": self.predictions,
             "probabilities": self.probabilities,
             "ground_truth": self.ground_truth,
+            "exception": str(self.exception),
         }
 
         for k, v in result_dict.items():
