@@ -126,7 +126,7 @@ experiment_name=all-datasets
 MAX_PROCESSES=10
 
 # config file
-config_file=../../TabSurvey/tabzilla_experiment_config_test.yml
+config_file=/home/shared/tabzilla/TabSurvey/tabzilla_experiment_config_test.yml
 
 # end: EXPERIMENT PARAMETERS
 ############################
