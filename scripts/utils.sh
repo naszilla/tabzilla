@@ -22,17 +22,21 @@ run_experiment() {
   # $3 = env name
   # $4 = instance name
   # $5 = experiment name
+  # $6 = config file
   model_name="$1"
   dataset_name="$2"
   env_name="$3"
   instance_name="$4"
   experiment_name="$5"
+  config_file="$6"
 
   echo "run_experiment: model_name: ${model_name}"
   echo "run_experiment: dataset_name: ${dataset_name}"
   echo "run_experiment: env_name: ${env_name}"
   echo "run_experiment: instance_name: ${instance_name}"
   echo "run_experiment: experiment_name: ${experiment_name}"
+  echo "run_experiment: config_file: ${config_file}"
+
 
   # set a return trap to delete the instance when this function returns
   trap "echo deleting instance ${instance_name}...; printf \"Y\" | gcloud compute instances delete ${instance_name} --zone=${zone} --project=${project}" RETURN
@@ -90,6 +94,7 @@ run_experiment() {
       export MODEL_NAME=${model_name}; \
       export DATASET_NAME=${dataset_name}; \
       export EXPERIMENT_NAME=${experiment_name}; \
+      export CONFIG_FILE=${config_file}; \
       chmod +x ${instance_script}; \
       /bin/bash ${instance_script}"
 
