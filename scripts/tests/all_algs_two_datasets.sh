@@ -36,7 +36,7 @@ MODELS_ENVS=(
 
 DATASETS=(
     openml__california__361089
-    openml__MiceProtein_146800
+    openml__MiceProtein__146800
 )
 
 # base name for the gcloud instances
