@@ -99,7 +99,7 @@ do
     echo "EXPERIMENT_NAME: ${experiment_name}"
     echo "CONFIG_FILE: ${config_file}"
 
-    run_experiment "${model}" ${DATASETS[j]} ${env} ${instance_base}-${i}-${j} ${experiment_name} ${config_file} ${config_file} >> ${LOG_DIR}/log_${i}_${j}_$(date +"%m%d%y_%H%M%S").txt 2>&1 &
+    run_experiment "${model}" ${DATASETS[j]} ${env} ${instance_base}-${i}-${j} ${experiment_name} ${config_file} >> ${LOG_DIR}/log_${i}_${j}_$(date +"%m%d%y_%H%M%S").txt 2>&1 &
     num_experiments=$((num_experiments + 1))
 
     # add instance name to the instance list
