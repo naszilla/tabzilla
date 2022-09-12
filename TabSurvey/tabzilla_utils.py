@@ -181,8 +181,8 @@ def cross_validation(model: BaseModel, dataset: TabularDataset) -> ExperimentRes
         loss_history, val_loss_history = curr_model.fit(
             X_train,
             y_train,
-            X_test,
-            y_test,
+            X_val,
+            y_val,
         )
         timers["train"].end()
 
