@@ -12,17 +12,17 @@ from sklearn.svm import SVR
 from tabzilla_meta_featurizer import get_cached_featurized
 from tabzilla_meta_metrics import get_metrics
 
-METADATA_LOCATION = "./temp/metafeatures_v0.csv"
+METADATA_VERSION = "v0"
+METADATA_PATH = f"./temp/metafeatures_{METADATA_VERSION}.csv"
 
 def get_metalearner(name: str):
-    """_summary_
-
+    """
     Args:
         name (str): type of metalearner
 
     Returns:
-        model class the supports model.fit and model.predict
-    """    
+        model class that supports model.fit and model.predict
+    """
     if name == 'linear':
         model = Pipeline([("scaler", StandardScaler()),
                          ("linear", MultiOutputRegressor(Ridge(alpha=10))),
@@ -39,7 +39,7 @@ def get_metalearner(name: str):
 
 if __name__ == '__main__':
     # Load the meta data
-    X_train, y_train, X_test, y_test, y_best_test = get_cached_featurized()
+    X_train, y_train, X_test, y_test, y_best_test = get_cached_featurized(METADATA_PATH)
 
     # fetch the model 
     model = get_metalearner('linear')
