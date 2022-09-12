@@ -125,6 +125,9 @@ experiment_name=all-datasets
 # maximum number of experiments (background processes) that can be running
 MAX_PROCESSES=10
 
+# config file
+config_file=../../TabSurvey/tabzilla_experiment_config_test.yml
+
 # end: EXPERIMENT PARAMETERS
 ############################
 
