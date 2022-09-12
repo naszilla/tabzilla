@@ -1,4 +1,5 @@
 import numpy as np
+import time
 
 import torch
 from torch.utils.data import TensorDataset
@@ -19,9 +20,10 @@ from models.deepgbm_lib.utils.helper import eval_metrics, printMetric
 
 model_path = "deepgbm.pt"
 
-
+# TabZilla: add time limit
+# TODO: time limit needs to be tested
 def trainModel(model, train_x, train_y, tree_outputs, test_x, test_y, optimizer,
-               train_x_cat=None, test_x_cat=None, epochs=20, early_stopping_rounds=5, save_model=False):
+               train_x_cat=None, test_x_cat=None, epochs=20, early_stopping_rounds=5, save_model=False, time_limit=None):
     task = config.config['task']
     device = config.config['device']
 
@@ -46,6 +48,8 @@ def trainModel(model, train_x, train_y, tree_outputs, test_x, test_y, optimizer,
 
     model = model.to(device)
 
+    training_start_time = time.time()
+    if time_limit is None...
     for epoch in range(epochs):
 
         running_loss = 0.0
@@ -109,6 +113,11 @@ def trainModel(model, train_x, train_y, tree_outputs, test_x, test_y, optimizer,
 
         if min_test_loss_idx + early_stopping_rounds < epoch:
             print("Early stopping applies!")
+            break
+
+        train_time = time.time() - training_start_time
+        if train_time > time_limit:
+            print(f"Training time has exceeded time limit of {time_limit} seconds. Stopping training.")
             break
 
     print('Finished Training')

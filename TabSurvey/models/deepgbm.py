@@ -43,7 +43,8 @@ class DeepGBM(BaseModelTorch):
 
         print(deepgbm_config)
 
-    def fit(self, X, y, X_val=None, y_val=None):
+    # TabZilla: add time limit
+    def fit(self, X, y, X_val=None, y_val=None, time_limit=None):
         # preprocess
         train_x_cat, feature_sizes = self.ce.fit_transform(X.copy())
         test_x_cat = self.ce.transform(X_val.copy())
@@ -56,7 +57,7 @@ class DeepGBM(BaseModelTorch):
 
         # train
         self.model, _, loss_history, val_loss_history = train(train_num, test_num, train_x_cat.astype('int32'),
-                                                              test_x_cat.astype('int32'), feature_sizes)
+                                                              test_x_cat.astype('int32'), feature_sizes, time_limit=time_limit)
 
         return loss_history, val_loss_history
 

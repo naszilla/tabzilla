@@ -76,8 +76,9 @@ def preprocess(df, num_col, cat_col, label_col):
         - optimizer: optimizer used during training
 '''
 
-
-def train(train_num, test_num, train_cat, test_cat, feature_sizes, save_model=False):
+# TabZilla: add time limit
+# TODO: time limit needs to be tested
+def train(train_num, test_num, train_cat, test_cat, feature_sizes, save_model=False, time_limit=None):
     x_train, y_train = train_num
     x_test, y_test = test_num
 
@@ -123,7 +124,9 @@ def train(train_num, test_num, train_cat, test_cat, feature_sizes, save_model=Fa
                                                       train_x_cat=train_cat, test_x_cat=test_cat,
                                                       epochs=config.config['epochs'],
                                                       early_stopping_rounds=config.config['early_stopping'],
-                                                      save_model=save_model)
+                                                      save_model=save_model,
+                                                      time_limit=time_limit,
+                                                      )
 
     return deepgbm_model, optimizer, loss_history, val_loss_history
 
