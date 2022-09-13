@@ -16,6 +16,7 @@ from models.basemodel import BaseModel
 from tabzilla_alg_handler import ALL_MODELS, get_model
 from tabzilla_datasets import TabularDataset
 from tabzilla_utils import (
+    ExperimentResult,
     cross_validation,
     generate_filepath,
     get_experiment_parser,
@@ -109,7 +110,22 @@ class TabZillaObjective(object):
         model = self.model_handle(trial_params, args)
 
         # Cross validate the chosen hyperparameters
-        result = cross_validation(model, self.dataset)
+        try:
+            result = cross_validation(model, self.dataset)
+            obj_val = result.scorers["val"].get_objective_result()
+        except Exception as e:
+            print(f"caught exception during cross-validation...")
+            result = ExperimentResult(
+                dataset=self.dataset,
+                model=model,
+                timers={},
+                scorers={},
+                predictions=None,
+                probabilities=None,
+                ground_truth=None,
+            )
+            result.exception = e
+            obj_val = None
 
         # add info about the hyperparams and trial number
         result.hparam_source = self.hparam_source
@@ -124,7 +140,7 @@ class TabZillaObjective(object):
 
         self.counter += 1
 
-        return result.scorers["val"].get_objective_result()
+        return obj_val
 
 
 def main(experiment_args, model_name, dataset_dir):
