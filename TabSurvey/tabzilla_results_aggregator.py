@@ -19,7 +19,7 @@ def download_results():
     local_results_folder.mkdir(parents=True, exist_ok=True)
 
     storage_client = storage.Client(project=PROJECT_NAME)
-    for result_blob in storage_client.list_blobs(RESULTS_BUCKET_NAME):
+    for result_blob in storage_client.list_blobs(RESULTS_BUCKET_NAME, prefix=ROOT_PATH):
         blob_path = Path(result_blob.name)
         local_path = local_results_folder / blob_path.relative_to(ROOT_PATH)
         if not local_path.exists():
