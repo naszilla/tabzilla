@@ -46,17 +46,22 @@ class KNN(BaseModel):
     def __init__(self, params, args):
         super().__init__(params, args)
 
+        knn_alg = params.get("knn_alg", "auto")
+        leaf_size = params.get("leaf_size", 30)
+
         if args.objective == "regression":
-            self.model = neighbors.KNeighborsRegressor(n_neighbors=params["n_neighbors"], n_jobs=-1)
+            self.model = neighbors.KNeighborsRegressor(n_neighbors=params["n_neighbors"], algorithm=knn_alg,
+                                                       leaf_size=leaf_size, n_jobs=-1)
         elif args.objective == "classification" or args.objective == "binary":
-            self.model = neighbors.KNeighborsClassifier(n_neighbors=params["n_neighbors"], n_jobs=-1)
+            self.model = neighbors.KNeighborsClassifier(n_neighbors=params["n_neighbors"], algorithm=knn_alg,
+                                                       leaf_size=leaf_size, n_jobs=-1)
 
     def fit(self, X, y, X_val=None, y_val=None):
-        max_samples = 10000
-        if X.shape[0] > max_samples:
-            idx = random.sample(list(range(X.shape[0])), max_samples)
-            X = X[idx]
-            y = y[idx]
+        # max_samples = 10000
+        # if X.shape[0] > max_samples:
+        #     idx = random.sample(list(range(X.shape[0])), max_samples)
+        #     X = X[idx]
+        #     y = y[idx]
 
         return super().fit(X, y, X_val, y_val)
 
