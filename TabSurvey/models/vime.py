@@ -103,6 +103,28 @@ class VIME(BaseModelTorch):
         }
         return params
 
+    # TabZilla: add function for seeded random params and default params
+    @classmethod
+    def get_random_parameters(cls, seed):
+        rs = np.random.RandomState(seed)
+        params = {
+            "p_m": rs.uniform(0.1, 0.9),
+            "alpha": rs.uniform(0.1, 10),
+            "K": rs.choice([2, 3, 5, 10, 15, 20]),
+            "beta": rs.uniform(0.1, 10),
+        }
+        return params
+
+    @classmethod
+    def default_parameters(cls):
+        params = {
+            "p_m": 0.5,
+            "alpha": 3.0,
+            "K": 5,
+            "beta": 3.0,
+        }
+        return params
+
     def fit_self(self, X, p_m=0.3, alpha=2):
         optimizer = optim.RMSprop(self.model_self.parameters(), lr=0.001)
         loss_func_mask = nn.BCELoss()

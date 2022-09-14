@@ -218,6 +218,32 @@ class TabTransformer(BaseModelTorch):
         }
         return params
 
+    # TabZilla: add function for seeded random params and default params
+    @classmethod
+    def get_random_parameters(cls, seed):
+        rs = np.random.RandomState(seed)
+        params = {
+            "dim": rs.choice([32, 64, 128, 256]),
+            "depth": rs.choice([1, 2, 3, 6, 12]),
+            "heads": rs.choice([2, 4, 8]),
+            "weight_decay": rs.randint(-6, 0),
+            "learning_rate": rs.randint(-6, -2),
+            "dropout": rs.choice([0, 0.1, 0.2, 0.3, 0.4, 0.5]),
+        }
+        return params
+
+    @classmethod
+    def default_parameters(cls):
+        params = {
+            "dim": 32,
+            "depth": 6,
+            "heads": 8,
+            "weight_decay": -3,
+            "learning_rate": -4,
+            "dropout": 0.3,
+        }
+        return params
+
     def attribute(self, X: np.ndarray, y: np.ndarray, strategy=""):
         """Generate feature attributions for the model input.
         Two strategies are supported: default ("") or "diag". The default strategie takes the sum

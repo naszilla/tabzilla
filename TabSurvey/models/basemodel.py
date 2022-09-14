@@ -165,6 +165,21 @@ class BaseModel:
 
         raise NotImplementedError("This method has to be implemented by the sub class")
 
+    # TabZilla: add placeholder methods for get_random_parameters() and default_parameters()
+    @classmethod
+    def get_random_parameters(cls, seed: int):
+        """
+        returns a random set of hyperparameters, which can be replicated using the provided seed
+        """
+        raise NotImplementedError("This method has to be implemented by the sub class")
+
+    @classmethod
+    def default_parameters(cls):
+        """
+        returns the default set of hyperparameters
+        """
+        raise NotImplementedError("This method has to be implemented by the sub class")
+
     def save_model(self, filename_extension=""):
         """Saves the current state of the model.
 

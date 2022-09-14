@@ -21,7 +21,6 @@ from tabzilla_utils import (
     generate_filepath,
     get_experiment_parser,
     get_scorer,
-    make_archive,
 )
 
 
@@ -36,7 +35,8 @@ class TabZillaObjective(object):
         model_handle: BaseModel,
         dataset: TabularDataset,
         experiment_args: NamedTuple,
-        hparam_source: str,
+        hparam_seed: int,
+        random_parameters: bool,
     ):
         #  BaseModel handle that will be initialized and trained
         self.model_handle = model_handle
@@ -51,19 +51,33 @@ class TabZillaObjective(object):
         sc_tmp = get_scorer(dataset.target_type)
         self.direction = sc_tmp.direction
 
-        # this should be a string that indicates the source of the hyperparameters
-        self.hparam_source = hparam_source
-
         # to keep track of the number of evaluations, separate from the trial number
         self.counter = 0
 
+        # if True, sample random hyperparameters. if False, sample using the optuna sampler object
+        self.random_parameters = random_parameters
+
+        # if random_parameters = True, then this is used to generate random hyperparameters
+        self.hparam_seed = hparam_seed
+
     def __call__(self, trial):
 
-        # TODO: we should limit the number of samples for algs with no hyperparams - right now, this is only LinearModel..
-        # Define hyperparameters to optimize
-        trial_params = self.model_handle.define_trial_parameters(
-            trial, None
-        )  # the second arg was "args", and is not used by the function. so we will pass None instead
+        if self.random_parameters:
+            # first trial is always default params. after that, sample using either random or optuna suggested hparams
+            if self.counter == 0:
+                trial_params = self.model_handle.default_parameters()
+                hparam_source = "default"
+            else:
+                trial_params = self.model_handle.get_random_parameters(
+                    self.counter + self.hparam_seed * 999
+                )
+                hparam_source = f"random_{self.counter}_s{self.hparam_seed}"
+
+        else:
+            trial_params = self.model_handle.define_trial_parameters(
+                trial, None
+            )  # the second arg was "args", and is not used by the function. so we will pass None instead
+            hparam_source = f"sampler_{trial.number}"
 
         # Create model
         # pass a namespace "args" that contains all information needed to initialize the model.
@@ -128,13 +142,13 @@ class TabZillaObjective(object):
             obj_val = None
 
         # add info about the hyperparams and trial number
-        result.hparam_source = self.hparam_source
+        result.hparam_source = hparam_source
         result.trial_number = self.counter
         result.experiment_args = vars(self.experiment_args)
 
         # write result to file
         result_file = self.output_path.joinpath(
-            generate_filepath(f"{self.hparam_source}_trial{self.counter}", "json")
+            generate_filepath(f"{hparam_source}_trial{self.counter}", "json")
         )
         result.write(result_file, compress=False)
 
@@ -166,7 +180,8 @@ def main(experiment_args, model_name, dataset_dir):
             model_handle=model_handle,
             dataset=dataset,
             experiment_args=experiment_args,
-            hparam_source=f"random_seed{experiment_args.hparam_seed}",
+            hparam_seed=experiment_args.hparam_seed,
+            random_parameters=True,
         )
 
         print(
@@ -177,7 +192,6 @@ def main(experiment_args, model_name, dataset_dir):
             study_name=study_name,
             storage=storage_name,
             load_if_exists=True,
-            sampler=RandomSampler(experiment_args.hparam_seed),
         )
         study.optimize(objective, n_trials=experiment_args.n_random_trials)
         previous_trials = study.trials
@@ -185,12 +199,13 @@ def main(experiment_args, model_name, dataset_dir):
         previous_trials = None
 
     if experiment_args.n_opt_trials:
-
+        # TODO: this needs to be tested
         objective = TabZillaObjective(
             model_handle=model_handle,
             dataset=dataset,
             experiment_args=experiment_args,
-            hparam_source="optimization",
+            hparam_seed=experiment_args.hparam_seed,
+            random_parameters=False,
         )
 
         print(

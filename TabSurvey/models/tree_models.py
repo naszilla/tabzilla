@@ -1,24 +1,23 @@
-import xgboost as xgb
+from pathlib import Path
+
 import catboost as cat
 import lightgbm as lgb
-
 import numpy as np
-from pathlib import Path
+import xgboost as xgb
 
 from models.basemodel import BaseModel
 
-'''
+"""
     Define all Gradient Boosting Decision Tree Models:
     XGBoost, CatBoost, LightGBM
-'''
+"""
 
-'''
+"""
     XGBoost (https://xgboost.readthedocs.io/en/stable/)
-'''
+"""
 
 
 class XGBoost(BaseModel):
-
     def __init__(self, params, args):
         super().__init__(params, args)
 
@@ -43,9 +42,14 @@ class XGBoost(BaseModel):
         train = xgb.DMatrix(X, label=y)
         val = xgb.DMatrix(X_val, label=y_val)
         eval_list = [(val, "eval")]
-        self.model = xgb.train(self.params, train, num_boost_round=self.args.epochs, evals=eval_list,
-                               early_stopping_rounds=self.args.early_stopping_rounds,
-                               verbose_eval=self.args.logging_period)
+        self.model = xgb.train(
+            self.params,
+            train,
+            num_boost_round=self.args.epochs,
+            evals=eval_list,
+            early_stopping_rounds=self.args.early_stopping_rounds,
+            verbose_eval=self.args.logging_period,
+        )
 
         return [], []
 
@@ -69,18 +73,39 @@ class XGBoost(BaseModel):
             "max_depth": trial.suggest_int("max_depth", 2, 12, log=True),
             "alpha": trial.suggest_float("alpha", 1e-8, 1.0, log=True),
             "lambda": trial.suggest_float("lambda", 1e-8, 1.0, log=True),
-            "eta": trial.suggest_float("eta", 0.01, 0.3, log=True)
+            "eta": trial.suggest_float("eta", 0.01, 0.3, log=True),
+        }
+        return params
+
+    # TabZilla: add function for seeded random params and default params
+    @classmethod
+    def get_random_parameters(cls, seed):
+        rs = np.random.RandomState(seed)
+        params = {
+            "max_depth": int(np.round(np.power(2, rs.uniform(1, np.log2(12))))),
+            "alpha": np.power(10, rs.uniform(-8, 0)),
+            "lambda": np.power(10, rs.uniform(-8, 0)),
+            "eta": 3.0 * np.power(10, rs.uniform(-2, -1)),
+        }
+        return params
+
+    @classmethod
+    def default_parameters(cls):
+        params = {
+            "max_depth": 5,
+            "alpha": 1e-4,
+            "lambda": 1e-4,
+            "eta": 0.08,
         }
         return params
 
 
-'''
+"""
     CatBoost (https://catboost.ai/)
-'''
+"""
 
 
 class CatBoost(BaseModel):
-
     def __init__(self, params, args):
         super().__init__(params, args)
 
@@ -88,7 +113,9 @@ class CatBoost(BaseModel):
         self.params["od_type"] = "Iter"
         self.params["od_wait"] = self.args.early_stopping_rounds
         self.params["verbose"] = self.args.logging_period
-        self.params["train_dir"] = "output/CatBoost/" + self.args.dataset + "/catboost_info"
+        self.params["train_dir"] = (
+            "output/CatBoost/" + self.args.dataset + "/catboost_info"
+        )
         Path(self.params["train_dir"]).parent.mkdir(parents=True, exist_ok=True)
 
         if args.use_gpu:
@@ -106,10 +133,10 @@ class CatBoost(BaseModel):
 
         # CatBoost does not accept float arrays if cat features are defined
         if self.args.cat_idx:
-            X = X.astype('object')
-            X_val = X_val.astype('object')
-            X[:, self.args.cat_idx] = X[:, self.args.cat_idx].astype('int')
-            X_val[:, self.args.cat_idx] = X_val[:, self.args.cat_idx].astype('int')
+            X = X.astype("object")
+            X_val = X_val.astype("object")
+            X[:, self.args.cat_idx] = X[:, self.args.cat_idx].astype("int")
+            X_val[:, self.args.cat_idx] = X_val[:, self.args.cat_idx].astype("int")
 
         self.model.fit(X, y, eval_set=(X_val, y_val))
 
@@ -117,8 +144,8 @@ class CatBoost(BaseModel):
 
     def predict(self, X):
         if self.args.cat_idx:
-            X = X.astype('object')
-            X[:, self.args.cat_idx] = X[:, self.args.cat_idx].astype('int')
+            X = X.astype("object")
+            X[:, self.args.cat_idx] = X[:, self.args.cat_idx].astype("int")
 
         return super().predict(X)
 
@@ -131,14 +158,33 @@ class CatBoost(BaseModel):
         }
         return params
 
+    # TabZilla: add function for seeded random params and default params
+    @classmethod
+    def get_random_parameters(cls, seed):
+        rs = np.random.RandomState(seed)
+        params = {
+            "learning_rate": 3.0 * np.power(10, rs.uniform(-2, -1)),
+            "max_depth": int(np.round(np.power(2, rs.uniform(1, np.log2(12))))),
+            "l2_leaf_reg": 0.5 * np.power(60, rs.uniform(0, 1)),
+        }
+        return params
 
-'''
+    @classmethod
+    def default_parameters(cls):
+        params = {
+            "learning_rate": 0.08,
+            "max_depth": 5,
+            "l2_leaf_reg": 5,
+        }
+        return params
+
+
+"""
     LightGBM (https://lightgbm.readthedocs.io/en/latest/)
-'''
+"""
 
 
 class LightGBM(BaseModel):
-
     def __init__(self, params, args):
         super().__init__(params, args)
 
@@ -158,10 +204,18 @@ class LightGBM(BaseModel):
     def fit(self, X, y, X_val=None, y_val=None):
         train = lgb.Dataset(X, label=y, categorical_feature=self.args.cat_idx)
         val = lgb.Dataset(X_val, label=y_val, categorical_feature=self.args.cat_idx)
-        self.model = lgb.train(self.params, train, num_boost_round=self.args.epochs, valid_sets=[val],
-                               valid_names=["eval"], callbacks=[lgb.early_stopping(self.args.early_stopping_rounds),
-                                                                lgb.log_evaluation(self.args.logging_period)],
-                               categorical_feature=self.args.cat_idx)
+        self.model = lgb.train(
+            self.params,
+            train,
+            num_boost_round=self.args.epochs,
+            valid_sets=[val],
+            valid_names=["eval"],
+            callbacks=[
+                lgb.early_stopping(self.args.early_stopping_rounds),
+                lgb.log_evaluation(self.args.logging_period),
+            ],
+            categorical_feature=self.args.cat_idx,
+        )
 
         return [], []
 
@@ -181,6 +235,28 @@ class LightGBM(BaseModel):
             "num_leaves": trial.suggest_int("num_leaves", 2, 4096, log=True),
             "lambda_l1": trial.suggest_float("lambda_l1", 1e-8, 10.0, log=True),
             "lambda_l2": trial.suggest_float("lambda_l2", 1e-8, 10.0, log=True),
-            "learning_rate": trial.suggest_float("learning_rate", 0.01, 0.3, log=True)
+            "learning_rate": trial.suggest_float("learning_rate", 0.01, 0.3, log=True),
+        }
+        return params
+
+    # TabZilla: add function for seeded random params and default params
+    @classmethod
+    def get_random_parameters(cls, seed):
+        rs = np.random.RandomState(seed)
+        params = {
+            "num_leaves": int(np.round(np.power(2, rs.uniform(1, 12)))),
+            "lambda_l1": np.power(10, rs.uniform(-8, 1)),
+            "lambda_l2": np.power(10, rs.uniform(-8, 1)),
+            "learning_rate": 3.0 * np.power(10, rs.uniform(-2, 1)),
+        }
+        return params
+
+    @classmethod
+    def default_parameters(cls):
+        params = {
+            "num_leaves": 512,
+            "lambda_l1": 1e-3,
+            "lambda_l2": 1e-3,
+            "learning_rate": 0.08,
         }
         return params

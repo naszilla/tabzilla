@@ -5,19 +5,22 @@ import torch.nn.functional as F
 
 from models.basemodel_torch import BaseModelTorch
 
-'''
+"""
     Custom implementation for the standard multi-layer perceptron
-'''
+"""
 
 
 class MLP(BaseModelTorch):
-
     def __init__(self, params, args):
         super().__init__(params, args)
 
-        self.model = MLP_Model(n_layers=self.params["n_layers"], input_dim=self.args.num_features,
-                               hidden_dim=self.params["hidden_dim"], output_dim=self.args.num_classes,
-                               task=self.args.objective)
+        self.model = MLP_Model(
+            n_layers=self.params["n_layers"],
+            input_dim=self.args.num_features,
+            hidden_dim=self.params["hidden_dim"],
+            output_dim=self.args.num_classes,
+            task=self.args.objective,
+        )
 
         self.to_device()
 
@@ -36,13 +39,32 @@ class MLP(BaseModelTorch):
         params = {
             "hidden_dim": trial.suggest_int("hidden_dim", 10, 100),
             "n_layers": trial.suggest_int("n_layers", 2, 5),
-            "learning_rate": trial.suggest_float("learning_rate", 0.0005, 0.001)
+            "learning_rate": trial.suggest_float("learning_rate", 0.0005, 0.001),
+        }
+        return params
+
+    # TabZilla: add function for seeded random params and default params
+    @classmethod
+    def get_random_parameters(cls, seed):
+        rs = np.random.RandomState(seed)
+        params = {
+            "hidden_dim": rs.randint(10, 101),
+            "n_layers": rs.randint(2, 6),
+            "learning_rate": rs.uniform(0.0005, 0.001),
+        }
+        return params
+
+    @classmethod
+    def default_parameters(cls):
+        params = {
+            "hidden_dim": 30,
+            "n_layers": 3,
+            "learning_rate": 0.0007,
         }
         return params
 
 
 class MLP_Model(nn.Module):
-
     def __init__(self, n_layers, input_dim, hidden_dim, output_dim, task):
         super().__init__()
 
@@ -54,7 +76,9 @@ class MLP_Model(nn.Module):
         self.input_layer = nn.Linear(input_dim, hidden_dim)
 
         # Hidden Layers (number specified by n_layers)
-        self.layers.extend([nn.Linear(hidden_dim, hidden_dim) for _ in range(n_layers - 1)])
+        self.layers.extend(
+            [nn.Linear(hidden_dim, hidden_dim) for _ in range(n_layers - 1)]
+        )
 
         # Output Layer
         self.output_layer = nn.Linear(hidden_dim, output_dim)
