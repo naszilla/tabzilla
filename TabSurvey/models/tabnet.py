@@ -1,8 +1,9 @@
-from pytorch_tabnet.tab_model import TabNetClassifier, TabNetRegressor
 import numpy as np
 import torch
+from pytorch_tabnet.tab_model import TabNetClassifier, TabNetRegressor
+from utils.io_utils import load_model_from_file, save_model_to_file
+
 from models.basemodel_torch import BaseModelTorch
-from utils.io_utils import save_model_to_file, load_model_from_file
 
 """
     TabNet: Attentive Interpretable Tabular Learning (https://arxiv.org/pdf/1908.07442.pdf)
@@ -84,6 +85,36 @@ class TabNet(BaseModelTorch):
             "mask_type": trial.suggest_categorical(
                 "mask_type", ["sparsemax", "entmax"]
             ),
+        }
+        return params
+
+    # TabZilla: add function for seeded random params and default params
+    @classmethod
+    def get_random_parameters(cls, seed):
+        rs = np.random.RandomState(seed)
+        params = {
+            "n_d": rs.randint(8, 65),
+            "n_steps": rs.randint(3, 11),
+            "gamma": 1.0 + rs.rand(),
+            "cat_emb_dim": rs.randint(1, 4),
+            "n_independent": rs.randint(1, 6),
+            "n_shared": rs.randint(1, 6),
+            "momentum": 0.4 * np.power(10, rs.uniform(-3, -1)),
+            "mask_type": rs.choice(["sparsemax", "entmax"]),
+        }
+        return params
+
+    @classmethod
+    def default_parameters(cls):
+        params = {
+            "n_d": 24,
+            "n_steps": 5,
+            "gamma": 1.5,
+            "cat_emb_dim": 2,
+            "n_independent": 3,
+            "n_shared": 3,
+            "momentum": 0.015,
+            "mask_type": "sparsemax",
         }
         return params
 

@@ -305,3 +305,25 @@ class SAINT(BaseModelTorch):
             ),
         }
         return params
+
+    # TabZilla: add function for seeded random params and default params
+    @classmethod
+    def get_random_parameters(cls, seed):
+        rs = np.random.RandomState(seed)
+        params = {
+            "dim": rs.choice([32, 64, 128, 256]),
+            "depth": rs.choice([1, 2, 3, 6, 12]),
+            "heads": rs.choice([2, 4, 8]),
+            "dropout": rs.choice([0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]),
+        }
+        return params
+
+    @classmethod
+    def default_parameters(cls):
+        params = {
+            "dim": 64,
+            "depth": 3,
+            "heads": 4,
+            "dropout": 0.5,
+        }
+        return params
