@@ -59,31 +59,22 @@ class KNN(BaseModel):
     def __init__(self, params, args):
         super().__init__(params, args)
 
-        knn_alg = params.get("knn_alg", "auto")
-        leaf_size = params.get("leaf_size", 30)
-
         if args.objective == "regression":
             self.model = neighbors.KNeighborsRegressor(
                 n_neighbors=params["n_neighbors"],
-                algorithm=knn_alg,
-                leaf_size=leaf_size,
+                algorithm=params["knn_alg"],
+                leaf_size=params["leaf_size"],
                 n_jobs=-1,
             )
         elif args.objective == "classification" or args.objective == "binary":
             self.model = neighbors.KNeighborsClassifier(
                 n_neighbors=params["n_neighbors"],
-                algorithm=knn_alg,
-                leaf_size=leaf_size,
+                algorithm=params["knn_alg"],
+                leaf_size=params["leaf_size"],
                 n_jobs=-1,
             )
 
     def fit(self, X, y, X_val=None, y_val=None):
-        # max_samples = 10000
-        # if X.shape[0] > max_samples:
-        #     idx = random.sample(list(range(X.shape[0])), max_samples)
-        #     X = X[idx]
-        #     y = y[idx]
-
         return super().fit(X, y, X_val, y_val)
 
     @classmethod
@@ -91,19 +82,29 @@ class KNN(BaseModel):
         params = {
             "n_neighbors": trial.suggest_categorical(
                 "n_neighbors", list(range(3, 42, 2))
-            )
+            ),
+            "knn_alg": trial.suggest_categorical("knn_alg", ["kd_tree", "ball_tree"]),
+            "leaf_size": trial.suggest_int("leaf_size", [30, 50, 70, 100, 300]),
         }
         return params
 
     @classmethod
     def get_random_parameters(cls, seed: int):
         rs = np.random.RandomState(seed)
-        params = {"n_neighbors": 1 + 2 * rs.randint(1, 21)}
+        params = {
+            "n_neighbors": 1 + 2 * rs.randint(1, 21),
+            "knn_alg": rs.choice(["kd_tree", "ball_tree"]),
+            "leaf_size": rs.choice([[30, 50, 70, 100, 300]]),
+        }
         return params
 
     @classmethod
     def default_parameters(cls):
-        params = {"n_neighbors": 9}
+        params = {
+            "n_neighbors": 9,
+            "knn_alg": "kd_tree",
+            "leaf_size": 30,
+        }
         return params
 
 
