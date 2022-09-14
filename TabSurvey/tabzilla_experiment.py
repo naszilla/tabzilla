@@ -10,7 +10,6 @@ from pathlib import Path
 from typing import NamedTuple
 
 import optuna
-from optuna.samplers import RandomSampler
 
 from models.basemodel import BaseModel
 from tabzilla_alg_handler import ALL_MODELS, get_model
@@ -18,7 +17,6 @@ from tabzilla_datasets import TabularDataset
 from tabzilla_utils import (
     ExperimentResult,
     cross_validation,
-    generate_filepath,
     get_experiment_parser,
     get_scorer,
 )
@@ -146,11 +144,11 @@ class TabZillaObjective(object):
         result.trial_number = self.counter
         result.experiment_args = vars(self.experiment_args)
 
-        # write result to file
-        result_file = self.output_path.joinpath(
-            generate_filepath(f"{hparam_source}_trial{self.counter}", "json")
+        # write results to file
+        result_file_base = self.output_path.joinpath(
+            f"{hparam_source}_trial{self.counter}"
         )
-        result.write(result_file, compress=False)
+        result.write(result_file_base, compress=False)
 
         self.counter += 1
 

@@ -92,8 +92,12 @@ class ExperimentResult:
         self.experiemnt_args = None
         self.exception = None
 
-    def write(self, filepath, compress=False):
-        """write all result properties to a new file. raise an exception if the file exists."""
+    def write(self, filepath_base, compress=False):
+        """
+        write two files:
+        - one with the results from the trial, including metadata and performance, and
+        - one with all metadata, all predictions, ground truth, and split indices.
+        """
 
         # create a dict with all output we want to store
         result_dict = {
@@ -102,25 +106,51 @@ class ExperimentResult:
             "experiemnt_args": self.experiment_args,
             "hparam_source": self.hparam_source,
             "trial_number": self.trial_number,
+            "exception": str(self.exception),
             "timers": {name: timer.save_times for name, timer in self.timers.items()},
             "scorers": {
                 name: scorer.get_results() for name, scorer in self.scorers.items()
             },
-            "splits": [
-                {key: list(val.tolist()) for key, val in split.items()}
-                for split in self.dataset.split_indeces
-            ],
-            "predictions": self.predictions,
-            "probabilities": self.probabilities,
-            "ground_truth": self.ground_truth,
-            "exception": str(self.exception),
         }
 
+        # add the predictions (lots of data) to a new dict
+        prediction_dict = result_dict.copy()
+
+        prediction_dict["predictions"] = self.predictions
+        prediction_dict["probabilities"] = self.probabilities
+        prediction_dict["ground_truth"] = self.ground_truth
+        prediction_dict["splits"] = [
+            {key: list(val.tolist()) for key, val in split.items()}
+            for split in self.dataset.split_indeces
+        ]
+
+        # write results
         for k, v in result_dict.items():
             if not is_jsonable(v, cls=NpEncoder):
-                raise Exception(f"value at key '{k}' is not json serializable: {v}")
+                raise Exception(
+                    f"writing results: value at key '{k}' is not json serializable: {v}"
+                )
 
-        write_dict_to_json(result_dict, filepath, compress=compress, cls=NpEncoder)
+        write_dict_to_json(
+            result_dict,
+            Path(str(filepath_base) + "_results.json"),
+            compress=compress,
+            cls=NpEncoder,
+        )
+
+        # write predictions
+        for k, v in prediction_dict.items():
+            if not is_jsonable(v, cls=NpEncoder):
+                raise Exception(
+                    f"writing predictions: value at key '{k}' is not json serializable: {v}"
+                )
+
+        write_dict_to_json(
+            prediction_dict,
+            Path(str(filepath_base) + "_predictions.json"),
+            compress=compress,
+            cls=NpEncoder,
+        )
 
 
 def cross_validation(model: BaseModel, dataset: TabularDataset) -> ExperimentResult:
