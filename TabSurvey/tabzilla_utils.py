@@ -5,11 +5,24 @@ import shutil
 import time
 from pathlib import Path
 
+import numpy as np
+
 from models.basemodel import BaseModel
 from tabzilla_data_processing import process_data
 from tabzilla_datasets import TabularDataset
 from utils.scorer import BinScorer, ClassScorer, RegScorer
 from utils.timer import Timer
+
+
+class NpEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        if isinstance(obj, np.floating):
+            return float(obj)
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return super(NpEncoder, self).default(obj)
 
 
 def generate_filepath(name, extension):
@@ -18,9 +31,9 @@ def generate_filepath(name, extension):
     return (name + "_%s." + extension) % timestr
 
 
-def is_jsonable(x):
+def is_jsonable(x, cls=None):
     try:
-        json.dumps(x)
+        json.dumps(x, cls=cls)
         return True
     except (TypeError, OverflowError):
         return False
@@ -104,10 +117,10 @@ class ExperimentResult:
         }
 
         for k, v in result_dict.items():
-            if not is_jsonable(v):
+            if not is_jsonable(v, cls=NpEncoder):
                 raise Exception(f"value at key '{k}' is not json serializable: {v}")
 
-        write_dict_to_json(result_dict, filepath, compress=compress)
+        write_dict_to_json(result_dict, filepath, compress=compress, cls=NpEncoder)
 
 
 def cross_validation(model: BaseModel, dataset: TabularDataset) -> ExperimentResult:
@@ -237,15 +250,15 @@ def cross_validation(model: BaseModel, dataset: TabularDataset) -> ExperimentRes
     )
 
 
-def write_dict_to_json(x: dict, filepath: Path, compress=False):
+def write_dict_to_json(x: dict, filepath: Path, compress=False, cls=None):
     assert not filepath.is_file(), f"file already exists: {filepath}"
     assert filepath.parent.is_dir(), f"directory does not exist: {filepath.parent}"
     if not compress:
         with filepath.open("w", encoding="UTF-8") as f:
-            json.dump(x, f)
+            json.dump(x, f, cls=cls)
     else:
         with gzip.open(str(filepath) + ".gz", "wb") as f:
-            f.write(json.dumps(x).encode("UTF-8"))
+            f.write(json.dumps(x, cls=cls).encode("UTF-8"))
 
 
 def make_archive(source, destination):

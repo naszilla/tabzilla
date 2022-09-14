@@ -94,7 +94,7 @@ class KNN(BaseModel):
         params = {
             "n_neighbors": 1 + 2 * rs.randint(1, 21),
             "knn_alg": rs.choice(["kd_tree", "ball_tree"]),
-            "leaf_size": rs.choice([[30, 50, 70, 100, 300]]),
+            "leaf_size": rs.choice([30, 50, 70, 100, 300]),
         }
         return params
 
