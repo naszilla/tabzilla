@@ -191,23 +191,27 @@ def cross_validation(model: BaseModel, dataset: TabularDataset) -> ExperimentRes
 
         # evaluate on train set
         timers["train-eval"].start()
-        train_predictions, train_probs = curr_model.predict(X_train)
+        train_predictions, train_probs = curr_model.predict_wrapper(X_train)
         timers["train-eval"].end()
 
         # evaluate on val set
         timers["val"].start()
-        val_predictions, val_probs = curr_model.predict(X_val)
+        val_predictions, val_probs = curr_model.predict_wrapper(X_val)
         timers["val"].end()
 
         # evaluate on test set
         timers["test"].start()
-        test_predictions, test_probs = curr_model.predict(X_test)
+        test_predictions, test_probs = curr_model.predict_wrapper(X_test)
         timers["test"].end()
 
+        extra_scorer_args = {}
+        if dataset.target_type == "classification":
+            extra_scorer_args["labels"] = range(dataset.num_classes)
+
         # evaluate on train, val, and test sets
-        scorers["train"].eval(y_train, train_predictions, train_probs)
-        scorers["val"].eval(y_val, val_predictions, val_probs)
-        scorers["test"].eval(y_test, test_predictions, test_probs)
+        scorers["train"].eval(y_train, train_predictions, train_probs, **extra_scorer_args)
+        scorers["val"].eval(y_val, val_predictions, val_probs, **extra_scorer_args)
+        scorers["test"].eval(y_test, test_predictions, test_probs, **extra_scorer_args)
 
         # store predictions & ground truth
 

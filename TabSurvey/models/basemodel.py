@@ -66,11 +66,11 @@ class BaseModel:
         }
 
     def fit(
-        self,
-        X: np.ndarray,
-        y: np.ndarray,
-        X_val: tp.Union[None, np.ndarray] = None,
-        y_val: tp.Union[None, np.ndarray] = None,
+            self,
+            X: np.ndarray,
+            y: np.ndarray,
+            X_val: tp.Union[None, np.ndarray] = None,
+            y_val: tp.Union[None, np.ndarray] = None,
     ) -> tp.Tuple[list, list]:
         """Trains the model.
 
@@ -91,6 +91,27 @@ class BaseModel:
 
         # Should return loss history and validation loss history
         return [], []
+
+    # Patch around the original predict method to handle case of missing classes in training set.
+    # This needs to be done as a separate method, since several of the inheriting classes override the predict_proba or
+    # predict methods.
+    def predict_wrapper(self, X: np.ndarray) -> tp.Tuple[np.ndarray, np.ndarray]:
+        self.predictions, self.prediction_probabilities = self.predict(X)
+
+        if self.args.objective == "classification" and self.prediction_probabilities.shape[1] != self.args.num_classes:
+            # Handle special case of missing classes in training set, which can (depending on the model)  result in
+            # predictions only being made for those classes
+            if "classes_" not in dir(self.model):
+                raise NotImplementedError(f"Cannot infer classes for model of type {type(self.model)}")
+            # From https://github.com/scikit-learn/scikit-learn/issues/21568#issuecomment-984030911
+            y_score_expanded = np.zeros((self.prediction_probabilities.shape[0], self.args.num_classes),
+                                        dtype=self.prediction_probabilities.dtype)
+            for idx, class_id in enumerate(self.model.classes_):
+                y_score_expanded[:, class_id] = self.prediction_probabilities[:, idx]
+            self.prediction_probabilities = y_score_expanded
+            self.predictions = np.argmax(self.prediction_probabilities, axis=1)
+
+        return self.predictions, self.prediction_probabilities
 
     def predict(self, X: np.ndarray) -> tp.Tuple[np.ndarray, np.ndarray]:
         """
@@ -123,6 +144,18 @@ class BaseModel:
         """
 
         self.prediction_probabilities = self.model.predict_proba(X)
+
+        # Handle special case of missing classes in training set, which can (depending on the model)  result in
+        # predictions only being made for those classes
+        if self.prediction_probabilities.shape[1] != self.args.num_classes:
+            if "classes_" not in dir(self.model):
+                raise NotImplementedError(f"Cannot infer classes for model of type {type(self.model)}")
+            # From https://github.com/scikit-learn/scikit-learn/issues/21568#issuecomment-984030911
+            y_score_expanded = np.zeros((self.prediction_probabilities.shape[0], self.args.num_classes),
+                                        dtype=self.prediction_probabilities.dtype)
+            for idx, class_id in enumerate(self.model.classes_):
+                y_score_expanded[:, class_id] = self.prediction_probabilities[:, idx]
+            self.prediction_probabilities = y_score_expanded
 
         # If binary task returns only probability for the true class, adapt it to return (N x 2)
         if self.prediction_probabilities.shape[1] == 1:
