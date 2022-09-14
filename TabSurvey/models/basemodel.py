@@ -145,18 +145,6 @@ class BaseModel:
 
         self.prediction_probabilities = self.model.predict_proba(X)
 
-        # Handle special case of missing classes in training set, which can (depending on the model)  result in
-        # predictions only being made for those classes
-        if self.prediction_probabilities.shape[1] != self.args.num_classes:
-            if "classes_" not in dir(self.model):
-                raise NotImplementedError(f"Cannot infer classes for model of type {type(self.model)}")
-            # From https://github.com/scikit-learn/scikit-learn/issues/21568#issuecomment-984030911
-            y_score_expanded = np.zeros((self.prediction_probabilities.shape[0], self.args.num_classes),
-                                        dtype=self.prediction_probabilities.dtype)
-            for idx, class_id in enumerate(self.model.classes_):
-                y_score_expanded[:, class_id] = self.prediction_probabilities[:, idx]
-            self.prediction_probabilities = y_score_expanded
-
         # If binary task returns only probability for the true class, adapt it to return (N x 2)
         if self.prediction_probabilities.shape[1] == 1:
             self.prediction_probabilities = np.concatenate(
