@@ -134,7 +134,9 @@ class CatBoost(BaseModel):
 
         if args.objective == "regression":
             self.model = cat.CatBoostRegressor(**self.params)
-        elif args.objective == "classification" or args.objective == "binary":
+        elif args.objective == "classification":
+            self.model = cat.CatBoostClassifier(classes_count=self.args.num_classes, **self.params)
+        elif args.objective == "binary":
             self.model = cat.CatBoostClassifier(**self.params)
 
     def fit(self, X, y, X_val=None, y_val=None):
