@@ -47,8 +47,7 @@ class TabNet(BaseModelTorch):
             batch_size=self.args.batch_size,
         )
         history = self.model.history
-        # tabzilla: don't save the model...
-        # self.save_model(filename_extension="best")
+        self.save_model(filename_extension="best")
         return history["loss"], history["eval_" + self.metric[0]]
 
     def predict_helper(self, X):

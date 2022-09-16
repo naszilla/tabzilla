@@ -257,8 +257,7 @@ class VIME(BaseModelTorch):
                 min_val_loss = val_loss
                 min_val_loss_idx = epoch
 
-                # tabzilla: again, don't save the model...
-                # self.save_model(filename_extension="best", directory="tmp")
+                self.save_model(filename_extension="best", directory="tmp")
 
             if min_val_loss_idx + self.args.early_stopping_rounds < epoch:
                 print("Early stopping applies.")

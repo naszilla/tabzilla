@@ -186,8 +186,7 @@ class SAINT(BaseModelTorch):
                 min_val_loss_idx = epoch
 
                 # Save the currently best model
-                # tabzilla: don't save the model...
-                # self.save_model(filename_extension="best", directory="tmp")
+                self.save_model(filename_extension="best", directory=self.tmp_name)
 
             if min_val_loss_idx + self.args.early_stopping_rounds < epoch:
                 print(
@@ -197,7 +196,7 @@ class SAINT(BaseModelTorch):
                 print("Early stopping applies.")
                 break
 
-        self.load_model(filename_extension="best", directory="tmp")
+        self.load_model(filename_extension="best", directory=self.tmp_name)
         return loss_history, val_loss_history
 
     def predict_helper(self, X):
@@ -243,7 +242,7 @@ class SAINT(BaseModelTorch):
         return array with the same shape as X.
         """
         global my_attention
-        # self.load_model(filename_extension="best", directory="tmp")
+        self.load_model(filename_extension="best", directory=self.tmp_name)
 
         X = {"data": X, "mask": np.ones_like(X)}
         y = {"data": np.ones((X["data"].shape[0], 1))}

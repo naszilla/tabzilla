@@ -22,10 +22,10 @@ cd /home/shared/tabzilla/TabSurvey
 # make sure environment variables are defined
 
 # define the conda env that should be used {sklearn | gbdt | torch | tensorflow}
-ENV_NAME=gbdt
+ENV_NAME=torch
 
 # name of the model/algorithm
-MODEL_NAME=ModelTree
+MODEL_NAME=MLP
 
 # name of the dataset
 DATASET_NAME=/openml__arrhythmia__5

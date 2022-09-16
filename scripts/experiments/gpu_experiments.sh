@@ -19,7 +19,7 @@ MODELS_ENVS=(
     # CatBoost:$GBDT_ENV
     # LightGBM:$GBDT_ENV
     # MLP:$TORCH_ENV
-    # ModelTree:$TORCH_ENV
+    # ModelTree:$GBDT_ENV
     # TabNet:$TORCH_ENV
     # VIME:$TORCH_ENV
     # TabTransformer:$TORCH_ENV

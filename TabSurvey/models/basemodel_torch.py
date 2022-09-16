@@ -1,4 +1,6 @@
 import time
+import string
+import random
 
 import numpy as np
 import torch
@@ -19,6 +21,9 @@ class BaseModelTorch(BaseModel):
             if args.use_gpu and torch.cuda.is_available() and args.data_parallel
             else None
         )
+
+        # tabzilla: use a random string for temporary saving/loading of the model. pass this to load/save model functions
+        self.tmp_name = "tmp_" + ''.join(random.sample(string.ascii_uppercase + string.digits, k=12))
 
     def to_device(self):
         if self.args.data_parallel:
@@ -126,8 +131,7 @@ class BaseModelTorch(BaseModel):
                 min_val_loss_idx = epoch
 
                 # Save the currently best model
-                # tabzilla: don't save the model...
-                # self.save_model(filename_extension="best", directory="tmp")
+                self.save_model(filename_extension="best", directory=self.tmp_name)
 
             if min_val_loss_idx + self.args.early_stopping_rounds < epoch:
                 print(
@@ -145,8 +149,7 @@ class BaseModelTorch(BaseModel):
                 break
 
         # Load best model
-        # tabzilla: don't load the model (we didn't save it...)
-        # self.load_model(filename_extension="best", directory="tmp")
+        self.load_model(filename_extension="best", directory=self.tmp_name)
         return loss_history, val_loss_history
 
     def predict(self, X):

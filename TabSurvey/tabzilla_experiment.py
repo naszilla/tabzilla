@@ -86,6 +86,7 @@ class TabZillaObjective(object):
         arg_namespace = namedtuple(
             "args",
             [
+                "model_name",
                 "batch_size",
                 "val_batch_size",
                 "objective",
@@ -110,6 +111,7 @@ class TabZillaObjective(object):
             max_epochs = experiment_args.epochs
 
         args = arg_namespace(
+            model_name=self.model_handle.__name__,
             batch_size=self.experiment_args.batch_size,
             val_batch_size=self.experiment_args.val_batch_size,
             epochs=max_epochs,

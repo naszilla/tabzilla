@@ -152,8 +152,7 @@ class TabTransformer(BaseModelTorch):
                 min_val_loss_idx = epoch
 
                 # Save the currently best model
-                # tabzilla: really, don't save the model...
-                # self.save_model(filename_extension="best", directory="tmp")
+                self.save_model(filename_extension="best", directory=self.tmp_name)
 
             if min_val_loss_idx + self.args.early_stopping_rounds < epoch:
                 print(
@@ -163,7 +162,7 @@ class TabTransformer(BaseModelTorch):
                 print("Early stopping applies.")
                 break
 
-        self.load_model(filename_extension="best", directory="tmp")
+        self.load_model(filename_extension="best", directory=self.tmp_name)
         return loss_history, val_loss_history
 
     def predict_helper(self, X):
