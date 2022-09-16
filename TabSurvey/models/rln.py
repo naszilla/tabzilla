@@ -48,8 +48,12 @@ class RLN(BaseModel):
 
         if self.args.objective == "classification":
             # Needs the classification targets one hot encoded
-            ohe = OneHotEncoder(sparse=False, handle_unknown="ignore")
-            y = ohe.fit_transform(y.reshape(-1, 1))
+            ohe = OneHotEncoder(sparse=False, handle_unknown="ignore", categories=[range(self.args.num_classes)])
+            class_arr = np.array(range(self.args.num_classes)).reshape(-1, 1)
+            ohe.fit(class_arr)
+
+            #y = ohe.fit_transform(y.reshape(-1, 1))
+            y = ohe.transform(y.reshape(-1, 1))
             y_val = ohe.transform(y_val.reshape(-1, 1))
 
         history = self.model.fit(X, y, validation_data=(X_val, y_val))
