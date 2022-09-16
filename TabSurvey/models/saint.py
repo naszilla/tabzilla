@@ -22,6 +22,10 @@ from models.saint_lib.models.pretrainmodel import SAINT as SAINTModel
 
 
 class SAINT(BaseModelTorch):
+
+    # TabZilla: add default number of epochs.
+    default_epochs = 100  # from SAINT paper
+
     def __init__(self, params, args):
         super().__init__(params, args)
         if args.cat_idx:

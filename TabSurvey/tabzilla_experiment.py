@@ -87,7 +87,6 @@ class TabZillaObjective(object):
                 "batch_size",
                 "val_batch_size",
                 "objective",
-                "epochs",
                 "gpu_ids",
                 "use_gpu",
                 "data_parallel",
@@ -101,10 +100,16 @@ class TabZillaObjective(object):
             ],
         )
 
+        # if model class has epochs defined, use this number. otherwise, use the num epochs passed in args.
+        if hasattr(self.model_handle, "default_epochs"):
+            max_epochs = self.model_handle.default_epochs
+        else:
+            max_epochs = args.epochs
+
         args = arg_namespace(
             batch_size=self.experiment_args.batch_size,
             val_batch_size=self.experiment_args.val_batch_size,
-            epochs=self.experiment_args.epochs,
+            epochs=max_epochs,
             gpu_ids=self.experiment_args.gpu_ids,
             use_gpu=self.experiment_args.use_gpu,
             data_parallel=self.experiment_args.data_parallel,
