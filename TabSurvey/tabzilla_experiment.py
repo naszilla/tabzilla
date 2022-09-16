@@ -19,6 +19,7 @@ from tabzilla_utils import (
     cross_validation,
     get_experiment_parser,
     get_scorer,
+    time_limit,
 )
 
 
@@ -35,6 +36,7 @@ class TabZillaObjective(object):
         experiment_args: NamedTuple,
         hparam_seed: int,
         random_parameters: bool,
+        time_limit: int,
     ):
         #  BaseModel handle that will be initialized and trained
         self.model_handle = model_handle
@@ -57,6 +59,9 @@ class TabZillaObjective(object):
 
         # if random_parameters = True, then this is used to generate random hyperparameters
         self.hparam_seed = hparam_seed
+
+        # time limit for any cross-validation cycle (seconds)
+        self.time_limit = time_limit
 
     def __call__(self, trial):
 
@@ -128,8 +133,9 @@ class TabZillaObjective(object):
 
         # Cross validate the chosen hyperparameters
         try:
-            result = cross_validation(model, self.dataset)
-            obj_val = result.scorers["val"].get_objective_result()
+            with time_limit(self.time_limit):
+                result = cross_validation(model, self.dataset)
+                obj_val = result.scorers["val"].get_objective_result()
         except Exception as e:
             print(f"caught exception during cross-validation...")
             result = ExperimentResult(
@@ -185,6 +191,7 @@ def main(experiment_args, model_name, dataset_dir):
             experiment_args=experiment_args,
             hparam_seed=experiment_args.hparam_seed,
             random_parameters=True,
+            time_limit=experiment_args.trial_time_limit,
         )
 
         print(
@@ -196,7 +203,12 @@ def main(experiment_args, model_name, dataset_dir):
             storage=storage_name,
             load_if_exists=True,
         )
-        study.optimize(objective, n_trials=experiment_args.n_random_trials)
+        study.optimize(
+            objective,
+            n_trials=experiment_args.n_random_trials,
+            timeout=experiment_args.experiment_time_limit,
+            n_jobs=-1,
+        )
         previous_trials = study.trials
     else:
         previous_trials = None
@@ -209,6 +221,7 @@ def main(experiment_args, model_name, dataset_dir):
             experiment_args=experiment_args,
             hparam_seed=experiment_args.hparam_seed,
             random_parameters=False,
+            time_limit=experiment_args.trial_time_limit,
         )
 
         print(
@@ -226,7 +239,12 @@ def main(experiment_args, model_name, dataset_dir):
                 f"adding {experiment_args.n_random_trials} random trials to warm-start HPO"
             )
             study.add_trials(previous_trials)
-        study.optimize(objective, n_trials=experiment_args.n_opt_trials)
+        study.optimize(
+            objective,
+            n_trials=experiment_args.n_opt_trials,
+            timeout=experiment_args.experiment_time_limit,
+            n_jobs=-1,
+        )
 
     print(f"trials complete. results written to {output_path}")
 

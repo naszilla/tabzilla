@@ -1,6 +1,11 @@
 ###### directory where results will be written
 output_dir: ./results/
 
+###### experiment & trial time limit in seconds (10 hours / 2 hours)
+experiment_time_limit: 36000
+trial_time_limit: 7200
+
+
 ###### number of trials for hyperparameter search & optimization
 n_random_trials: 30
 n_opt_trials: 0

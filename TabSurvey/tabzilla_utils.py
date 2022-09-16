@@ -2,7 +2,9 @@ import gzip
 import json
 import os
 import shutil
+import signal
 import time
+from contextlib import contextmanager
 from pathlib import Path
 
 import numpy as np
@@ -12,6 +14,24 @@ from tabzilla_data_processing import process_data
 from tabzilla_datasets import TabularDataset
 from utils.scorer import BinScorer, ClassScorer, RegScorer
 from utils.timer import Timer
+
+
+# time limit code from: https://stackoverflow.com/questions/366682/how-to-limit-execution-time-of-a-function-call
+class TimeoutException(Exception):
+    pass
+
+
+@contextmanager
+def time_limit(seconds):
+    def signal_handler(signum, frame):
+        raise TimeoutException("Timed out!")
+
+    signal.signal(signal.SIGALRM, signal_handler)
+    signal.alarm(seconds)
+    try:
+        yield
+    finally:
+        signal.alarm(0)
 
 
 class NpEncoder(json.JSONEncoder):
@@ -252,7 +272,9 @@ def cross_validation(model: BaseModel, dataset: TabularDataset) -> ExperimentRes
             extra_scorer_args["labels"] = range(dataset.num_classes)
 
         # evaluate on train, val, and test sets
-        scorers["train"].eval(y_train, train_predictions, train_probs, **extra_scorer_args)
+        scorers["train"].eval(
+            y_train, train_predictions, train_probs, **extra_scorer_args
+        )
         scorers["val"].eval(y_val, val_predictions, val_probs, **extra_scorer_args)
         scorers["test"].eval(y_test, test_predictions, test_probs, **extra_scorer_args)
 
@@ -394,6 +416,18 @@ def get_experiment_parser():
         type=int,
         default=100,
         help="Number of iteration after which validation is printed.",
+    )
+    experiment_parser.add(
+        "--experiment_time_limit",
+        type=int,
+        default=10,
+        help="Time limit for experiment, in seconds.",
+    )
+    experiment_parser.add(
+        "--trial_time_limit",
+        type=int,
+        default=10,
+        help="Time limit for each train/test trial, in seconds.",
     )
 
     return experiment_parser
