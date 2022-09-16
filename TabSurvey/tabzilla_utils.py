@@ -2,7 +2,9 @@ import gzip
 import json
 import os
 import shutil
+import signal
 import time
+from contextlib import contextmanager
 from pathlib import Path
 
 import numpy as np
@@ -153,10 +155,13 @@ class ExperimentResult:
         )
 
 
-def cross_validation(model: BaseModel, dataset: TabularDataset) -> ExperimentResult:
+class TimeoutException(Exception):
+    pass
+
+def cross_validation(model: BaseModel, dataset: TabularDataset, time_limit: int) -> ExperimentResult:
     """
     takes a BaseModel and TabularDataset as input, and trains and evaluates the model using cross validation with all
-    folds specified in the dataset property split_indeces
+    folds specified in the dataset property split_indeces. Time limit is checked after each fold, and an exception is raised
 
     returns an ExperimentResult object, which contains all metadata and results from the cross validation run, including:
     - evlaution objects for the validation and test sets
@@ -196,8 +201,13 @@ def cross_validation(model: BaseModel, dataset: TabularDataset) -> ExperimentRes
         "test": [],
     }
 
+    start_time = time.time()
+
     # iterate over all train/val/test splits in the dataset property split_indeces
     for i, split_dictionary in enumerate(dataset.split_indeces):
+
+        if time.time() - start_time > time_limit:
+            raise TimeoutException(f"time limit of {time_limit}s reached during fold {i}")
 
         train_index = split_dictionary["train"]
         val_index = split_dictionary["val"]
@@ -252,7 +262,9 @@ def cross_validation(model: BaseModel, dataset: TabularDataset) -> ExperimentRes
             extra_scorer_args["labels"] = range(dataset.num_classes)
 
         # evaluate on train, val, and test sets
-        scorers["train"].eval(y_train, train_predictions, train_probs, **extra_scorer_args)
+        scorers["train"].eval(
+            y_train, train_predictions, train_probs, **extra_scorer_args
+        )
         scorers["val"].eval(y_val, val_predictions, val_probs, **extra_scorer_args)
         scorers["test"].eval(y_test, test_predictions, test_probs, **extra_scorer_args)
 
@@ -394,6 +406,18 @@ def get_experiment_parser():
         type=int,
         default=100,
         help="Number of iteration after which validation is printed.",
+    )
+    experiment_parser.add(
+        "--experiment_time_limit",
+        type=int,
+        default=10,
+        help="Time limit for experiment, in seconds.",
+    )
+    experiment_parser.add(
+        "--trial_time_limit",
+        type=int,
+        default=10,
+        help="Time limit for each train/test trial, in seconds.",
     )
 
     return experiment_parser

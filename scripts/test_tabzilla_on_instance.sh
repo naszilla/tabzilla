@@ -22,13 +22,13 @@ cd /home/shared/tabzilla/TabSurvey
 # make sure environment variables are defined
 
 # define the conda env that should be used {sklearn | gbdt | torch | tensorflow}
-ENV_NAME=NONE
+ENV_NAME=tensorflow
 
 # name of the model/algorithm
-MODEL_NAME=NONE
+MODEL_NAME=RLN
 
 # name of the dataset
-DATASET_NAME=NONE
+DATASET_NAME=/openml__arrhythmia__5
 
 #########################################################
 # prepare conda, in case it has not already been prepared
@@ -46,6 +46,7 @@ conda activate ${ENV_NAME}
 
 # search parameters - this is the default
 CONFIG_FILE=tabzilla_experiment_config.yml
+# CONFIG_FILE=tabzilla_experiment_config_gpu.yml
 
 # all datasets should be in this folder. the dataset folder should be in ${DATASET_BASE_DIR}/<dataset-name>
 DATASET_BASE_DIR=./datasets

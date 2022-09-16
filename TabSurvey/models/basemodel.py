@@ -66,11 +66,11 @@ class BaseModel:
         }
 
     def fit(
-            self,
-            X: np.ndarray,
-            y: np.ndarray,
-            X_val: tp.Union[None, np.ndarray] = None,
-            y_val: tp.Union[None, np.ndarray] = None,
+        self,
+        X: np.ndarray,
+        y: np.ndarray,
+        X_val: tp.Union[None, np.ndarray] = None,
+        y_val: tp.Union[None, np.ndarray] = None,
     ) -> tp.Tuple[list, list]:
         """Trains the model.
 
@@ -98,14 +98,21 @@ class BaseModel:
     def predict_wrapper(self, X: np.ndarray) -> tp.Tuple[np.ndarray, np.ndarray]:
         self.predictions, self.prediction_probabilities = self.predict(X)
 
-        if self.args.objective == "classification" and self.prediction_probabilities.shape[1] != self.args.num_classes:
+        if (
+            self.args.objective == "classification"
+            and self.prediction_probabilities.shape[1] != self.args.num_classes
+        ):
             # Handle special case of missing classes in training set, which can (depending on the model)  result in
             # predictions only being made for those classes
             if "classes_" not in dir(self.model):
-                raise NotImplementedError(f"Cannot infer classes for model of type {type(self.model)}")
+                raise NotImplementedError(
+                    f"Cannot infer classes for model of type {type(self.model)}"
+                )
             # From https://github.com/scikit-learn/scikit-learn/issues/21568#issuecomment-984030911
-            y_score_expanded = np.zeros((self.prediction_probabilities.shape[0], self.args.num_classes),
-                                        dtype=self.prediction_probabilities.dtype)
+            y_score_expanded = np.zeros(
+                (self.prediction_probabilities.shape[0], self.args.num_classes),
+                dtype=self.prediction_probabilities.dtype,
+            )
             for idx, class_id in enumerate(self.model.classes_):
                 y_score_expanded[:, class_id] = self.prediction_probabilities[:, idx]
             self.prediction_probabilities = y_score_expanded

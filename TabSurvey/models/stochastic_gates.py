@@ -13,6 +13,12 @@ from .stg_lib import STG as STGModel
 
 
 class STG(BaseModelTorch):
+
+    # TabZilla: add default number of epochs.
+    default_epochs = (
+        1000  # STG paper searches the range [50, 20k]. We'll use 1000 as a compromise
+    )
+
     def __init__(self, params, args):
         super().__init__(params, args)
 

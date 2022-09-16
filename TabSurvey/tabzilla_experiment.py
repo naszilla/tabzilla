@@ -5,6 +5,7 @@
 import argparse
 import logging
 import sys
+import traceback
 from collections import namedtuple
 from pathlib import Path
 from typing import NamedTuple
@@ -35,6 +36,7 @@ class TabZillaObjective(object):
         experiment_args: NamedTuple,
         hparam_seed: int,
         random_parameters: bool,
+        time_limit: int,
     ):
         #  BaseModel handle that will be initialized and trained
         self.model_handle = model_handle
@@ -49,27 +51,27 @@ class TabZillaObjective(object):
         sc_tmp = get_scorer(dataset.target_type)
         self.direction = sc_tmp.direction
 
-        # to keep track of the number of evaluations, separate from the trial number
-        self.counter = 0
-
         # if True, sample random hyperparameters. if False, sample using the optuna sampler object
         self.random_parameters = random_parameters
 
         # if random_parameters = True, then this is used to generate random hyperparameters
         self.hparam_seed = hparam_seed
 
+        # time limit for any cross-validation cycle (seconds)
+        self.time_limit = time_limit
+
     def __call__(self, trial):
 
         if self.random_parameters:
             # first trial is always default params. after that, sample using either random or optuna suggested hparams
-            if self.counter == 0:
+            if trial.number == 0:
                 trial_params = self.model_handle.default_parameters()
                 hparam_source = "default"
             else:
                 trial_params = self.model_handle.get_random_parameters(
-                    self.counter + self.hparam_seed * 999
+                    trial.number + self.hparam_seed * 999
                 )
-                hparam_source = f"random_{self.counter}_s{self.hparam_seed}"
+                hparam_source = f"random_{trial.number}_s{self.hparam_seed}"
 
         else:
             trial_params = self.model_handle.define_trial_parameters(
@@ -87,9 +89,9 @@ class TabZillaObjective(object):
                 "batch_size",
                 "val_batch_size",
                 "objective",
-                "epochs",
                 "gpu_ids",
                 "use_gpu",
+                "epochs",
                 "data_parallel",
                 "early_stopping_rounds",
                 "dataset",
@@ -101,10 +103,16 @@ class TabZillaObjective(object):
             ],
         )
 
+        # if model class has epochs defined, use this number. otherwise, use the num epochs passed in args.
+        if hasattr(self.model_handle, "default_epochs"):
+            max_epochs = self.model_handle.default_epochs
+        else:
+            max_epochs = experiment_args.epochs
+
         args = arg_namespace(
             batch_size=self.experiment_args.batch_size,
             val_batch_size=self.experiment_args.val_batch_size,
-            epochs=self.experiment_args.epochs,
+            epochs=max_epochs,
             gpu_ids=self.experiment_args.gpu_ids,
             use_gpu=self.experiment_args.use_gpu,
             data_parallel=self.experiment_args.data_parallel,
@@ -123,10 +131,11 @@ class TabZillaObjective(object):
 
         # Cross validate the chosen hyperparameters
         try:
-            result = cross_validation(model, self.dataset)
+            result = cross_validation(model, self.dataset, self.time_limit)
             obj_val = result.scorers["val"].get_objective_result()
         except Exception as e:
             print(f"caught exception during cross-validation...")
+            tb = traceback.format_exc()
             result = ExperimentResult(
                 dataset=self.dataset,
                 model=model,
@@ -136,21 +145,19 @@ class TabZillaObjective(object):
                 probabilities=None,
                 ground_truth=None,
             )
-            result.exception = e
+            result.exception = tb
             obj_val = None
 
         # add info about the hyperparams and trial number
         result.hparam_source = hparam_source
-        result.trial_number = self.counter
+        result.trial_number = trial.number
         result.experiment_args = vars(self.experiment_args)
 
         # write results to file
         result_file_base = self.output_path.joinpath(
-            f"{hparam_source}_trial{self.counter}"
+            f"{hparam_source}_trial{trial.number}"
         )
         result.write(result_file_base, compress=False)
-
-        self.counter += 1
 
         return obj_val
 
@@ -166,12 +173,7 @@ def main(experiment_args, model_name, dataset_dir):
     output_path = Path(experiment_args.output_dir).resolve()
     output_path.mkdir(parents=True, exist_ok=True)
 
-    # all results will be written to the local sqlite database.
-    # if this database exists, results will be added to it--this is due to the flag load_if_exists for optuna.create_study
-    # NOTE: study_name should always be equivalent ot the database file name. this is necessary for reading the study database.
     optuna.logging.get_logger("optuna").addHandler(logging.StreamHandler(sys.stdout))
-    study_name = model_name + "_" + dataset.name
-    storage_name = "sqlite:///{}.db".format(study_name)
 
     if experiment_args.n_random_trials > 0:
         objective = TabZillaObjective(
@@ -180,6 +182,7 @@ def main(experiment_args, model_name, dataset_dir):
             experiment_args=experiment_args,
             hparam_seed=experiment_args.hparam_seed,
             random_parameters=True,
+            time_limit=experiment_args.trial_time_limit,
         )
 
         print(
@@ -187,11 +190,16 @@ def main(experiment_args, model_name, dataset_dir):
         )
         study = optuna.create_study(
             direction=objective.direction,
-            study_name=study_name,
-            storage=storage_name,
-            load_if_exists=True,
+            study_name=None,
+            storage=None,
+            load_if_exists=False,
         )
-        study.optimize(objective, n_trials=experiment_args.n_random_trials)
+        study.optimize(
+            objective,
+            n_trials=experiment_args.n_random_trials,
+            timeout=experiment_args.experiment_time_limit,
+            n_jobs=-1,
+        )
         previous_trials = study.trials
     else:
         previous_trials = None
@@ -204,6 +212,7 @@ def main(experiment_args, model_name, dataset_dir):
             experiment_args=experiment_args,
             hparam_seed=experiment_args.hparam_seed,
             random_parameters=False,
+            time_limit=experiment_args.trial_time_limit,
         )
 
         print(
@@ -211,9 +220,9 @@ def main(experiment_args, model_name, dataset_dir):
         )
         study = optuna.create_study(
             direction=objective.direction,
-            study_name=study_name,
-            storage=storage_name,
-            load_if_exists=True,
+            study_name=None,
+            storage=None,
+            load_if_exists=False,
         )
         # if random search was run, add these trials
         if previous_trials is not None:
@@ -221,7 +230,12 @@ def main(experiment_args, model_name, dataset_dir):
                 f"adding {experiment_args.n_random_trials} random trials to warm-start HPO"
             )
             study.add_trials(previous_trials)
-        study.optimize(objective, n_trials=experiment_args.n_opt_trials)
+        study.optimize(
+            objective,
+            n_trials=experiment_args.n_opt_trials,
+            timeout=experiment_args.experiment_time_limit,
+            n_jobs=-1,
+        )
 
     print(f"trials complete. results written to {output_path}")
 
