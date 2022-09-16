@@ -145,7 +145,8 @@ class BaseModelTorch(BaseModel):
                 break
 
         # Load best model
-        self.load_model(filename_extension="best", directory="tmp")
+        # tabzilla: don't load the model (we didn't save it...)
+        # self.load_model(filename_extension="best", directory="tmp")
         return loss_history, val_loss_history
 
     def predict(self, X):
