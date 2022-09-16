@@ -171,12 +171,7 @@ def main(experiment_args, model_name, dataset_dir):
     output_path = Path(experiment_args.output_dir).resolve()
     output_path.mkdir(parents=True, exist_ok=True)
 
-    # all results will be written to the local sqlite database.
-    # if this database exists, results will be added to it--this is due to the flag load_if_exists for optuna.create_study
-    # NOTE: study_name should always be equivalent ot the database file name. this is necessary for reading the study database.
     optuna.logging.get_logger("optuna").addHandler(logging.StreamHandler(sys.stdout))
-    study_name = model_name + "_" + dataset.name
-    storage_name = "sqlite:///{}.db".format(study_name)
 
     if experiment_args.n_random_trials > 0:
         objective = TabZillaObjective(
@@ -193,8 +188,8 @@ def main(experiment_args, model_name, dataset_dir):
         )
         study = optuna.create_study(
             direction=objective.direction,
-            study_name=study_name,
-            storage=storage_name,
+            study_name=None,
+            storage=None,
             load_if_exists=False,
         )
         study.optimize(
@@ -223,8 +218,8 @@ def main(experiment_args, model_name, dataset_dir):
         )
         study = optuna.create_study(
             direction=objective.direction,
-            study_name=study_name,
-            storage=storage_name,
+            study_name=None,
+            storage=None,
             load_if_exists=False,
         )
         # if random search was run, add these trials
