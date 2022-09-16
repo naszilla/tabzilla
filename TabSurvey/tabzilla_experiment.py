@@ -50,9 +50,6 @@ class TabZillaObjective(object):
         sc_tmp = get_scorer(dataset.target_type)
         self.direction = sc_tmp.direction
 
-        # to keep track of the number of evaluations, separate from the trial number
-        self.counter = 0
-
         # if True, sample random hyperparameters. if False, sample using the optuna sampler object
         self.random_parameters = random_parameters
 
@@ -66,14 +63,14 @@ class TabZillaObjective(object):
 
         if self.random_parameters:
             # first trial is always default params. after that, sample using either random or optuna suggested hparams
-            if self.counter == 0:
+            if trial.number == 0:
                 trial_params = self.model_handle.default_parameters()
                 hparam_source = "default"
             else:
                 trial_params = self.model_handle.get_random_parameters(
-                    self.counter + self.hparam_seed * 999
+                    trial.number + self.hparam_seed * 999
                 )
-                hparam_source = f"random_{self.counter}_s{self.hparam_seed}"
+                hparam_source = f"random_{trial.number}_s{self.hparam_seed}"
 
         else:
             trial_params = self.model_handle.define_trial_parameters(
@@ -151,16 +148,14 @@ class TabZillaObjective(object):
 
         # add info about the hyperparams and trial number
         result.hparam_source = hparam_source
-        result.trial_number = self.counter
+        result.trial_number = trial.number
         result.experiment_args = vars(self.experiment_args)
 
         # write results to file
         result_file_base = self.output_path.joinpath(
-            f"{hparam_source}_trial{self.counter}"
+            f"{hparam_source}_trial{trial.number}"
         )
         result.write(result_file_base, compress=False)
-
-        self.counter += 1
 
         return obj_val
 
@@ -200,7 +195,7 @@ def main(experiment_args, model_name, dataset_dir):
             direction=objective.direction,
             study_name=study_name,
             storage=storage_name,
-            load_if_exists=True,
+            load_if_exists=False,
         )
         study.optimize(
             objective,
@@ -230,7 +225,7 @@ def main(experiment_args, model_name, dataset_dir):
             direction=objective.direction,
             study_name=study_name,
             storage=storage_name,
-            load_if_exists=True,
+            load_if_exists=False,
         )
         # if random search was run, add these trials
         if previous_trials is not None:
