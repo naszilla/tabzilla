@@ -25,7 +25,7 @@ cd /home/shared/tabzilla/TabSurvey
 ENV_NAME=torch
 
 # name of the model/algorithm
-MODEL_NAME=NODE
+MODEL_NAME=TabNet
 
 # name of the dataset
 DATASET_NAME=/openml__arrhythmia__5
