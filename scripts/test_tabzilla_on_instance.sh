@@ -25,7 +25,7 @@ cd /home/shared/tabzilla/TabSurvey
 ENV_NAME=gbdt
 
 # name of the model/algorithm
-MODEL_NAME=CatBoost
+MODEL_NAME=ModelTree
 
 # name of the dataset
 DATASET_NAME=/openml__arrhythmia__5

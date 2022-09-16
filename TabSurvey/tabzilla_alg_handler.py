@@ -91,6 +91,12 @@ def get_LightGBM():
     return model
 
 
+@register_model("gbdt")
+def get_ModelTree():
+    from models.modeltree import ModelTree as model
+
+    return model
+
 ##############################################################
 # torch models
 
@@ -98,13 +104,6 @@ def get_LightGBM():
 @register_model("torch")
 def get_MLP():
     from models.mlp import MLP as model
-
-    return model
-
-
-@register_model("torch")
-def get_ModelTree():
-    from models.modeltree import ModelTree as model
 
     return model
 
