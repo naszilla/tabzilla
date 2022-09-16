@@ -48,7 +48,8 @@ class DANetClassifier(DANsModel):
         y_train,
         eval_set
     ):
-        output_dim, train_labels = infer_output_dim(y_train)
+        #output_dim, train_labels = infer_output_dim(y_train)
+        output_dim, train_labels = infer_output_dim(np.array(range(self.num_classes)))
         for X, y in eval_set:
             check_output_dim(train_labels, y)
         self.output_dim = output_dim

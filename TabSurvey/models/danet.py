@@ -47,9 +47,16 @@ class DANet(BaseModelTorch):
         }
 
         if self.task == "classification":
+            if args.objective == "binary":
+                self.num_classes_for_fit = 2
+            elif args.objective == "classification":
+                self.num_classes_for_fit = args.num_classes
+            else:
+                raise RuntimeError(f"Unexpected args.objective: {args.objective}")
             self.model = DANetClassifier(**model_params)
             self.eval_metric = ["accuracy"]
         else:
+            self.num_classes_for_fit = None
             self.model = DANetRegressor(**model_params)
             self.eval_metric = ["mse"]
 
@@ -82,6 +89,7 @@ class DANet(BaseModelTorch):
             logname=self.logname,
             # resume_dir=self.train_config['resume_dir'],
             n_gpu=self.n_gpu,
+            num_classes=self.num_classes_for_fit,
         )
 
         return (

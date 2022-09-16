@@ -71,7 +71,8 @@ class DANsModel(BaseEstimator):
         callbacks=None,
         logname=None,
         resume_dir=None,
-        n_gpu=1
+        n_gpu=1,
+        num_classes=None # Change only for Classification
     ):
         """Train a neural network stored in self.network
         Using train_dataloader for training data and
@@ -108,6 +109,8 @@ class DANsModel(BaseEstimator):
             The resume file directory
         gpu_id: str
             Single GPU or Multi GPU ID
+        num_classes: int
+            Number of classes (for multi-class)
         """
         self.max_epochs = max_epochs
         self.patience = patience
@@ -118,6 +121,7 @@ class DANsModel(BaseEstimator):
         self.log = Train_Log(logname, resume_dir) if (logname or resume_dir) else None
         self.n_gpu = n_gpu
         eval_set = eval_set if eval_set else []
+        self.num_classes = num_classes
 
         self.loss_fn = self._default_loss if loss_fn is None else loss_fn
         check_array(X_train)
