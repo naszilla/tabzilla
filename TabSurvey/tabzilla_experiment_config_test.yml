@@ -4,7 +4,7 @@
 output_dir: ./results/
 
 ###### number of trials for hyperparameter search & optimization
-n_random_trials: 2
+n_random_trials: 3
 n_opt_trials: 0
 hparam_seed: 0
 
@@ -17,5 +17,5 @@ data_parallel: True
 batch_size: 128
 val_batch_size: 256
 early_stopping_rounds: 20
-epochs: 1
+epochs: 10
 logging_period: 100
