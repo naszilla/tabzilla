@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 from pytorch_tabnet.tab_model import TabNetClassifier, TabNetRegressor
+from models.tabnet_patch_lib.tabnet_patch import TabNetClassifierPatched
 from utils.io_utils import load_model_from_file, save_model_to_file
 
 from models.basemodel_torch import BaseModelTorch
@@ -29,12 +30,17 @@ class TabNet(BaseModelTorch):
             self.model = TabNetRegressor(**self.params)
             self.metric = ["rmse"]
         elif args.objective == "classification" or args.objective == "binary":
-            self.model = TabNetClassifier(**self.params)
+            #self.model = TabNetClassifier(**self.params)
+            self.model = TabNetClassifierPatched(**self.params)
             self.metric = ["logloss"]
 
     def fit(self, X, y, X_val=None, y_val=None):
         if self.args.objective == "regression":
             y, y_val = y.reshape(-1, 1), y_val.reshape(-1, 1)
+        elif self.args.objective == "binary":
+            self.model.num_classes = 2
+        elif self.args.objective == "classification":
+            self.model.num_classes = self.args.num_classes
 
         self.model.fit(
             X,
