@@ -16,24 +16,6 @@ from utils.scorer import BinScorer, ClassScorer, RegScorer
 from utils.timer import Timer
 
 
-# time limit code from: https://stackoverflow.com/questions/366682/how-to-limit-execution-time-of-a-function-call
-class TimeoutException(Exception):
-    pass
-
-
-@contextmanager
-def time_limit(seconds):
-    def signal_handler(signum, frame):
-        raise TimeoutException("Timed out!")
-
-    signal.signal(signal.SIGALRM, signal_handler)
-    signal.alarm(seconds)
-    try:
-        yield
-    finally:
-        signal.alarm(0)
-
-
 class NpEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, np.integer):
@@ -173,10 +155,13 @@ class ExperimentResult:
         )
 
 
-def cross_validation(model: BaseModel, dataset: TabularDataset) -> ExperimentResult:
+class TimeoutException(Exception):
+    pass
+
+def cross_validation(model: BaseModel, dataset: TabularDataset, time_limit: int) -> ExperimentResult:
     """
     takes a BaseModel and TabularDataset as input, and trains and evaluates the model using cross validation with all
-    folds specified in the dataset property split_indeces
+    folds specified in the dataset property split_indeces. Time limit is checked after each fold, and an exception is raised
 
     returns an ExperimentResult object, which contains all metadata and results from the cross validation run, including:
     - evlaution objects for the validation and test sets
@@ -216,8 +201,13 @@ def cross_validation(model: BaseModel, dataset: TabularDataset) -> ExperimentRes
         "test": [],
     }
 
+    start_time = time.time()
+
     # iterate over all train/val/test splits in the dataset property split_indeces
     for i, split_dictionary in enumerate(dataset.split_indeces):
+
+        if time.time() - start_time > time_limit:
+            raise TimeoutException(f"time limit of {time_limit}s reached during fold {i}")
 
         train_index = split_dictionary["train"]
         val_index = split_dictionary["val"]

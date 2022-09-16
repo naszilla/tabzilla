@@ -19,7 +19,6 @@ from tabzilla_utils import (
     cross_validation,
     get_experiment_parser,
     get_scorer,
-    time_limit,
 )
 
 
@@ -94,6 +93,7 @@ class TabZillaObjective(object):
                 "objective",
                 "gpu_ids",
                 "use_gpu",
+                "epochs",
                 "data_parallel",
                 "early_stopping_rounds",
                 "dataset",
@@ -109,7 +109,7 @@ class TabZillaObjective(object):
         if hasattr(self.model_handle, "default_epochs"):
             max_epochs = self.model_handle.default_epochs
         else:
-            max_epochs = args.epochs
+            max_epochs = experiment_args.epochs
 
         args = arg_namespace(
             batch_size=self.experiment_args.batch_size,
@@ -133,9 +133,8 @@ class TabZillaObjective(object):
 
         # Cross validate the chosen hyperparameters
         try:
-            with time_limit(self.time_limit):
-                result = cross_validation(model, self.dataset)
-                obj_val = result.scorers["val"].get_objective_result()
+            result = cross_validation(model, self.dataset, self.time_limit)
+            obj_val = result.scorers["val"].get_objective_result()
         except Exception as e:
             print(f"caught exception during cross-validation...")
             result = ExperimentResult(
