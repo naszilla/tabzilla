@@ -5,6 +5,7 @@
 import argparse
 import logging
 import sys
+import traceback
 from collections import namedtuple
 from pathlib import Path
 from typing import NamedTuple
@@ -134,6 +135,7 @@ class TabZillaObjective(object):
             obj_val = result.scorers["val"].get_objective_result()
         except Exception as e:
             print(f"caught exception during cross-validation...")
+            tb = traceback.format_exc()
             result = ExperimentResult(
                 dataset=self.dataset,
                 model=model,
@@ -143,7 +145,7 @@ class TabZillaObjective(object):
                 probabilities=None,
                 ground_truth=None,
             )
-            result.exception = e
+            result.exception = tb
             obj_val = None
 
         # add info about the hyperparams and trial number
