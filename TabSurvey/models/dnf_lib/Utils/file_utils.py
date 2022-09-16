@@ -5,6 +5,7 @@ import shutil
 import json
 from os.path import isfile, join, isdir
 
+from tabzilla_utils import NpEncoder
 
 def dir_to_file_list(path_to_dir):
     return [path_to_dir + '/' + f for f in os.listdir(path_to_dir) if isfile(join(path_to_dir, f))]
@@ -80,9 +81,10 @@ def write_list_to_file(data_list, file_path):
             file.write(str(item) + "\n")
 
 
+# tabzilla: use npencoder to write numpy objects as serializable objects
 def write_dict_to_file(data_dict, file_path):
     with open(file_path, 'w') as file:
-        file.write(json.dumps(data_dict,  sort_keys=False, indent=4, separators=(',', ': ')))
+        file.write(json.dumps(data_dict,  sort_keys=False, indent=4, separators=(',', ': '), cls=NpEncoder))
 
 
 def read_dict_from_file(file_path):

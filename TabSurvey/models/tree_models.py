@@ -20,7 +20,7 @@ from models.basemodel import BaseModel
 class XGBoost(BaseModel):
 
     # TabZilla: add default number of boosting rounds
-    default_epochs = 500
+    # default_epochs = 500
 
     def __init__(self, params, args):
         super().__init__(params, args)
@@ -112,7 +112,7 @@ class XGBoost(BaseModel):
 class CatBoost(BaseModel):
 
     # TabZilla: add default number of boosting rounds
-    default_epochs = 500
+    # default_epochs = 500
 
     def __init__(self, params, args):
         super().__init__(params, args)
@@ -197,7 +197,7 @@ class CatBoost(BaseModel):
 class LightGBM(BaseModel):
 
     # TabZilla: add default number of boosting rounds
-    default_epochs = 500
+    # default_epochs = 500
 
     def __init__(self, params, args):
         super().__init__(params, args)
