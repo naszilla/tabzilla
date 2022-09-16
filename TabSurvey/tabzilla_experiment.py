@@ -149,6 +149,7 @@ class TabZillaObjective(object):
             )
             result.exception = tb
             obj_val = None
+            print(tb)
 
         # add info about the hyperparams and trial number
         result.hparam_source = hparam_source

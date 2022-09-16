@@ -65,6 +65,11 @@ class BaseModel:
             "args": self.args._asdict(),
         }
 
+    def get_classes(self):
+        if "classes_" not in dir(self):
+            return None
+        return self.classes_
+
     def fit(
         self,
         X: np.ndarray,
@@ -104,16 +109,17 @@ class BaseModel:
         ):
             # Handle special case of missing classes in training set, which can (depending on the model)  result in
             # predictions only being made for those classes
-            if "classes_" not in dir(self.model):
+            classes_ = self.get_classes()
+            if classes_ is None:
                 raise NotImplementedError(
-                    f"Cannot infer classes for model of type {type(self.model)}"
+                    f"Cannot infer classes for model of type {type(self)}"
                 )
             # From https://github.com/scikit-learn/scikit-learn/issues/21568#issuecomment-984030911
             y_score_expanded = np.zeros(
                 (self.prediction_probabilities.shape[0], self.args.num_classes),
                 dtype=self.prediction_probabilities.dtype,
             )
-            for idx, class_id in enumerate(self.model.classes_):
+            for idx, class_id in enumerate(classes_):
                 y_score_expanded[:, class_id] = self.prediction_probabilities[:, idx]
             self.prediction_probabilities = y_score_expanded
             self.predictions = np.argmax(self.prediction_probabilities, axis=1)

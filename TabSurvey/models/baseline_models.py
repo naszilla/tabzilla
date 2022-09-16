@@ -47,6 +47,9 @@ class LinearModel(BaseModel):
         params = dict()
         return params
 
+    def get_classes(self):
+        return self.model.classes_
+
 
 """
     K-Neighbors Regressor - Regression/Classification based on k-nearest neighbors
@@ -107,6 +110,8 @@ class KNN(BaseModel):
         }
         return params
 
+    def get_classes(self):
+        return self.model.classes_
 
 """
     Support Vector Machines - Epsilon-Support Vector Regression / C-Support Vector Classification
@@ -139,6 +144,9 @@ class SVM(BaseModel):
     def default_parameters(cls):
         params = {"C": 1.0}
         return params
+
+    def get_classes(self):
+        return self.model.classes_
 
 
 """
@@ -173,6 +181,8 @@ class DecisionTree(BaseModel):
         params = {"max_depth": 5}
         return params
 
+    def get_classes(self):
+        return self.model.classes_
 
 """
     Random Forest - Random Forest Regressor/Classifier
@@ -224,3 +234,6 @@ class RandomForest(BaseModel):
             "n_estimators": 50,
         }
         return params
+
+    def get_classes(self):
+        return self.model.classes_
