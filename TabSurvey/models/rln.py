@@ -21,7 +21,7 @@ from models.basemodel import BaseModel
 class RLN(BaseModel):
 
     # TabZilla: add default number of epochs.
-    default_epochs = 56  # from RLN paper (fig. 7)
+    # default_epochs = 56  # from RLN paper (fig. 7). this seems too low though
 
     def __init__(self, params, args):
         super().__init__(params, args)

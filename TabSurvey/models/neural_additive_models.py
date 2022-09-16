@@ -20,7 +20,7 @@ from models.basemodel_torch import BaseModelTorch
 class NAM(BaseModelTorch):
 
     # TabZilla: add default number of epochs.
-    default_epochs = 1000  # from NAM paper
+    # default_epochs = 1000  # from NAM paper. this seems too high though
 
     def __init__(self, params, args):
         super().__init__(params, args)
