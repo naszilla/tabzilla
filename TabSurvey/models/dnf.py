@@ -28,7 +28,7 @@ from models.dnf_lib.Utils.NumpyGenerator import NumpyGenerator
 class DNFNet(BaseModel):
 
     # TabZilla: add default number of epochs.
-    default_epochs = 1000  # from DNFNet paper
+    # default_epochs = 1000  # from DNFNet paper. this seems too high.
 
     def __init__(self, params, args):
         super().__init__(params, args)
