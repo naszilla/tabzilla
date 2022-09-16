@@ -178,6 +178,9 @@ def main(experiment_args, model_name, dataset_dir):
 
     optuna.logging.get_logger("optuna").addHandler(logging.StreamHandler(sys.stdout))
 
+    # number of jobs is -1 if using CPU, and 1 if using GPU. we're only planning to use 1 GPU/experiment
+    n_jobs = 1 if experiment_args.use_gpu else -1
+
     if experiment_args.n_random_trials > 0:
         objective = TabZillaObjective(
             model_handle=model_handle,
@@ -201,7 +204,7 @@ def main(experiment_args, model_name, dataset_dir):
             objective,
             n_trials=experiment_args.n_random_trials,
             timeout=experiment_args.experiment_time_limit,
-            n_jobs=-1,
+            n_jobs=n_jobs,
         )
         previous_trials = study.trials
     else:
@@ -237,7 +240,7 @@ def main(experiment_args, model_name, dataset_dir):
             objective,
             n_trials=experiment_args.n_opt_trials,
             timeout=experiment_args.experiment_time_limit,
-            n_jobs=-1,
+            n_jobs=n_jobs,
         )
 
     print(f"trials complete. results written to {output_path}")
