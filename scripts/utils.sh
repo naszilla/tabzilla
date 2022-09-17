@@ -166,6 +166,7 @@ run_experiment_gpu() {
     --project=$project --image-family=$image_family \
     --machine-type=${machine_type} \
     --service-account $service_account \
+    --maintenance-policy TERMINATE \
     --scopes=https://www.googleapis.com/auth/devstorage.read_write \
     --accelerator type=${ACCELERATOR_TYPE},count=${ACCELERATOR_COUNT}
 
