@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# gpu-experiments-b = {tabtransformer, stg, saint, danet, rln, dnfnet}
+# gpu-experiments-a = {xgboost, catboost, mlp, tabnet, vime}
 
 # load functions
 source ../utils.sh
@@ -24,16 +24,16 @@ MODELS_ENVS=(
     # ModelTree:$GBDT_ENV <- bug
     TabNet:$TORCH_ENV
     VIME:$TORCH_ENV
-    TabTransformer:$TORCH_ENV
+    # TabTransformer:$TORCH_ENV
     # NODE:$TORCH_ENV <- bug
     # DeepGBM:$TORCH_ENV <- bug
-     STG:$TORCH_ENV
+    #  STG:$TORCH_ENV
     # NAM:$TORCH_ENV <- bug
     # DeepFM:$TORCH_ENV <- bug
-     SAINT:$TORCH_ENV
-     DANet:$TORCH_ENV
-     RLN:$KERAS_ENV
-     DNFNet:$KERAS_ENV
+    #  SAINT:$TORCH_ENV
+    #  DANet:$TORCH_ENV
+    #  RLN:$KERAS_ENV
+    #  DNFNet:$KERAS_ENV
   )
 
 # to generate this list, run in python:
