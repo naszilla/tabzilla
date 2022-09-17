@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# gpu-experiments-a = {xgboost, catboost, mlp, tabnet, vime}
+# gpu-experiments-b = {tabtransformer, stg, saint, danet, rln, dnfnet}
+
 # load functions
 source ../utils.sh
 
@@ -156,10 +159,10 @@ DATASETS=(
 )
 
 # base name for the gcloud instances
-instance_base=cpu-test
+instance_base=gpu-expt-b
 
 # experiment name (will be appended to results files)
-experiment_name=cpu-test
+experiment_name=gpu-expt-b
 
 # maximum number of experiments (background processes) that can be running
 MAX_PROCESSES=10
