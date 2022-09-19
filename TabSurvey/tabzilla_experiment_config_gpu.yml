@@ -20,5 +20,5 @@ data_parallel: True
 batch_size: 128
 val_batch_size: 256
 early_stopping_rounds: 20
-epochs: 2
+epochs: 100
 logging_period: 100

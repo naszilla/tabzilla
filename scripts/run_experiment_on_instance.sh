@@ -84,4 +84,4 @@ mv ./results.zip ./${result_file}
 ###############################
 # save results to gcloud bucket
 
-gsutil cp ./${result_file} gs://tabzilla-results/inbox/${DATASET_NAME}/${MODEL_NAME}/${result_file}
+gsutil cp ./${result_file} gs://tabzilla-results/results/${DATASET_NAME}/${MODEL_NAME}/${result_file}
