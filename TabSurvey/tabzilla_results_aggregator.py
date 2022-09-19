@@ -73,8 +73,8 @@ def aggregate_results_helper(results_file):
 def aggregate_results():
     print("Parsing files...")
 
-    results_files = local_results_folder.glob("*/*/*/*.json")
-    # results_files = local_results_folder.glob("*/*/*/*_results.json") # Future versions will use this format
+    # results_files = local_results_folder.glob("*/*/*/*.json") # Past versions used this format
+    results_files = local_results_folder.glob("*/*/*/*_results.json")
 
     with multiprocessing.Pool() as pool:
         consolidated_results = pool.map(aggregate_results_helper, results_files)
