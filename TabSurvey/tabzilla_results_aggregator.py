@@ -19,6 +19,8 @@ ROOT_PATH = "results"
 out_results_file = Path("metadataset.csv")
 out_errors_file = Path("metadataset_errors.csv")
 
+num_processes = 8
+
 
 def process_blob(result_blob):
     blob_path = Path(result_blob)
@@ -36,6 +38,7 @@ def process_blob(result_blob):
     dest_folder = local_path.with_suffix("")
     with ZipFile(local_path, 'r') as zf:
         zf.extractall(dest_folder)
+    local_path.unlink()
 
     # Parse results
     print(f"Parsing: {blob_path}...")
@@ -49,7 +52,6 @@ def process_blob(result_blob):
 
     # Clean up
     shutil.rmtree(dest_folder)
-    local_path.unlink()
     print(f"Done!: {blob_path}...")
 
     return result_list, exception_list
@@ -123,7 +125,7 @@ def download_and_process_results():
     matching_blobs = storage_client.list_blobs(RESULTS_BUCKET_NAME, prefix=ROOT_PATH)
     matching_blobs = [blob.name for blob in matching_blobs if blob.name not in processed_file_set]
 
-    with multiprocessing.Pool() as pool:
+    with multiprocessing.Pool(processes=num_processes) as pool:
         results_and_exceptions = pool.map(process_blob, matching_blobs)
     shutil.rmtree(local_results_folder)
 
