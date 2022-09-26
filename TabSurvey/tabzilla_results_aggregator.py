@@ -1,47 +1,69 @@
-import argparse
-from pathlib import Path
-import json
-from zipfile import ZipFile
-import multiprocessing
 import itertools
+import json
+import logging
+import multiprocessing
 import shutil
-import functools
 import warnings
+from pathlib import Path
+from zipfile import ZipFile
 
 import pandas as pd
 from google.cloud import storage
 
+logging.basicConfig(format="[%(asctime)s] : %(message)s", level=logging.INFO)
 
 local_results_folder = Path("bucket_results")
-PROJECT_NAME = 'research-collab-naszilla'
+save_results_folder = Path("results_files")
+PROJECT_NAME = "research-collab-naszilla"
 RESULTS_BUCKET_NAME = "tabzilla-results"
 ROOT_PATH = "results"
 out_results_file = Path("metadataset.csv")
 out_errors_file = Path("metadataset_errors.csv")
 
-num_processes = 8
+num_processes = 2
 
 
-def process_blob(result_blob):
+def process_blob(args):
+
+    i = args[0]
+    result_blob = args[1]
+    num_blobs = args[2]
+    logging.info(f"[blob {i} {num_blobs}]: Processing...")
     blob_path = Path(result_blob)
 
     # Download and extract contents
     local_path = local_results_folder / blob_path.relative_to(ROOT_PATH)
-    print(f"Downloading: {blob_path}...")
+    logging.info(f"[blob {i} of {num_blobs}]: Downloading...")
     local_path.parent.mkdir(parents=True, exist_ok=True)
 
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore")
-        storage.Client(project=PROJECT_NAME).get_bucket(RESULTS_BUCKET_NAME).get_blob(result_blob).download_to_filename(local_path)
+        storage.Client(project=PROJECT_NAME).get_bucket(RESULTS_BUCKET_NAME).get_blob(
+            result_blob
+        ).download_to_filename(local_path)
 
-    print(f"Extracting: {blob_path}...")
-    dest_folder = local_path.with_suffix("")
-    with ZipFile(local_path, 'r') as zf:
-        zf.extractall(dest_folder)
+    logging.info(f"[blob {i} {num_blobs}]: Extracting...")
+    dest_folder = save_results_folder / blob_path.relative_to(ROOT_PATH)
+    dest_folder.mkdir(parents=True, exist_ok=True)
+    with ZipFile(local_path, "r") as zf:
+        # extract only the "*_results.json" files
+        extract_files = []
+        for f in zf.namelist():
+            if f.endswith("results.json"):
+                extract_files.append(f)
+
+        logging.info(
+            f"[blob {i} of {num_blobs}]: found {len(extract_files)} results files"
+        )
+        logging.info(f"[blob {i} of  {num_blobs}]: extracting...")
+        for f in extract_files:
+            zf.extract(f, dest_folder)
+
+    # remove downloaded zip file
     local_path.unlink()
 
     # Parse results
-    print(f"Parsing: {blob_path}...")
+    logging.info(f"[blob {i} of {num_blobs}]: Parsing...")
     results_files = dest_folder.glob("*_results.json")
     result_list = []
     exception_list = []
@@ -50,9 +72,7 @@ def process_blob(result_blob):
         result_list += new_results
         exception_list += new_exceptions
 
-    # Clean up
-    shutil.rmtree(dest_folder)
-    print(f"Done!: {blob_path}...")
+    logging.info(f"[blob {i} of {num_blobs}]: Done!")
 
     return result_list, exception_list
 
@@ -71,17 +91,18 @@ def parse_results_file(results_file, blob_path):
 
     is_exception = contents["exception"] != "None"
     if not is_exception:
-        num_folds = len(contents['timers']['train'])
+        num_folds = len(contents["timers"]["train"])
         for fold_number in range(num_folds):
             fold_results = dict(
                 results_bucket_path=blob_path.as_posix(),
                 dataset_fold_id=f"{dataset_name}__fold_{fold_number}",
                 dataset_name=dataset_name,
+                target_type=contents["dataset"]["target_type"],
                 alg_name=contents["model"]["name"],
                 hparam_source=contents["hparam_source"],
                 trial_number=contents["trial_number"],
                 alg_hparam_id=f'{alg_name}__seed_{contents["experiemnt_args"]["hparam_seed"]}__trial_{contents["trial_number"]}',
-                exp_name=exp_name
+                exp_name=exp_name,
             )
 
             for phase in ["train", "val", "test", "train-eval"]:
@@ -89,7 +110,9 @@ def parse_results_file(results_file, blob_path):
                 if phase == "train-eval":
                     continue
                 for metric in contents["scorers"][phase].keys():
-                    fold_results[f"{metric}__{phase}"] = contents["scorers"][phase][metric][fold_number]
+                    fold_results[f"{metric}__{phase}"] = contents["scorers"][phase][
+                        metric
+                    ][fold_number]
 
             result_list.append(fold_results)
     else:
@@ -116,37 +139,49 @@ def download_and_process_results():
         del done_results
     if out_errors_file.exists():
         done_errors = pd.read_csv(out_errors_file)
-        processed_file_set = processed_file_set.union(set(done_errors["results_bucket_path"]))
+        processed_file_set = processed_file_set.union(
+            set(done_errors["results_bucket_path"])
+        )
         del done_errors
 
     local_results_folder.mkdir(parents=True, exist_ok=True)
 
     storage_client = storage.Client(project=PROJECT_NAME)
     matching_blobs = storage_client.list_blobs(RESULTS_BUCKET_NAME, prefix=ROOT_PATH)
-    matching_blobs = [blob.name for blob in matching_blobs if blob.name not in processed_file_set]
-
+    matching_blobs = [
+        blob.name for blob in matching_blobs if blob.name not in processed_file_set
+    ]
+    num_blobs = len(matching_blobs)
+    args = [(i, blobname, num_blobs) for i, blobname in enumerate(matching_blobs)]
     with multiprocessing.Pool(processes=num_processes) as pool:
-        results_and_exceptions = pool.map(process_blob, matching_blobs)
+        results_and_exceptions = pool.map(process_blob, args)
+
     shutil.rmtree(local_results_folder)
 
     # Flatten list of lists
     exceptions = list(itertools.chain(*(exc for _, exc in results_and_exceptions)))
-    consolidated_results = list(itertools.chain(*(res for res, _ in results_and_exceptions)))
+    consolidated_results = list(
+        itertools.chain(*(res for res, _ in results_and_exceptions))
+    )
     del results_and_exceptions
 
     if not consolidated_results and not exceptions:
-        print("No new results. Exiting.")
+        logging.info("No new results. Exiting.")
         return
 
-    print("Parsing done. Aggregating results...")
+    logging.info("Parsing done. Aggregating results...")
     if consolidated_results:
         consolidated_results = pd.DataFrame(consolidated_results)
 
         if out_results_file.exists():
             old_results = pd.read_csv(out_results_file)
-            consolidated_results = pd.concat([old_results, consolidated_results], axis=0, ignore_index=True)
+            consolidated_results = pd.concat(
+                [old_results, consolidated_results], axis=0, ignore_index=True
+            )
 
-        consolidated_results.sort_values(["dataset_fold_id", "alg_hparam_id"], inplace=True)
+        consolidated_results.sort_values(
+            ["dataset_fold_id", "alg_hparam_id"], inplace=True
+        )
         consolidated_results.to_csv(out_results_file, index=False)
 
     if exceptions:
@@ -158,6 +193,7 @@ def download_and_process_results():
 
         exceptions.sort_values(["dataset_name", "alg_hparam_id"], inplace=True)
         exceptions.to_csv(out_errors_file, index=False)
+
 
 if __name__ == "__main__":
     download_and_process_results()
