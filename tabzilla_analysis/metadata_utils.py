@@ -9,7 +9,7 @@ is_max_metric = {
     "Accuracy": True,
     "F1": True,
     "MSE": False,
-    "R2": False
+    "R2": True
 }
 
 def get_metadata(suffix="_v0"):
@@ -27,9 +27,9 @@ def process_metafeatures(metafeatures_df, filter_families=None):
     'model-based',
     'info-theory',
     'relative',
-    'clustering', # Not currently implemente; OOM
-    # 'complexity', # Not currently implemente; OOM
-    # 'itemset', # Not currently implemente; OOM
+    'clustering', # Not currently implemented; OOM
+    # 'complexity', # Not currently implemented; OOM
+    # 'itemset', # Not currently implemented; OOM
     # 'concept' # Not currently implemented
     ]
     """
