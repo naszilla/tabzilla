@@ -221,7 +221,8 @@ class VIME(BaseModelTorch):
                     self.args.objective == "regression"
                     or self.args.objective == "binary"
                 ):
-                    y_hat = y_hat.squeeze()
+                    #y_hat = y_hat.squeeze()
+                    y_hat = y_hat.reshape((batch_X.shape[0], ))
 
                 y_loss = loss_func_supervised(y_hat, batch_y.to(self.device))
                 yu_loss = torch.mean(torch.var(yv_hats, dim=0))
@@ -243,7 +244,8 @@ class VIME(BaseModelTorch):
                     self.args.objective == "regression"
                     or self.args.objective == "binary"
                 ):
-                    y_hat = y_hat.squeeze()
+                    y_hat = y_hat.reshape((batch_val_X.shape[0], ))
+                    #y_hat = y_hat.squeeze()
 
                 val_loss += loss_func_supervised(y_hat, batch_val_y.to(self.device))
                 val_dim += 1
