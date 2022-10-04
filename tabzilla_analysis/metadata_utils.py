@@ -1,8 +1,7 @@
 import pandas as pd
-import itertools
-import matplotlib.pyplot as plt
+from pathlib import Path
 
-
+# Maps metric name to a boolean indicating whether maximizing the metric equates to having a better model
 is_max_metric = {
     "Log Loss": False,
     "AUC": True,
@@ -12,26 +11,47 @@ is_max_metric = {
     "R2": True
 }
 
+metadata_folder = Path("../TabSurvey")
+
 def get_metadata(suffix="_v0"):
-    metadataset_df = pd.read_csv(f"../TabSurvey/metadataset{suffix}.csv")
-    metafeatures_df = pd.read_csv(f"../TabSurvey/metafeatures{suffix}.csv")
+    """
+    Read the metadataset and metafeatures for the specified suffix.
+    metadataset_df: as output by tabzilla_results_aggregator.py
+    metafeatures_df: as output by tabzilla_featurizer.py
+
+    Args:
+        suffix: The suffix indicating the dataset (usually the version)
+
+    Returns:
+        metadataset_df, metafeatures_df: Tuple of DataFrames
+    """
+    metadataset_df = pd.read_csv(metadata_folder / f"metadataset{suffix}.csv")
+    metafeatures_df = pd.read_csv(metadata_folder / f"metafeatures{suffix}.csv")
     
     return metadataset_df, metafeatures_df
 
 def process_metafeatures(metafeatures_df, filter_families=None):
-    """Impute missing values and filter by groups of features
-    filter_families: list of strings from
-    ['landmarking',
-    'general',
-    'statistical',
-    'model-based',
-    'info-theory',
-    'relative',
-    'clustering', # Not currently implemented; OOM
-    # 'complexity', # Not currently implemented; OOM
-    # 'itemset', # Not currently implemented; OOM
-    # 'concept' # Not currently implemented
-    ]
+    """
+    Impute missing values (with median of metafeatures) and filter by groups of features.
+
+    Args:
+        metafeatures_df: DataFrame, as output by get_metadata
+        filter_families: list of strings from:
+            ['landmarking',
+            'general',
+            'statistical',
+            'model-based',
+            'info-theory',
+            'relative',
+            'clustering', # Not currently implemented; OOM
+            # 'complexity', # Not currently implemented; OOM
+            # 'itemset', # Not currently implemented; OOM
+            # 'concept' # Not currently implemented
+            ]
+
+    Returns:
+        metafeatures_processed: dataframe similar to metafeatures_df, with imputed features and filtered by metafeature
+            categories
     """
     metafeatures_processed = metafeatures_df.fillna(metafeatures_df.median())
     
@@ -47,7 +67,18 @@ def process_metafeatures(metafeatures_df, filter_families=None):
     
 
 def get_tuned_alg_perf(metadataset_df, metric="Accuracy"):
-    """ For each algorithm, for each dataset fold, tune on "validation". You should analyze the performance on "test" after this. """
+    """ For each algorithm, for each dataset fold, tune on "validation". Only one row per algorithm / dataset_fold_id
+    pair will be kept. You should analyze the performance on "test" after this, with the same metric used to tune.
+
+    Args:
+        metadataset_df: DataFrame, as output by get_metadata
+        metric: Metric name (choices as in the keys of is_max_metric)
+
+    Returns:
+        tuned_alg_perf: dataframe with tuned performance
+    """
+
+    """  """
     if metric not in is_max_metric:
         raise RuntimeError(f"metric must be one of: {is_max_metric.keys()}")
     groups = metadataset_df.groupby(["alg_name", "dataset_fold_id"])[f"{metric}__val"]
@@ -61,17 +92,39 @@ def get_tuned_alg_perf(metadataset_df, metric="Accuracy"):
     return tuned_alg_perf
 
 
+def join_tuned_with_metafeatures(tuned_alg_perf, metafeatures_df):
+    """
+    Join the tuned performance dataframe with the metafeatures dataframe
+    Args:
+        tuned_alg_perf: DataFrame of tuned performance, as output by get_tuned_alg_perf()
+        metafeatures_df: DataFrame of metafeatures
+
+    Returns:
+
+    """
+    joined_df = tuned_alg_perf.merge(metafeatures_df, right_on="dataset_name", left_on="dataset_fold_id", how='left')
+    return joined_df
+
+
 def compute_feature_corrs(joined_df, metric_name, as_abs=False):
     """
-    Compute correlation between each metafeature and each algorithm (when tuned)
+
+    Args:
+        joined_df: As output by join_tuned_with_metafeatures()
+        metric_name: The name of the metric. Use one of the keys of is_max_metric.
+        as_abs: Boolean specifying whether to get the absolute values of all correlations.
+
+    Returns:
+        all_cors: DataFrame with one row per metafeature and one column per algorithm
     """
+
     query_column = f"{metric_name}__test"
     all_cors = []
 
     all_features = [col for col in joined_df.columns if col.startswith("f__")]
 
     for alg, filtered_results in joined_df.groupby("alg_name"):
-        alg_cors = filtered_results[all_features].corrwith(filtered_results[f"{metric_name}__test"])
+        alg_cors = filtered_results[all_features].corrwith(filtered_results[query_column])
         alg_cors.name = alg
         all_cors.append(alg_cors)
     all_cors = pd.concat(all_cors, axis=1)
