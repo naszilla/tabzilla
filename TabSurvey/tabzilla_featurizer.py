@@ -6,6 +6,8 @@ from tqdm import tqdm
 from tabzilla_datasets import TabularDataset
 from tabzilla_data_processing import process_data
 
+# Subset of: ['landmarking', 'general', 'statistical', 'model-based', 'info-theory', 'relative', 'clustering',
+# 'complexity', 'itemset', 'concept']
 groups = [
     'landmarking',
     'general',
@@ -19,24 +21,10 @@ groups = [
     # 'concept'
 ]
 
-# groups = [
-#     # 'landmarking',
-#     # 'general',
-#     # 'statistical',
-#     # 'model-based',
-#     # 'info-theory',
-#     # 'relative',
-#     # 'clustering', # OOM
-#     # 'complexity', # OOM
-#     #'itemset', # OOM
-#     'concept'
-# ]
-# #
-# groups = [
-#     'general',
-#     #'info-theory',
-# ]
 
+# Subset of:
+# ["mean", "sd", "count", "histogram", "iq_range", "kurtosis", "max", "median", "min", "quantiles", "range",
+# "skewness"]
 summary_funcs = [
     "mean",
     "sd",

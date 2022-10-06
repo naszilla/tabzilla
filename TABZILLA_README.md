@@ -293,3 +293,10 @@ There are a few additional settings that control PyMFE's metafeature extraction 
 
 Extracting metafeatures can take several days for all datasets, so it is recommended to run the script within a terminal multiplexer such as screen. Paralellization of the script might be desirable in the future, but memory issues might arise with some of the computations if done on a single instance.
 
+# Implementing new models
+
+You can follow the [original TabSurvey readme](TabSurvey/TabSurvey_README.md) to implement new models, with the following additions.
+
+For any model supporting multi-class classification, you need to ensure the model follows one of the next two approaches:
+1. The model always encodes its output with `args.num_classes` dimension (this is set to 1 for binary classification). In the case of multi-class classification, dimension `i` must match to the value `i` in the labels (which are encoded 0 through `args.num_classes-1` in the output). **Note**: inferring the number of classes from the labels in training may not be sufficient if there are missing labels on the training set (which happens for some datasets), so you must use `args.num_classes` directly.
+2. If there is a chance for the prediction probabilities for the model to have less than `args.num_classes` dimension (this can mainly happen if there are missing classes in training for models such as those from `sklearn`) implement a method `get_classes()` that returns the list of the labels corresponding to the dimensions. See [examples here](TabSurvey/models/baseline_models.py).
