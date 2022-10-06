@@ -315,6 +315,8 @@ def check_tasks_from_suite(suite_id):
 
 # Call the dataset preprocessor decorator for each of the selected OpenML datasets
 for kwargs in openml_tasks:
+    #if kwargs["openml_task_id"] in [48, 50]:
+    #    continue
     task = openml.tasks.get_task(task_id=kwargs["openml_task_id"], download_data=False, download_qualities=False)
     ds = openml.datasets.get_dataset(task.dataset_id, download_data=False, download_qualities=False)
     dataset_name = f"openml__{ds.name}__{kwargs['openml_task_id']}"
