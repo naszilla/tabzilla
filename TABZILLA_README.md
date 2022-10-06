@@ -89,7 +89,12 @@ Calling `tabzilla_data_preprocessing.py` as a script will preprocess selected da
 > python tabzilla_data_preprocessing.py --dataset_name openml__california__361089
 ```
 
-will preprocess and write the `CaliforniaHousing` dataset to local directory `tabzilla/TabSurvey/datasets/CaliforniaHousing`. 
+will preprocess and write the `CaliforniaHousing` dataset to local directory `tabzilla/TabSurvey/datasets/CaliforniaHousing`.
+
+If you wish to process all of the datasets instead, you can execute the following:
+```bash
+> python tabzilla_data_preprocessing.py --process_all
+```
 
 ## Reading Preprocessed Datasets
 
@@ -264,3 +269,27 @@ The final step is running pre-processing on the dataset. From `TabSurvey`, run t
 (If you do not know the dataset name, it will the format `f"openml__DATASET_NAME__TASK_ID"`. You can find the `OPENML_DATASET_NAME` dataset name using `task.get_dataset().name`. Alternatively, run the script with the flag `--process_all` instead of the `--dataset_name` flag). 
 
 This should output a folder under `TabSurvey/datasets/YOUR_DATASET_NAME` with files `metadata.json`, `split_indeces.npy.gz`, `X.npy.gz`, and `y.npy.gz`. Open `metadata.json` and check that the metadata corresponds to what you expect (especially `target_type`). Note that running the pre-processing also performs the checks within `inspect_openml_task` again, which is particularly useful if you had to make any changes (for Option 2 of OpenML dataset addition). This ensures the final dataset saved to disk passes the checks.
+
+# Metafeature Extraction
+
+The script for extracting metafeatures is provided in [`TabSurvey/tabzilla_featurizer.py`](TabSurvey/tabzilla_featurizer.py). It uses [PyMFE](https://pymfe.readthedocs.io/en/latest/index.html) to extract metafeatures from the datasets. Note that PyMFE currently does not support regression tasks, so the featurizer will skip regression datasets.
+
+To extract metafeatures, you first need to have the dataset(s) you want to extract metafeatures on disk (follow the instructions from the **Datasets** section for this). Next, run `tabzilla_featurizer.py` (no arguments needed). The script will walk the datasets folder, extract metafeatures for each dataset (that is not a regression task), and write the metafeatures to `metafeatures.csv`. Note that the script saves these metafeatures after each dataset has been processed, so if the script is killed halfway through a dataset, the progress is not lost and only datasets that have not been featurized are processed.
+
+Each row corresponds to one dataset fold. Metafeature columns start with the prefix `f__`.
+
+There are three main settings that control the metafeatures extracted, and they are defined at the top of the script. These are:
+1. `groups`: List of groups of metafeatures to extract. The possible values are listed in the comments. In general, we should aim to extract as many metafeatures as possible. However, some metafeature categories can result in expensive computations that run out of memory, so some categories are not currently selected.
+2. `summary_funcs`: functions to summarize distributions. The possible values are listed in the comments, and the current list includes all of them.
+3. `scoring`: scoring function used for landmarkers. Possible values are listed in the comments.
+
+
+**It is very important that you use a consistent setting of metafeatures for all datasets**. Extracting metafeatures for some datasets, changing the datasets, and then appending to the same `metafeatures.csv` file is not recommended. It is possible to modify the script so that if entries are added to `groups`, the script only computes the new group of metafeatures for all datasets. However, this behavior has not been implemented, and the current version of the script assumes that the metafeature settings do not change in between runs.
+
+There are a few additional settings that control PyMFE's metafeature extraction process within the script. These are set fixed in the code but can also be modified if needed:
+1. `random_state` (used in `MFE` initialization): Set to 0 for reproducibility.
+2. `transform_num`: boolean flag used in the `fit` method of the `MFE` object. Setting it to true causes numerical features to be transformed into categorical for metafeatures that can only be computed with categorical features. This behavior is memory-intensive, so it has been disabled, but it also means that some metafeatures that are computed on categorical features will be missing or less reliable for datasets with none or few categorical features, respectively.
+3. `transform_cat`: analogous to `transform_num`, for categorical features to be converted into numerical ones. Setting it to `None` disables the behavior, and this is currently done in the script to avoid memory issues. For the different options, see the PyMFE source code and documentation.
+
+Extracting metafeatures can take several days for all datasets, so it is recommended to run the script within a terminal multiplexer such as screen. Paralellization of the script might be desirable in the future, but memory issues might arise with some of the computations if done on a single instance.
+
