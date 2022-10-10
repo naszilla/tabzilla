@@ -22,6 +22,10 @@ from models.saint_lib.models.pretrainmodel import SAINT as SAINTModel
 
 
 class SAINT(BaseModelTorch):
+
+    # TabZilla: add default number of epochs.
+    # default_epochs = 100  # from SAINT paper. this is equal to our max-epochs
+
     def __init__(self, params, args):
         super().__init__(params, args)
         if args.cat_idx:
@@ -182,8 +186,7 @@ class SAINT(BaseModelTorch):
                 min_val_loss_idx = epoch
 
                 # Save the currently best model
-                # tabzilla: don't save the model...
-                # self.save_model(filename_extension="best", directory="tmp")
+                self.save_model(filename_extension="best", directory=self.tmp_name)
 
             if min_val_loss_idx + self.args.early_stopping_rounds < epoch:
                 print(
@@ -193,7 +196,7 @@ class SAINT(BaseModelTorch):
                 print("Early stopping applies.")
                 break
 
-        self.load_model(filename_extension="best", directory="tmp")
+        self.load_model(filename_extension="best", directory=self.tmp_name)
         return loss_history, val_loss_history
 
     def predict_helper(self, X):
@@ -239,7 +242,7 @@ class SAINT(BaseModelTorch):
         return array with the same shape as X.
         """
         global my_attention
-        # self.load_model(filename_extension="best", directory="tmp")
+        self.load_model(filename_extension="best", directory=self.tmp_name)
 
         X = {"data": X, "mask": np.ones_like(X)}
         y = {"data": np.ones((X["data"].shape[0], 1))}
@@ -303,5 +306,27 @@ class SAINT(BaseModelTorch):
             "dropout": trial.suggest_categorical(
                 "dropout", [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
             ),
+        }
+        return params
+
+    # TabZilla: add function for seeded random params and default params
+    @classmethod
+    def get_random_parameters(cls, seed):
+        rs = np.random.RandomState(seed)
+        params = {
+            "dim": rs.choice([32, 64, 128, 256]),
+            "depth": rs.choice([1, 2, 3, 6, 12]),
+            "heads": rs.choice([2, 4, 8]),
+            "dropout": rs.choice([0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]),
+        }
+        return params
+
+    @classmethod
+    def default_parameters(cls):
+        params = {
+            "dim": 64,
+            "depth": 3,
+            "heads": 4,
+            "dropout": 0.5,
         }
         return params

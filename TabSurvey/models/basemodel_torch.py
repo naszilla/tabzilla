@@ -1,3 +1,7 @@
+import time
+import string
+import random
+
 import numpy as np
 import torch
 import torch.nn as nn
@@ -17,6 +21,9 @@ class BaseModelTorch(BaseModel):
             if args.use_gpu and torch.cuda.is_available() and args.data_parallel
             else None
         )
+
+        # tabzilla: use a random string for temporary saving/loading of the model. pass this to load/save model functions
+        self.tmp_name = "tmp_" + ''.join(random.sample(string.ascii_uppercase + string.digits, k=12))
 
     def to_device(self):
         if self.args.data_parallel:
@@ -38,7 +45,8 @@ class BaseModelTorch(BaseModel):
 
         return torch.device(device)
 
-    def fit(self, X, y, X_val=None, y_val=None):
+    # TabZilla: added a time limit
+    def fit(self, X, y, X_val=None, y_val=None, time_limit=600):
         optimizer = optim.AdamW(
             self.model.parameters(), lr=self.params["learning_rate"]
         )
@@ -79,6 +87,7 @@ class BaseModelTorch(BaseModel):
         loss_history = []
         val_loss_history = []
 
+        start_time = time.time()
         for epoch in range(self.args.epochs):
             for i, (batch_X, batch_y) in enumerate(train_loader):
 
@@ -88,7 +97,8 @@ class BaseModelTorch(BaseModel):
                     self.args.objective == "regression"
                     or self.args.objective == "binary"
                 ):
-                    out = out.squeeze()
+                    # out = out.squeeze()
+                    out = out.reshape((batch_X.shape[0], ))
 
                 loss = loss_func(out, batch_y.to(self.device))
                 loss_history.append(loss.item())
@@ -107,7 +117,8 @@ class BaseModelTorch(BaseModel):
                     self.args.objective == "regression"
                     or self.args.objective == "binary"
                 ):
-                    out = out.squeeze()
+                    #out = out.squeeze()
+                    out = out.reshape((batch_val_X.shape[0], ))
 
                 val_loss += loss_func(out, batch_val_y.to(self.device))
                 val_dim += 1
@@ -122,8 +133,7 @@ class BaseModelTorch(BaseModel):
                 min_val_loss_idx = epoch
 
                 # Save the currently best model
-                # tabzilla: don't save the model...
-                # self.save_model(filename_extension="best", directory="tmp")
+                self.save_model(filename_extension="best", directory=self.tmp_name)
 
             if min_val_loss_idx + self.args.early_stopping_rounds < epoch:
                 print(
@@ -133,8 +143,15 @@ class BaseModelTorch(BaseModel):
                 print("Early stopping applies.")
                 break
 
+            runtime = time.time() - start_time
+            if runtime > time_limit:
+                print(
+                    f"Runtime has exceeded time limit of {time_limit} seconds. Stopping fit."
+                )
+                break
+
         # Load best model
-        self.load_model(filename_extension="best", directory="tmp")
+        self.load_model(filename_extension="best", directory=self.tmp_name)
         return loss_history, val_loss_history
 
     def predict(self, X):

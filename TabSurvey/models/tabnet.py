@@ -1,8 +1,10 @@
-from pytorch_tabnet.tab_model import TabNetClassifier, TabNetRegressor
 import numpy as np
 import torch
+from pytorch_tabnet.tab_model import TabNetClassifier, TabNetRegressor
+from models.tabnet_patch_lib.tabnet_patch import TabNetClassifierPatched
+from utils.io_utils import load_model_from_file, save_model_to_file
+
 from models.basemodel_torch import BaseModelTorch
-from utils.io_utils import save_model_to_file, load_model_from_file
 
 """
     TabNet: Attentive Interpretable Tabular Learning (https://arxiv.org/pdf/1908.07442.pdf)
@@ -28,13 +30,20 @@ class TabNet(BaseModelTorch):
             self.model = TabNetRegressor(**self.params)
             self.metric = ["rmse"]
         elif args.objective == "classification" or args.objective == "binary":
-            self.model = TabNetClassifier(**self.params)
+            #self.model = TabNetClassifier(**self.params)
+            self.model = TabNetClassifierPatched(**self.params)
             self.metric = ["logloss"]
-
+        
     def fit(self, X, y, X_val=None, y_val=None):
         if self.args.objective == "regression":
             y, y_val = y.reshape(-1, 1), y_val.reshape(-1, 1)
+        elif self.args.objective == "binary":
+            self.model.num_classes = 2
+        elif self.args.objective == "classification":
+            self.model.num_classes = self.args.num_classes
 
+        # Drop last only if last batch has only one sample
+        drop_last = X.shape[0] % self.args.batch_size == 1
         self.model.fit(
             X,
             y,
@@ -44,10 +53,10 @@ class TabNet(BaseModelTorch):
             max_epochs=self.args.epochs,
             patience=self.args.early_stopping_rounds,
             batch_size=self.args.batch_size,
+            drop_last=drop_last,
         )
         history = self.model.history
-        # tabzilla: don't save the model...
-        # self.save_model(filename_extension="best")
+        self.save_model(filename_extension="best")
         return history["loss"], history["eval_" + self.metric[0]]
 
     def predict_helper(self, X):
@@ -84,6 +93,36 @@ class TabNet(BaseModelTorch):
             "mask_type": trial.suggest_categorical(
                 "mask_type", ["sparsemax", "entmax"]
             ),
+        }
+        return params
+
+    # TabZilla: add function for seeded random params and default params
+    @classmethod
+    def get_random_parameters(cls, seed):
+        rs = np.random.RandomState(seed)
+        params = {
+            "n_d": rs.randint(8, 65),
+            "n_steps": rs.randint(3, 11),
+            "gamma": 1.0 + rs.rand(),
+            "cat_emb_dim": rs.randint(1, 4),
+            "n_independent": rs.randint(1, 6),
+            "n_shared": rs.randint(1, 6),
+            "momentum": 0.4 * np.power(10, rs.uniform(-3, -1)),
+            "mask_type": rs.choice(["sparsemax", "entmax"]),
+        }
+        return params
+
+    @classmethod
+    def default_parameters(cls):
+        params = {
+            "n_d": 24,
+            "n_steps": 5,
+            "gamma": 1.5,
+            "cat_emb_dim": 2,
+            "n_independent": 3,
+            "n_shared": 3,
+            "momentum": 0.015,
+            "mask_type": "sparsemax",
         }
         return params
 

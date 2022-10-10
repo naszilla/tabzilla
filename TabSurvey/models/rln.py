@@ -1,38 +1,44 @@
+import numpy as np
+from keras import backend as K
+from keras import regularizers
+from keras.callbacks import Callback, EarlyStopping
+from keras.layers import Dense
+from keras.models import Sequential
+from keras.wrappers.scikit_learn import KerasClassifier, KerasRegressor
+from pandas import DataFrame
 from sklearn.preprocessing import OneHotEncoder
+from utils.io_utils import get_output_path
 
 from models.basemodel import BaseModel
 
-from keras.callbacks import Callback, EarlyStopping
-from keras import backend as K
-from pandas import DataFrame
-import numpy as np
-
-from keras.wrappers.scikit_learn import KerasRegressor, KerasClassifier
-from keras import regularizers
-from keras.models import Sequential
-from keras.layers import Dense
-
-from utils.io_utils import get_output_path
-
-'''
+"""
     Regularization Learning Networks: Deep Learning for Tabular Datasets (https://arxiv.org/abs/1805.06440)
 
     Code adapted from: https://github.com/irashavitt/regularization_learning_networks
-'''
+"""
+
+
 class RLN(BaseModel):
+
+    # TabZilla: add default number of epochs.
+    # default_epochs = 56  # from RLN paper (fig. 7). this seems too low though
 
     def __init__(self, params, args):
         super().__init__(params, args)
 
         lr = np.power(10, self.params["log_lr"])
-        build_fn = self.RLN_Model(layers=self.params["layers"], norm=self.params["norm"],
-                                  avg_reg=self.params["theta"], learning_rate=lr)
+        build_fn = self.RLN_Model(
+            layers=self.params["layers"],
+            norm=self.params["norm"],
+            avg_reg=self.params["theta"],
+            learning_rate=lr,
+        )
 
         arguments = {
-            'build_fn': build_fn,
-            'epochs': args.epochs,
-            'batch_size': self.args.batch_size,
-            'verbose': 1,
+            "build_fn": build_fn,
+            "epochs": args.epochs,
+            "batch_size": self.args.batch_size,
+            "verbose": 1,
         }
 
         if args.objective == "regression":
@@ -41,13 +47,17 @@ class RLN(BaseModel):
             self.model = KerasClassifier(**arguments)
 
     def fit(self, X, y, X_val=None, y_val=None):
-        X = np.asarray(X).astype('float32')
-        X_val = np.asarray(X_val).astype('float32')
+        X = np.asarray(X).astype("float32")
+        X_val = np.asarray(X_val).astype("float32")
 
         if self.args.objective == "classification":
             # Needs the classification targets one hot encoded
-            ohe = OneHotEncoder(sparse=False, handle_unknown='ignore')
-            y = ohe.fit_transform(y.reshape(-1, 1))
+            ohe = OneHotEncoder(sparse=False, handle_unknown="ignore", categories=[range(self.args.num_classes)])
+            class_arr = np.array(range(self.args.num_classes)).reshape(-1, 1)
+            ohe.fit(class_arr)
+
+            #y = ohe.fit_transform(y.reshape(-1, 1))
+            y = ohe.transform(y.reshape(-1, 1))
             y_val = ohe.transform(y_val.reshape(-1, 1))
 
         history = self.model.fit(X, y, validation_data=(X_val, y_val))
@@ -56,16 +66,21 @@ class RLN(BaseModel):
         return history.history["loss"], history.history["val_loss"]
 
     def predict(self, X):
-        X = np.asarray(X).astype('float32')
+        X = np.asarray(X).astype("float32")
         return super().predict(X)
 
     def predict_proba(self, X):
-        X = np.asarray(X).astype('float32')
+        X = np.asarray(X).astype("float32")
         return super().predict_proba(X)
 
     def save_model(self, filename_extension="", directory="models"):
-        filename = get_output_path(self.args, directory=directory, filename="m", extension=filename_extension,
-                                   file_type="h5")
+        filename = get_output_path(
+            self.args,
+            directory=directory,
+            filename="m",
+            extension=filename_extension,
+            file_type="h5",
+        )
         self.model.model.save(filename)
 
     def get_model_size(self):
@@ -78,6 +93,28 @@ class RLN(BaseModel):
             "theta": trial.suggest_int("theta", -12, -8),
             "log_lr": trial.suggest_int("log_lr", 5, 7),
             "norm": trial.suggest_categorical("norm", [1, 2]),
+        }
+        return params
+
+    # TabZilla: add function for seeded random params and default params
+    @classmethod
+    def get_random_parameters(cls, seed):
+        rs = np.random.RandomState(seed)
+        params = {
+            "layers": rs.randint(2, 9),
+            "theta": rs.randint(-12, -7),
+            "log_lr": rs.randint(5, 8),
+            "norm": rs.choice([1, 2]),
+        }
+        return params
+
+    @classmethod
+    def default_parameters(cls):
+        params = {
+            "layers": 4,
+            "theta": -10,
+            "log_lr": 6,
+            "norm": 1,
         }
         return params
 
@@ -101,7 +138,9 @@ class RLN(BaseModel):
             def rln_fit(*args, **fit_kwargs):
                 # orig_callbacks = fit_kwargs.get('callbacks', [])
                 # Has to be set in here or Keras will crash...
-                orig_callbacks = [EarlyStopping(patience=self.args.early_stopping_rounds)]
+                orig_callbacks = [
+                    EarlyStopping(patience=self.args.early_stopping_rounds)
+                ]
 
                 rln_callbacks = orig_callbacks + [rln_callback]
                 return orig_fit(*args, callbacks=rln_callbacks, **fit_kwargs)
@@ -134,18 +173,29 @@ class RLN(BaseModel):
             model = Sequential()
             # Construct the layers of the model to form a geometric series
             prev_width = INPUT_DIM
-            for width in np.exp(np.log(INPUT_DIM) * np.arange(layers - 1, 0, -1) / layers):
+            for width in np.exp(
+                np.log(INPUT_DIM) * np.arange(layers - 1, 0, -1) / layers
+            ):
                 width = int(np.round(width))
-                model.add(Dense(width, input_dim=prev_width, kernel_initializer='glorot_normal', activation='relu',
-                                kernel_regularizer=regularizers.l1(inner_l1)))
+                model.add(
+                    Dense(
+                        width,
+                        input_dim=prev_width,
+                        kernel_initializer="glorot_normal",
+                        activation="relu",
+                        kernel_regularizer=regularizers.l1(inner_l1),
+                    )
+                )
                 # For efficiency we only regularized the first layer
                 inner_l1 = 0
                 prev_width = width
 
-            model.add(Dense(OUTPUT_DIM, kernel_initializer='glorot_normal', activation=act_fn))
+            model.add(
+                Dense(OUTPUT_DIM, kernel_initializer="glorot_normal", activation=act_fn)
+            )
 
             # Compile model
-            model.compile(loss=loss_fn, optimizer='Adam')
+            model.compile(loss=loss_fn, optimizer="Adam")
             return model
 
         return build_fn
@@ -194,11 +244,13 @@ class RLNCallback(Callback):
             self._lambdas -= self._lr * lambda_gradients
 
             # Project the lambdas onto the simplex \sum(lambdas) = Theta
-            translation = (self._avg_reg - self._lambdas.mean().mean())
+            translation = self._avg_reg - self._lambdas.mean().mean()
             self._lambdas += translation
 
         # Clip extremely large lambda values to prevent overflow
-        max_lambda_values = np.log(np.abs(self._weights / norms_derivative)).fillna(np.inf)
+        max_lambda_values = np.log(np.abs(self._weights / norms_derivative)).fillna(
+            np.inf
+        )
         self._lambdas = self._lambdas.clip(upper=max_lambda_values)
 
         # Update the weights

@@ -1,0 +1,25 @@
+# only one epoch, and two random trials
+
+###### directory where results will be written
+output_dir: ./results/
+
+###### experiment time limit in seconds
+experiment_time_limit: 30
+trial_time_limit: 10
+
+###### number of trials for hyperparameter search & optimization
+n_random_trials: 3
+n_opt_trials: 0
+hparam_seed: 0
+
+###### GPU parameters
+use_gpu: False
+gpu_ids: [0, 1]
+data_parallel: True
+
+###### Training parameters
+batch_size: 128
+val_batch_size: 256
+early_stopping_rounds: 20
+epochs: 10
+logging_period: 100

@@ -2,8 +2,12 @@ import gzip
 import json
 import os
 import shutil
+import signal
 import time
+from contextlib import contextmanager
 from pathlib import Path
+
+import numpy as np
 
 from models.basemodel import BaseModel
 from tabzilla_data_processing import process_data
@@ -12,17 +16,30 @@ from utils.scorer import BinScorer, ClassScorer, RegScorer
 from utils.timer import Timer
 
 
+class NpEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        if isinstance(obj, np.floating):
+            return float(obj)
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return super(NpEncoder, self).default(obj)
+
+
 def generate_filepath(name, extension):
     # generate filepath, of the format <name>_YYYYMMDD_HHMMDD.<extension>
     timestr = time.strftime("%Y%m%d_%H%M%S")
     return (name + "_%s." + extension) % timestr
 
-def is_jsonable(x):
+
+def is_jsonable(x, cls=None):
     try:
-        json.dumps(x)
+        json.dumps(x, cls=cls)
         return True
     except (TypeError, OverflowError):
         return False
+
 
 def get_scorer(objective):
     if objective == "regression":
@@ -75,9 +92,14 @@ class ExperimentResult:
         self.hparam_source = None
         self.trial_number = None
         self.experiemnt_args = None
+        self.exception = None
 
-    def write(self, filepath, compress=False):
-        """write all result properties to a new file. raise an exception if the file exists."""
+    def write(self, filepath_base, compress=False):
+        """
+        write two files:
+        - one with the results from the trial, including metadata and performance, and
+        - one with all metadata, all predictions, ground truth, and split indices.
+        """
 
         # create a dict with all output we want to store
         result_dict = {
@@ -86,31 +108,60 @@ class ExperimentResult:
             "experiemnt_args": self.experiment_args,
             "hparam_source": self.hparam_source,
             "trial_number": self.trial_number,
+            "exception": str(self.exception),
             "timers": {name: timer.save_times for name, timer in self.timers.items()},
             "scorers": {
                 name: scorer.get_results() for name, scorer in self.scorers.items()
             },
-            "splits": [
-                {key: list(val.tolist()) for key, val in split.items()}
-                for split in self.dataset.split_indeces
-            ],
-            # TODO: check that all values in this dict are serializable...
-            "predictions": self.predictions,
-            "probabilities": self.probabilities,
-            "ground_truth": self.ground_truth,
         }
 
+        # add the predictions (lots of data) to a new dict
+        prediction_dict = result_dict.copy()
+
+        prediction_dict["predictions"] = self.predictions
+        prediction_dict["probabilities"] = self.probabilities
+        prediction_dict["ground_truth"] = self.ground_truth
+        prediction_dict["splits"] = [
+            {key: list(val.tolist()) for key, val in split.items()}
+            for split in self.dataset.split_indeces
+        ]
+
+        # write results
         for k, v in result_dict.items():
-            if not is_jsonable(v):
-                raise Exception(f"value at key '{k}' is not json serializable: {v}")
+            if not is_jsonable(v, cls=NpEncoder):
+                raise Exception(
+                    f"writing results: value at key '{k}' is not json serializable: {v}"
+                )
 
-        write_dict_to_json(result_dict, filepath, compress=compress)
+        write_dict_to_json(
+            result_dict,
+            Path(str(filepath_base) + "_results.json"),
+            compress=compress,
+            cls=NpEncoder,
+        )
+
+        # write predictions
+        for k, v in prediction_dict.items():
+            if not is_jsonable(v, cls=NpEncoder):
+                raise Exception(
+                    f"writing predictions: value at key '{k}' is not json serializable: {v}"
+                )
+
+        write_dict_to_json(
+            prediction_dict,
+            Path(str(filepath_base) + "_predictions.json"),
+            compress=compress,
+            cls=NpEncoder,
+        )
 
 
-def cross_validation(model: BaseModel, dataset: TabularDataset) -> ExperimentResult:
+class TimeoutException(Exception):
+    pass
+
+def cross_validation(model: BaseModel, dataset: TabularDataset, time_limit: int) -> ExperimentResult:
     """
     takes a BaseModel and TabularDataset as input, and trains and evaluates the model using cross validation with all
-    folds specified in the dataset property split_indeces
+    folds specified in the dataset property split_indeces. Time limit is checked after each fold, and an exception is raised
 
     returns an ExperimentResult object, which contains all metadata and results from the cross validation run, including:
     - evlaution objects for the validation and test sets
@@ -150,8 +201,13 @@ def cross_validation(model: BaseModel, dataset: TabularDataset) -> ExperimentRes
         "test": [],
     }
 
+    start_time = time.time()
+
     # iterate over all train/val/test splits in the dataset property split_indeces
     for i, split_dictionary in enumerate(dataset.split_indeces):
+
+        if time.time() - start_time > time_limit:
+            raise TimeoutException(f"time limit of {time_limit}s reached during fold {i}")
 
         train_index = split_dictionary["train"]
         val_index = split_dictionary["val"]
@@ -181,30 +237,36 @@ def cross_validation(model: BaseModel, dataset: TabularDataset) -> ExperimentRes
         loss_history, val_loss_history = curr_model.fit(
             X_train,
             y_train,
-            X_test,
-            y_test,
+            X_val,
+            y_val,
         )
         timers["train"].end()
 
         # evaluate on train set
         timers["train-eval"].start()
-        train_predictions, train_probs = curr_model.predict(X_train)
+        train_predictions, train_probs = curr_model.predict_wrapper(X_train)
         timers["train-eval"].end()
 
         # evaluate on val set
         timers["val"].start()
-        val_predictions, val_probs = curr_model.predict(X_val)
+        val_predictions, val_probs = curr_model.predict_wrapper(X_val)
         timers["val"].end()
 
         # evaluate on test set
         timers["test"].start()
-        test_predictions, test_probs = curr_model.predict(X_test)
+        test_predictions, test_probs = curr_model.predict_wrapper(X_test)
         timers["test"].end()
 
+        extra_scorer_args = {}
+        if dataset.target_type == "classification":
+            extra_scorer_args["labels"] = range(dataset.num_classes)
+
         # evaluate on train, val, and test sets
-        scorers["train"].eval(y_train, train_predictions, train_probs)
-        scorers["val"].eval(y_val, val_predictions, val_probs)
-        scorers["test"].eval(y_test, test_predictions, test_probs)
+        scorers["train"].eval(
+            y_train, train_predictions, train_probs, **extra_scorer_args
+        )
+        scorers["val"].eval(y_val, val_predictions, val_probs, **extra_scorer_args)
+        scorers["test"].eval(y_test, test_predictions, test_probs, **extra_scorer_args)
 
         # store predictions & ground truth
 
@@ -234,15 +296,15 @@ def cross_validation(model: BaseModel, dataset: TabularDataset) -> ExperimentRes
     )
 
 
-def write_dict_to_json(x: dict, filepath: Path, compress=False):
+def write_dict_to_json(x: dict, filepath: Path, compress=False, cls=None):
     assert not filepath.is_file(), f"file already exists: {filepath}"
     assert filepath.parent.is_dir(), f"directory does not exist: {filepath.parent}"
     if not compress:
         with filepath.open("w", encoding="UTF-8") as f:
-            json.dump(x, f)
+            json.dump(x, f, cls=cls)
     else:
         with gzip.open(str(filepath) + ".gz", "wb") as f:
-            f.write(json.dumps(x).encode("UTF-8"))
+            f.write(json.dumps(x, cls=cls).encode("UTF-8"))
 
 
 def make_archive(source, destination):
@@ -344,6 +406,18 @@ def get_experiment_parser():
         type=int,
         default=100,
         help="Number of iteration after which validation is printed.",
+    )
+    experiment_parser.add(
+        "--experiment_time_limit",
+        type=int,
+        default=10,
+        help="Time limit for experiment, in seconds.",
+    )
+    experiment_parser.add(
+        "--trial_time_limit",
+        type=int,
+        default=10,
+        help="Time limit for each train/test trial, in seconds.",
     )
 
     return experiment_parser

@@ -65,6 +65,11 @@ class BaseModel:
             "args": self.args._asdict(),
         }
 
+    def get_classes(self):
+        if "classes_" not in dir(self):
+            return None
+        return self.classes_
+
     def fit(
         self,
         X: np.ndarray,
@@ -91,6 +96,35 @@ class BaseModel:
 
         # Should return loss history and validation loss history
         return [], []
+
+    # Patch around the original predict method to handle case of missing classes in training set.
+    # This needs to be done as a separate method, since several of the inheriting classes override the predict_proba or
+    # predict methods.
+    def predict_wrapper(self, X: np.ndarray) -> tp.Tuple[np.ndarray, np.ndarray]:
+        self.predictions, self.prediction_probabilities = self.predict(X)
+
+        if (
+            self.args.objective == "classification"
+            and self.prediction_probabilities.shape[1] != self.args.num_classes
+        ):
+            # Handle special case of missing classes in training set, which can (depending on the model)  result in
+            # predictions only being made for those classes
+            classes_ = self.get_classes()
+            if classes_ is None:
+                raise NotImplementedError(
+                    f"Cannot infer classes for model of type {type(self)}"
+                )
+            # From https://github.com/scikit-learn/scikit-learn/issues/21568#issuecomment-984030911
+            y_score_expanded = np.zeros(
+                (self.prediction_probabilities.shape[0], self.args.num_classes),
+                dtype=self.prediction_probabilities.dtype,
+            )
+            for idx, class_id in enumerate(classes_):
+                y_score_expanded[:, class_id] = self.prediction_probabilities[:, idx]
+            self.prediction_probabilities = y_score_expanded
+            self.predictions = np.argmax(self.prediction_probabilities, axis=1)
+
+        return self.predictions, self.prediction_probabilities
 
     def predict(self, X: np.ndarray) -> tp.Tuple[np.ndarray, np.ndarray]:
         """
@@ -163,6 +197,21 @@ class BaseModel:
         :return: Hyperparameter configuration
         """
 
+        raise NotImplementedError("This method has to be implemented by the sub class")
+
+    # TabZilla: add placeholder methods for get_random_parameters() and default_parameters()
+    @classmethod
+    def get_random_parameters(cls, seed: int):
+        """
+        returns a random set of hyperparameters, which can be replicated using the provided seed
+        """
+        raise NotImplementedError("This method has to be implemented by the sub class")
+
+    @classmethod
+    def default_parameters(cls):
+        """
+        returns the default set of hyperparameters
+        """
         raise NotImplementedError("This method has to be implemented by the sub class")
 
     def save_model(self, filename_extension=""):

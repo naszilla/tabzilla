@@ -103,6 +103,28 @@ class VIME(BaseModelTorch):
         }
         return params
 
+    # TabZilla: add function for seeded random params and default params
+    @classmethod
+    def get_random_parameters(cls, seed):
+        rs = np.random.RandomState(seed)
+        params = {
+            "p_m": rs.uniform(0.1, 0.9),
+            "alpha": rs.uniform(0.1, 10),
+            "K": rs.choice([2, 3, 5, 10, 15, 20]),
+            "beta": rs.uniform(0.1, 10),
+        }
+        return params
+
+    @classmethod
+    def default_parameters(cls):
+        params = {
+            "p_m": 0.5,
+            "alpha": 3.0,
+            "K": 5,
+            "beta": 3.0,
+        }
+        return params
+
     def fit_self(self, X, p_m=0.3, alpha=2):
         optimizer = optim.RMSprop(self.model_self.parameters(), lr=0.001)
         loss_func_mask = nn.BCELoss()
@@ -199,7 +221,8 @@ class VIME(BaseModelTorch):
                     self.args.objective == "regression"
                     or self.args.objective == "binary"
                 ):
-                    y_hat = y_hat.squeeze()
+                    #y_hat = y_hat.squeeze()
+                    y_hat = y_hat.reshape((batch_X.shape[0], ))
 
                 y_loss = loss_func_supervised(y_hat, batch_y.to(self.device))
                 yu_loss = torch.mean(torch.var(yv_hats, dim=0))
@@ -221,7 +244,8 @@ class VIME(BaseModelTorch):
                     self.args.objective == "regression"
                     or self.args.objective == "binary"
                 ):
-                    y_hat = y_hat.squeeze()
+                    y_hat = y_hat.reshape((batch_val_X.shape[0], ))
+                    #y_hat = y_hat.squeeze()
 
                 val_loss += loss_func_supervised(y_hat, batch_val_y.to(self.device))
                 val_dim += 1
@@ -235,8 +259,7 @@ class VIME(BaseModelTorch):
                 min_val_loss = val_loss
                 min_val_loss_idx = epoch
 
-                # tabzilla: again, don't save the model...
-                # self.save_model(filename_extension="best", directory="tmp")
+                self.save_model(filename_extension="best", directory="tmp")
 
             if min_val_loss_idx + self.args.early_stopping_rounds < epoch:
                 print("Early stopping applies.")

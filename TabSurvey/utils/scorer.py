@@ -73,10 +73,10 @@ class ClassScorer(Scorer):
         self.f1s = []
         self.direction = "minimize"  # we want to minimize log-loss
 
-    def eval(self, y_true, y_prediction, y_probabilities):
-        logloss = log_loss(y_true, y_probabilities)
+    def eval(self, y_true, y_prediction, y_probabilities, labels=None):
+        logloss = log_loss(y_true, y_probabilities, labels=labels)
         # auc = roc_auc_score(y_true, y_probabilities, multi_class='ovr')
-        auc = roc_auc_score(y_true, y_probabilities, multi_class="ovo", average="macro")
+        auc = roc_auc_score(y_true, y_probabilities, labels=labels, multi_class="ovo", average="macro")
 
         acc = accuracy_score(y_true, y_prediction)
         f1 = f1_score(

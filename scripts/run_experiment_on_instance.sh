@@ -12,7 +12,8 @@ set -e
 #  - MODEL_NAME <- name of the ML model to use
 #  - DATASET_NAME <- the name of the dataset to use for the experiment
 #  - EXPERIMENT_NAME <- name of the experiment. this will be appended to the result file name
-#
+#  - CONFIG_FILE <- name of the config file (yml)
+# 
 ###############################################################################################################
 
 #############################################
@@ -42,6 +43,12 @@ else
   echo "EXPERIMENT_NAME string not defined" 1>&2
 fi
 
+if [ -n "$CONFIG_FILE" ]; then
+  echo "CONFIG_FILE: $CONFIG_FILE"
+else
+  echo "CONFIG_FILE string not defined" 1>&2
+fi
+
 ###############
 # prepare conda
 
@@ -56,9 +63,6 @@ printf 'running experiment with model %s on dataset %s in env %s\n\n' "$MODEL_NA
 
 # use the env specified in ENV_NAME
 conda activate ${ENV_NAME}
-
-# search parameters
-CONFIG_FILE=tabzilla_experiment_config.yml
 
 # all datasets should be in this folder. the dataset folder should be in ${DATASET_BASE_DIR}/<dataset-name>
 DATASET_BASE_DIR=./datasets
@@ -80,4 +84,4 @@ mv ./results.zip ./${result_file}
 ###############################
 # save results to gcloud bucket
 
-gsutil cp ./${result_file} gs://tabzilla-results/inbox/${DATASET_NAME}/${MODEL_NAME}/${result_file}
+gsutil cp ./${result_file} gs://tabzilla-results/results/${DATASET_NAME}/${MODEL_NAME}/${result_file}

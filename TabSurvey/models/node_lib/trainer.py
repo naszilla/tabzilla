@@ -171,7 +171,7 @@ class Trainer(nn.Module):
             logloss = log_loss(y_test, logits)
         return logloss
     
-    def evaluate_logloss(self, X_test, y_test, device, batch_size=512):
+    def evaluate_logloss(self, X_test, y_test, device, batch_size=512, num_classes=None):
         X_test = torch.as_tensor(X_test, device=device)
         y_test = check_numpy(y_test)
         self.model.train(False)
@@ -179,5 +179,5 @@ class Trainer(nn.Module):
             logits = F.softmax(process_in_chunks(self.model, X_test, batch_size=batch_size), dim=1)
             logits = check_numpy(logits)
             y_test = torch.tensor(y_test)
-            logloss = log_loss(check_numpy(to_one_hot(y_test)), logits)
+            logloss = log_loss(check_numpy(to_one_hot(y_test, depth=num_classes)), logits)
         return logloss

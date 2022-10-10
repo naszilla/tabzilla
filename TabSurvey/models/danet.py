@@ -1,29 +1,27 @@
-from models.basemodel_torch import BaseModelTorch
 import os
+
 import numpy as np
-
-from models.danet_lib.DAN_Task import DANetClassifier, DANetRegressor
-from models.danet_lib.config.default import cfg
-from models.danet_lib.lib.utils import normalize_reg_label
-
 import torch
 from qhoptim.pyt import QHAdam
-
 from utils.io_utils import get_output_path
 
-'''
+from models.basemodel_torch import BaseModelTorch
+from models.danet_lib.config.default import cfg
+from models.danet_lib.DAN_Task import DANetClassifier, DANetRegressor
+from models.danet_lib.lib.utils import normalize_reg_label
+
+"""
     DANets: Deep Abstract Networks for Tabular Data Classification and Regression (https://arxiv.org/abs/2112.02962)
     
     Code adapted from: https://github.com/WhatAShot/DANet
-'''
+"""
 
 
 class DANet(BaseModelTorch):
-
     def __init__(self, params, args):
         super().__init__(params, args)
 
-        os.environ['CUDA_VISIBLE_DEVICES'] = str(args.gpu_ids)
+        os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu_ids)
         self.n_gpu = len(args.gpu_ids)
 
         # No distinction between binary and multiclass classification
@@ -45,15 +43,22 @@ class DANet(BaseModelTorch):
             # "k": self.model_config['k'],
             # "drop_rate": self.model_config['drop_rate'],
             "seed": cfg.seed,
-            **params
+            **params,
         }
 
         if self.task == "classification":
+            if args.objective == "binary":
+                self.num_classes_for_fit = 2
+            elif args.objective == "classification":
+                self.num_classes_for_fit = args.num_classes
+            else:
+                raise RuntimeError(f"Unexpected args.objective: {args.objective}")
             self.model = DANetClassifier(**model_params)
-            self.eval_metric = ['accuracy']
+            self.eval_metric = ["accuracy"]
         else:
+            self.num_classes_for_fit = None
             self.model = DANetRegressor(**model_params)
-            self.eval_metric = ['mse']
+            self.eval_metric = ["mse"]
 
         print(self.model)
 
@@ -62,7 +67,7 @@ class DANet(BaseModelTorch):
         X = np.array(X, dtype=np.float)
         X_val = np.array(X_val, dtype=np.float)
 
-        if self.task == 'regression':
+        if self.task == "regression":
             self.mu, self.std = y.mean(), y.std()
             print("mean = %.5f, std = %.5f" % (self.mu, self.std))
             y = normalize_reg_label(y, self.std, self.mu)
@@ -72,18 +77,25 @@ class DANet(BaseModelTorch):
             self.model.std = self.std
 
         self.model.fit(
-            X_train=X, y_train=y,
+            X_train=X,
+            y_train=y,
             eval_set=[(X_val, y_val)],
-            eval_name=['valid'],
+            eval_name=["valid"],
             eval_metric=self.eval_metric,
-            max_epochs=self.args.epochs, patience=self.args.early_stopping_rounds,
-            batch_size=self.args.batch_size, virtual_batch_size=self.args.batch_size,
+            max_epochs=self.args.epochs,
+            patience=self.args.early_stopping_rounds,
+            batch_size=self.args.batch_size,
+            virtual_batch_size=self.args.batch_size,
             logname=self.logname,
             # resume_dir=self.train_config['resume_dir'],
-            n_gpu=self.n_gpu
+            n_gpu=self.n_gpu,
+            num_classes=self.num_classes_for_fit,
         )
 
-        return self.model.history["loss"], self.model.history["valid_" + self.eval_metric[0]]
+        return (
+            self.model.history["loss"],
+            self.model.history["valid_" + self.eval_metric[0]],
+        )
 
     def predict_helper(self, X):
         assert self.task == "regression"
@@ -103,8 +115,13 @@ class DANet(BaseModelTorch):
         return self.prediction_probabilities
 
     def save_model(self, filename_extension="", directory="models"):
-        filename = get_output_path(self.args, directory=directory, filename="m", extension=filename_extension,
-                                   file_type="pt")
+        filename = get_output_path(
+            self.args,
+            directory=directory,
+            filename="m",
+            extension=filename_extension,
+            file_type="pt",
+        )
         self.model.save_check(filename)
 
     @classmethod
@@ -113,6 +130,28 @@ class DANet(BaseModelTorch):
             "layer": trial.suggest_int("layer", 8, 32),
             "base_outdim": trial.suggest_categorical("base_outdim", [64, 96]),
             "k": trial.suggest_int("k", 3, 8),
-            "drop_rate": trial.suggest_categorical("drop_rate", [0, 0.1, 0.2, 0.3])
+            "drop_rate": trial.suggest_categorical("drop_rate", [0, 0.1, 0.2, 0.3]),
+        }
+        return params
+
+    # TabZilla: add function for seeded random params and default params
+    @classmethod
+    def get_random_parameters(cls, seed: int):
+        rs = np.random.RandomState(seed)
+        params = {
+            "layer": rs.randint(8, 33),
+            "base_outdim": rs.choice([64, 96]),
+            "k": rs.randint(8, 9),
+            "drop_rate": rs.choice([0, 0.1, 0.2, 0.3]),
+        }
+        return params
+
+    @classmethod
+    def default_parameters(cls):
+        params = {
+            "layer": 16,
+            "base_outdim": 64,
+            "k": 5,
+            "drop_rate": 0.2,
         }
         return params
