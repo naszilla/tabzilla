@@ -97,7 +97,8 @@ class BaseModelTorch(BaseModel):
                     self.args.objective == "regression"
                     or self.args.objective == "binary"
                 ):
-                    out = out.squeeze()
+                    # out = out.squeeze()
+                    out = out.reshape((batch_X.shape[0], ))
 
                 loss = loss_func(out, batch_y.to(self.device))
                 loss_history.append(loss.item())
@@ -116,7 +117,8 @@ class BaseModelTorch(BaseModel):
                     self.args.objective == "regression"
                     or self.args.objective == "binary"
                 ):
-                    out = out.squeeze()
+                    #out = out.squeeze()
+                    out = out.reshape((batch_val_X.shape[0], ))
 
                 val_loss += loss_func(out, batch_val_y.to(self.device))
                 val_dim += 1

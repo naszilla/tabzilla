@@ -33,7 +33,7 @@ class TabNet(BaseModelTorch):
             #self.model = TabNetClassifier(**self.params)
             self.model = TabNetClassifierPatched(**self.params)
             self.metric = ["logloss"]
-
+        
     def fit(self, X, y, X_val=None, y_val=None):
         if self.args.objective == "regression":
             y, y_val = y.reshape(-1, 1), y_val.reshape(-1, 1)
@@ -42,6 +42,8 @@ class TabNet(BaseModelTorch):
         elif self.args.objective == "classification":
             self.model.num_classes = self.args.num_classes
 
+        # Drop last only if last batch has only one sample
+        drop_last = X.shape[0] % self.args.batch_size == 1
         self.model.fit(
             X,
             y,
@@ -51,6 +53,7 @@ class TabNet(BaseModelTorch):
             max_epochs=self.args.epochs,
             patience=self.args.early_stopping_rounds,
             batch_size=self.args.batch_size,
+            drop_last=drop_last,
         )
         history = self.model.history
         self.save_model(filename_extension="best")

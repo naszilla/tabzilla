@@ -1,4 +1,5 @@
 import time
+import shutil
 
 import numpy as np
 import torch
@@ -17,6 +18,7 @@ from models.node_lib.utils import check_numpy, process_in_chunks
     Code adapted from: https://github.com/Qwicen/node
 """
 
+n_last_checkpoints = 5 # Number of models that are averaged
 
 class NODE(BaseModelTorch):
     def __init__(self, params, args):
@@ -98,7 +100,7 @@ class NODE(BaseModelTorch):
             Optimizer=QHAdam,
             optimizer_params=dict(lr=1e-3, nus=(0.7, 1.0), betas=(0.95, 0.998)),
             verbose=True,
-            n_last_checkpoints=5,
+            n_last_checkpoints=n_last_checkpoints,
         )
 
         best_loss = float("inf")
@@ -120,7 +122,8 @@ class NODE(BaseModelTorch):
             metrics = self.trainer.train_on_batch(*batch, device=self.device)
             loss_history.append(metrics["loss"].item())
 
-            if self.trainer.step % self.args.logging_period == 0:
+            # Periodically every args.logging_period until last step
+            if (self.args.epochs - self.trainer.step) % self.args.logging_period == 0:
                 self.trainer.save_checkpoint()
                 self.trainer.average_checkpoints(out_tag="avg")
                 self.trainer.load_checkpoint(tag="avg")
@@ -141,6 +144,7 @@ class NODE(BaseModelTorch):
                         data.y_valid,
                         device=self.device,
                         batch_size=self.args.batch_size,
+                        num_classes=self.args.num_classes,
                     )
                     print("Val LogLoss: %0.5f" % loss)
                 elif self.args.objective == "binary":
@@ -172,6 +176,7 @@ class NODE(BaseModelTorch):
                 break
 
         self.trainer.load_checkpoint(tag="best")
+        shutil.rmtree(self.trainer.experiment_path)
         return loss_history, val_loss_history
 
     def predict_helper(self, X):

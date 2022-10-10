@@ -16,7 +16,7 @@ openml_tasks = [
     {
         "openml_task_id": 3021,
         "drop_features": ["TBG"],
-    }
+    },
     # These datasets have been added to openml_easy_import_list.txt, but are provided here as a blueprint
     # for addition of other datasets
     # {
@@ -129,7 +129,11 @@ def preprocess_openml(openml_task_id, target_type=None, force_cat_features=None,
         if task.task_type == "Supervised Regression":
             target_type = "regression"
         elif task.task_type == "Supervised Classification":
-            n_unique_labels = len(task.class_labels)
+            #n_unique_labels = len(task.class_labels)
+            n_unique_labels = len(np.unique(y))
+            metadata_num_classes = dataset.qualities["NumberOfClasses"]
+            if not np.isnan(metadata_num_classes) and metadata_num_classes != n_unique_labels:
+                raise RuntimeError("Inconsistent metadata. Cannot automatically infer task type.")
             if n_unique_labels == 2:
                 target_type = "binary"
             elif n_unique_labels > 2:
@@ -311,6 +315,8 @@ def check_tasks_from_suite(suite_id):
 
 # Call the dataset preprocessor decorator for each of the selected OpenML datasets
 for kwargs in openml_tasks:
+    #if kwargs["openml_task_id"] in [48, 50]:
+    #    continue
     task = openml.tasks.get_task(task_id=kwargs["openml_task_id"], download_data=False, download_qualities=False)
     ds = openml.datasets.get_dataset(task.dataset_id, download_data=False, download_qualities=False)
     dataset_name = f"openml__{ds.name}__{kwargs['openml_task_id']}"
