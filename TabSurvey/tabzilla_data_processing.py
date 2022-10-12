@@ -27,6 +27,17 @@ def process_data(
     # Impute numerical features
     if impute:
         num_idx = np.where(num_mask)[0]
+
+        # The imputer drops columns that are fully NaN. So, we first identify columns that are fully NaN and set them to
+        # zero. This will effectively drop the columns without changing the column indexing and ordering that many of
+        # the functions in this repository rely upon.
+        fully_nan_num_idcs = np.nonzero((~np.isnan(X_train[:, num_idx].astype("float"))).sum(axis=0) == 0)[0]
+        if fully_nan_num_idcs.size > 0:
+            X_train[:, num_idx[fully_nan_num_idcs]] = 0
+            X_val[:, num_idx[fully_nan_num_idcs]] = 0
+            X_test[:, num_idx[fully_nan_num_idcs]] = 0
+
+        # Impute numerical features, and pass through the rest
         numeric_transformer = Pipeline(
             steps=[("imputer", SimpleImputer())]
         )
