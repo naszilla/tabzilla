@@ -4,7 +4,7 @@
 
 # Python Environments
 
-This repository uses four conda python environments, which are also defined in the TabSurvey dockerfiles. We need to use different environments because some algorithms have different requirements. These four environments are specified in files created using command `conda env export`.
+This repository uses four conda python environments, which are also defined in the TabSurvey dockerfiles. We need to use different environments because some algorithms have different requirements. These four environments are specified in files created using command `conda env export --no-builds > {env name}.yml`.
 
 Each environment is specified in a yml file:
 - [`conda_envs/sklearn.yml`](conda_envs/sklearn.yml)
