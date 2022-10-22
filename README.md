@@ -22,8 +22,6 @@ conda env create -f ./conda_envs/tensorflow.yml
 ```
 **Note:** These environments were created in linux, and some packages may not be available on Windows or OSX. If you get a `ResolvePackageNotFound` error when creating these environments, try removing these incompatible packages from the environment files.
 
-Different algorithms require different environments. (TBD)
-
 
 # Running Tabzilla Experiments
 
@@ -41,7 +39,7 @@ The three inputs are:
 - `--dataset_dir`: the directory of the processed dataset to use. This directory should be created 
 
 
-## Experiment Config Parametesr
+## Experiment Config Parser
 
 General parameters for each experiment are read from a yml config file, by the parser returned by [`TabSurvey.tabzilla_utils.get_general_parser`](TabSurvey/tabzilla_utils.py). Below is a description of each of the general parameters read by this parser. For debugging, you can use the example config file here: [TabSurvey/tabzilla_experiment_config.yml](TabSurvey/tabzilla_experiment_config.yml).
 
@@ -68,6 +66,10 @@ General parameters for each experiment are read from a yml config file, by the p
   --logging_period LOGGING_PERIOD
                         Number of iteration after which validation is printed. (default: 100)
 ```
+
+## Running Individual Experiments
+
+The script [`scripts/test_tabzilla_on_instance.sh`](scripts/test_tabzilla_on_instance.sh) gives an example of a single experiment. That is, running a single algorithm on a single dataset, using parameters specified in an experiment config file. We wrote this script to run experiments on a cloud instance (GCP), but it can be run anywhere as long as all python environments and datasets are present.
 
 # Datasets
 
