@@ -75,7 +75,7 @@ The script [`scripts/test_tabzilla_on_instance.sh`](scripts/test_tabzilla_on_ins
 
 **Note:** Our code downloads datasets from [OpenML](https://www.openml.org/), so you will need to install the openml python module. If this code hangs or raises an error when downloading datasets, you may need to create an OpenML account (on their website) and authenticate your local machine in order to download datasets. We have no idea why, but authentication is required for some users and not for others. If you run into any issues, please follow [these installation and authentication instructions](https://openml.github.io/openml-python/main/examples/20_basic/introduction_tutorial.html#sphx-glr-examples-20-basic-introduction-tutorial-py).  
 
-Datasets are handled using the class [`TabSurvey.tabzilla_datasets.TabularDataset`](TabSurvey.tabzilla_datasets.py); all datasets are accessed using an instance of this class. Each dataset is initialized using a function with the decorator `dataset_preprocessor` defined in [`TabSurvey/tabzilla_data_preprocessor_utils.py`](TabSurvey/tabzilla_data_preprocessor_utils.py). Each of these functions is accessed through function `preprocess_dataset()`, which returns any defined datasets by name. For example, the following code will return a `TabularDataset` object representing the `openml__california__361089` dataset, and will write it to a local directory unless it already has been written:
+Datasets are handled using the class [`TabSurvey.tabzilla_datasets.TabularDataset`](TabSurvey/tabzilla_datasets.py); all datasets are accessed using an instance of this class. Each dataset is initialized using a function with the decorator `dataset_preprocessor` defined in [`TabSurvey/tabzilla_preprocessor_utils.py`](TabSurvey/tabzilla_preprocessor_utils.py). Each of these functions is accessed through function `preprocess_dataset()`, which returns any defined datasets by name. For example, the following code will return a `TabularDataset` object representing the `openml__california__361089` dataset, and will write it to a local directory unless it already has been written:
 
 ```python
 from TabSurvey.tabzilla_data_preprocessing import preprocess_dataset
@@ -172,7 +172,7 @@ Once you have implemented a new dataset, verify that pre-processing runs as expe
 This should output a folder under `TabSurvey/datasets/YOUR_DATASET_NAME` with files `metadata.json`, `split_indeces.npy.gz`, `X.npy.gz`, and `y.npy.gz`. Open `metadata.json` and check that the metadata corresponds to what you expect.
 
 ### OpenML datasets
-OpenML datasets need to be added under [`TabSurvey/tabzilla_data_preprocessors_openml.py`](TabSurvey/tabzilla_data_preprocessors_openml.py).
+OpenML datasets need to be added under [`TabSurvey/tabzilla_preprocessors_openml.py`](TabSurvey/tabzilla_preprocessors_openml.py).
 
 OpenML distinguishes tasks from datasets, where tasks are specific prediction tasks associated with a dataset. For our purposes, we will be using OpenML tasks to obtain datasets for training and evaluation.
 
