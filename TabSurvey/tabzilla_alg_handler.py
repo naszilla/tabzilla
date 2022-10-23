@@ -97,6 +97,7 @@ def get_ModelTree():
 
     return model
 
+
 ##############################################################
 # torch models
 
@@ -192,6 +193,33 @@ def get_RLN():
 @register_model("tensorflow")
 def get_DNFNet():
     from models.dnf import DNFNet as model
+
+    return model
+
+
+##############################################################
+# rtdl models (using torch environment)
+# code: https://yura52.github.io
+# paper: https://arxiv.org/abs/2106.11959
+
+
+@register_model("torch")
+def get_rtdl_MLP():
+    from models.rtdl import rtdl_MLP as model
+
+    return model
+
+
+@register_model("torch")
+def get_rtdl_ResNet():
+    from models.rtdl import rtdl_ResNet as model
+
+    return model
+
+
+@register_model("torch")
+def get_rtdl_FTTransformer():
+    from models.rtdl import rtdl_FTTransformer as model
 
     return model
 
