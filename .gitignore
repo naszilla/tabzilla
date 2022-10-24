@@ -129,5 +129,5 @@ dmypy.json
 .pyre/
 
 #datasets
-./TabSurvey/datasets/
-./TabSurvey/results/
+TabSurvey/datasets/
+TabSurvey/results/

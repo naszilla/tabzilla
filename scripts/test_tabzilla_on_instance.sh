@@ -16,16 +16,16 @@ set -e
 ###############################################################################################################
 
 # run from this directory
-cd /home/shared/tabzilla/TabSurvey
+cd /home/ramyasri/tabzilla/TabSurvey
 
 #############################################
 # make sure environment variables are defined
 
 # define the conda env that should be used {sklearn | gbdt | torch | tensorflow}
-ENV_NAME=gbdt
+ENV_NAME=torch
 
 # name of the model/algorithm
-MODEL_NAME=XGBoost
+MODEL_NAME=NODE
 
 # name of the dataset
 DATASET_NAME=/openml__arrhythmia__5
