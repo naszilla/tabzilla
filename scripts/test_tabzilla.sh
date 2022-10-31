@@ -2,7 +2,7 @@
 
 # small test script to make sure that TabSurvey code and environments work.
 
-cd ./TabSurvey
+cd /home/ramyasri/tabzilla/TabSurvey
 
 SKLEARN_ENV="sklearn"
 GBDT_ENV="gbdt"
@@ -16,19 +16,24 @@ DATASET_BASE_DIR=./datasets
 # define lists of datasets and models to evaluate them on
 
 MODELS_ENVS=(
-  "LinearModel:$SKLEARN_ENV"
-  "KNN:$SKLEARN_ENV"
-  "DecisionTree:$SKLEARN_ENV"
+  "NODE:$TORCH_ENV"
   )
 
 CONFIG_FILE=tabzilla_experiment_config.yml
 
+DATASETS=()
+search_dir=/home/ramyasri/tabzilla/TabSurvey/datasets
+for entry in `ls $search_dir`
+do
+  DATASETS+=($entry)
+done
 
-DATASETS=(
-  openml__california__361089
-)
+# DATASETS=(
+#   openml__california__361089
 
-# conda init bash
+# )
+
+conda init bash
 eval "$(conda shell.bash hook)"
 
 for dataset in "${DATASETS[@]}"; do
