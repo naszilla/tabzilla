@@ -47,9 +47,19 @@ NAME          ZONE           MACHINE_TYPE   PREEMPTIBLE  INTERNAL_IP  EXTERNAL_I
 ############  us-central1-a  n1-standard-1               xx.xxx.x.xx  xxx.xxx.xxx.xxx  RUNNING
 ```
 
+## 4. Prepare SSH Config Files
+
+We recommend you run the following command to automatically create ssh config files for your GCP instances (more info [here](https://cloud.google.com/sdk/gcloud/reference/compute/config-ssh)):
+
+```
+> gcloud compute config-ssh --project <project-name>
+```
+
+
+## 5. SSH into the instance, using flag `-A` for agent forwarding
+
 **Pro tip!!** if you're using an IDE that lets you ssh into a remote machine (like Visual Studio Code), **you can ssh into your GCP instance using the IDE, using the `EXTERNAL_IP` address printed above**. This allows you to use the instance more easily for development purposes.
 
-## 4. SSH into the instance, using flag `-A` for agent forwarding
 
 ```
 gcloud compute ssh --ssh-flag="-A" --zone ${zone} ${instance_name}  --project ${project}
@@ -73,14 +83,14 @@ tensorflow               /opt/conda/envs/tensorflow
 torch                    /opt/conda/envs/torch
 ```
 
-## 5. Go to the shared tabzilla directory, and update it if needed.
+## 6. Go to the shared tabzilla directory, and update it if needed.
 
 ```commandline
 cd /home/shared/tabzilla/
 git pull
 ```
 
-## 6. Look at the datasets that are currently pre-processed on this image:
+## 7. Look at the datasets that are currently pre-processed on this image:
 
 ```commandline
 ls /home/shared/tabzilla/TabSurvey/datasets
@@ -97,7 +107,7 @@ openml__CIFAR_10__167124                          openml__jm1__3904
 ...
 ```
 
-## 7. Run an experiment!
+## 8. Run an experiment!
 
 First, modify the script `/home/shared/tabzilla/scripts/test_tabzilla_on_instance.sh` to specify an ML model, conda environment, and dataset name. You can use any dataset already on the instance (see previous step). You need to modify the following three lines:
 
