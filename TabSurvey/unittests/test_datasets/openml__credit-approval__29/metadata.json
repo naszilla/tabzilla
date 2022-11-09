@@ -1,0 +1,30 @@
+{
+    "name": "openml__credit-approval__29",
+    "cat_idx": [
+        0,
+        3,
+        4,
+        5,
+        6,
+        8,
+        9,
+        11,
+        12
+    ],
+    "cat_dims": [
+        3,
+        4,
+        4,
+        15,
+        10,
+        2,
+        2,
+        2,
+        3
+    ],
+    "target_type": "binary",
+    "num_classes": 1,
+    "num_features": 15,
+    "num_instances": 690,
+    "split_source": "openml"
+}

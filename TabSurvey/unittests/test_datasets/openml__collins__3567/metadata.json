@@ -1,0 +1,16 @@
+{
+    "name": "openml__collins__3567",
+    "cat_idx": [
+        19,
+        20
+    ],
+    "cat_dims": [
+        15,
+        1
+    ],
+    "target_type": "classification",
+    "num_classes": 15,
+    "num_features": 21,
+    "num_instances": 500,
+    "split_source": "openml"
+}
