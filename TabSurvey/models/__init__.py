@@ -1,6 +1,6 @@
 all_models = ["LinearModel", "KNN", "DecisionTree", "RandomForest", "XGBoost", "CatBoost", "LightGBM", "ModelTree",
                "MLP", "TabNet", "VIME", "TabTransformer", "NODE", "DeepGBM", "RLN", "DNFNet", "STG", "NAM", "DeepFM",
-               "SAINT", "DANet"]
+               "SAINT", "DANet", "NGBoost"]
 
 
 def str2model(model):
@@ -92,6 +92,11 @@ def str2model(model):
     elif model == "DANet":
         from models.danet import DANet
         return DANet
+
+    elif model == "NGBoost":
+        from models.tree_models import NGBoost
+        return NGBoost
+
 
     else:
         raise NotImplementedError("Model \"" + model + "\" not yet implemented")

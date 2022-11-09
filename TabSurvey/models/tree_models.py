@@ -4,7 +4,8 @@ import catboost as cat
 import lightgbm as lgb
 import numpy as np
 import xgboost as xgb
-
+from ngboost import NGBRegressor
+from ngboost import NGBClassifier
 from models.basemodel import BaseModel
 
 """
@@ -100,6 +101,71 @@ class XGBoost(BaseModel):
             "alpha": 1e-4,
             "lambda": 1e-4,
             "eta": 0.08,
+        }
+        return params
+
+class NGBoost(BaseModel):
+
+    # TabZilla: add default number of boosting rounds
+    # default_epochs = 500
+
+    def __init__(self, params, args):
+        super().__init__(params, args)
+        self.params["verbosity"] = 1
+
+        if args.objective == "regression":
+            self.params["objective"] = "regression"
+            self.params["metric"] = "mse"
+        elif args.objective == "classification":
+            self.params["objective"] = "multiclass"
+            self.params["num_class"] = args.num_classes
+            self.params["metric"] = "multiclass"
+        elif args.objective == "binary":
+            self.params["objective"] = "binary"
+            self.params["metric"] = "auc"
+
+    def fit(self, X, y, X_val=None, y_val=None):
+        if self.args.objective == "regression":
+            self.model = NGBRegressor().fit(X, y, X_val=X_val, Y_val=y_val)
+        elif self.args.objective == "classification":
+            self.model = NGBClassifier(Dist=k_categorical(self.args.num_classes)).fit(X, y, X_val=X_val, Y_val=y_val)
+        else:
+            self.model = NGBClassifier(Dist=k_categorical(2)).fit(X, y, X_val=X_val, Y_val=y_val)
+        return [], []
+    def predict(self, X):
+        return super().predict(X)
+    def predict_proba(self, X):
+        probabilities = self.model.predict(X)
+        self.prediction_probabilities = probabilities
+        return self.prediction_probabilities
+
+    @classmethod
+    def define_trial_parameters(cls, trial, args):
+        params = {
+            "learning_rate": trial.suggest_float("learning_rate", 0.01, 0.3, log=True),
+            "n_estimators": trial.suggest_int("n_estimators", 100, 250, log=True),
+            "minibatch_frac": trial.suggest_float("minibatch_frac", 0.4, 0.8, log=True),
+            "col_sample": trial.suggest_float("col_sample", 0.3, 0.7, log=True),
+        }
+        return params
+    @classmethod
+    def get_random_parameters(cls, seed):
+        rs = np.random.RandomState(seed)
+        params = {
+            "learning_rate": 3.0 * np.power(10, rs.uniform(-2, -1)),
+            "n_estimators": int(np.round(50 * rs.uniform(1,5))),
+            "minibatch_frac": rs.uniform(0.4, 0.8),
+            "col_sample": rs.uniform(0.3, 0.7)
+        }
+        return params
+
+    @classmethod
+    def default_parameters(cls):
+        params = {
+            "learning_rate": 0.08,
+            "n_estimators": 100,
+            "minibatch_frac": 0.5,
+            "col_sample": 0.5,
         }
         return params
 
@@ -274,3 +340,5 @@ class LightGBM(BaseModel):
             "learning_rate": 0.08,
         }
         return params
+
+

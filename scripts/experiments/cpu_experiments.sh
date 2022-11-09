@@ -17,6 +17,7 @@ MODELS_ENVS=(
     RandomForest:$SKLEARN_ENV
     # XGBoost:$GBDT_ENV
     # CatBoost:$GBDT_ENV
+    # NGBoost:$GBDT_ENV
     LightGBM:$GBDT_ENV
     # MLP:$TORCH_ENV
     # ModelTree:$GBDT_ENV <- bug

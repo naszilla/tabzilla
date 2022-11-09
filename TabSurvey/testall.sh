@@ -9,9 +9,9 @@ TORCH_ENV="torch"
 KERAS_ENV="tensorflow"
 
 # "LinearModel" "KNN" "DecisionTree" "RandomForest"
-# "XGBoost" "CatBoost" "LightGBM"
+# "XGBoost" "CatBoost" "NGBoost" "LightGBM"
 # "MLP" "TabNet" "VIME"
-# MODELS=( "LinearModel" "KNN" "DecisionTree" "RandomForest" "XGBoost" "CatBoost" "LightGBM" "MLP" "TabNet" "VIME")
+# MODELS=( "LinearModel" "KNN" "DecisionTree" "RandomForest" "XGBoost" "NGBoost" "CatBoost" "LightGBM" "MLP" "TabNet" "VIME")
 
 declare -A MODELS
 MODELS=( ["LinearModel"]=$SKLEARN_ENV
@@ -20,6 +20,7 @@ MODELS=( ["LinearModel"]=$SKLEARN_ENV
          ["DecisionTree"]=$SKLEARN_ENV
          ["RandomForest"]=$SKLEARN_ENV
          ["XGBoost"]=$GBDT_ENV
+         ["NGBoost"]=$GBDT_ENV
          ["CatBoost"]=$GBDT_ENV
          ["LightGBM"]=$GBDT_ENV
          ["MLP"]=$TORCH_ENV
