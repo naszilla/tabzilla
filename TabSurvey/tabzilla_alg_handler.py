@@ -83,13 +83,17 @@ def get_CatBoost():
 
     return model
 
+@register_model("gbdt")
+def get_NGBoost():
+    from models.tree_models import NGBoost as model
+
+    return model
 
 @register_model("gbdt")
 def get_LightGBM():
     from models.tree_models import LightGBM as model
 
     return model
-
 
 @register_model("gbdt")
 def get_ModelTree():
@@ -177,10 +181,6 @@ def get_DANet():
     from models.danet import DANet as model
 
     return model
-
-@register_model("torch")
-def get_Hopular():
-    from models.hopular_model import HopularModel as model
 
 
 ##############################################################
