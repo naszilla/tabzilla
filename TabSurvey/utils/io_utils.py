@@ -19,12 +19,15 @@ def save_predictions_to_file(arr, args, extension=""):
 
 def save_model_to_file(model, args, extension=""):
     filename = get_output_path(args, directory="models", filename="m", extension=extension, file_type="pkl")
-    pickle.dump(model, open(filename, 'wb'))
+    with open(filename, 'wb') as f:
+        pickle.dump(model, f)
 
 
 def load_model_from_file(model, args, extension=""):
     filename = get_output_path(args, directory="models", filename="m", extension=extension, file_type="pkl")
-    return pickle.load(open(filename, 'rb'))
+    with open(filename, 'rb') as f:
+        x = pickle.load(f)
+    return x
 
 
 def save_results_to_json_file(args, jsondict, resultsname, append=True):
