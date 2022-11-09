@@ -26,6 +26,7 @@ from models.dnf_lib.Utils.NumpyGenerator import NumpyGenerator
 
 
 class DNFNet(BaseModel):
+    objtype_not_implemented = ["regression"]
 
     # TabZilla: add default number of epochs.
     default_epochs = 1000  # from DNFNet paper

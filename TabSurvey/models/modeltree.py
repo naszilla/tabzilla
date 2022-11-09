@@ -12,6 +12,8 @@ from models.basemodel import BaseModel
 
 
 class ModelTree(BaseModel):
+    objtype_not_implemented = ["classification"]
+    
     def __init__(self, params, args):
         super().__init__(params, args)
         if args.objective == "regression":

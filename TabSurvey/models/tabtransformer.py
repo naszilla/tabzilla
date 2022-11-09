@@ -25,7 +25,7 @@ class TabTransformer(BaseModelTorch):
             num_continuous = args.num_features
             categories_unique = ()
         # print(categories_unique)
-        # print("On Device:", self.device)
+        print("On Device:", self.device)
 
         # Decreasing some hyperparameter to cope with memory issues
         dim = self.params["dim"] if args.num_features < 50 else 8

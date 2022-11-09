@@ -15,6 +15,8 @@ from models.deepgbm_lib.preprocess.preprocessing_num import NumEncoder
 
 
 class DeepGBM(BaseModelTorch):
+    objtype_not_implemented = ["classification"]
+    
     def __init__(self, params, args):
         super().__init__(params, args)
 
@@ -90,7 +92,7 @@ class DeepGBM(BaseModelTorch):
         params = {
             "n_trees": rs.choice([100, 200]),
             "maxleaf": rs.choice([64, 128]),
-            "loss_de": rs.randiint(2, 11),
+            "loss_de": rs.randint(2, 11),
             "loss_dr": rs.choice([0.7, 0.9]),
         }
         return params

@@ -18,7 +18,8 @@ from models.basemodel_torch import BaseModelTorch
 
 
 class NAM(BaseModelTorch):
-
+    objtype_not_implemented = ["classification"]
+    
     # TabZilla: add default number of epochs.
     default_epochs = 1000  # from NAM paper
 

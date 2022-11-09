@@ -34,7 +34,7 @@ class VIME(BaseModelTorch):
                 self.model_semi, device_ids=self.args.gpu_ids
             )
 
-        # print("On Device:", self.device)
+        print("On Device:", self.device)
 
         self.encoder_layer = None
 

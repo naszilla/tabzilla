@@ -147,6 +147,8 @@ class RTDL_FTTransformer_Model(nn.Module):
 class rtdl_MLP(BaseModelTorch):
     """default parameters. code is adapted from the rtdl example colab notebook"""
 
+    objtype_not_implemented = ["regression"]
+
     def __init__(self, params, args):
         super().__init__(params, args)
 
@@ -202,6 +204,7 @@ class rtdl_MLP(BaseModelTorch):
 
 class rtdl_ResNet(BaseModelTorch):
     """default parameters. code is adapted from the rtdl example colab notebook"""
+    objtype_not_implemented = ["classification"]
 
     def __init__(self, params, args):
         super().__init__(params, args)
@@ -258,7 +261,8 @@ class rtdl_ResNet(BaseModelTorch):
 
 class rtdl_FTTransformer(BaseModelTorch):
     """default parameters. code is adapted from the rtdl example colab notebook"""
-
+    objtype_not_implemented = ["classification"]
+    
     def __init__(self, params, args):
         super().__init__(params, args)
 
