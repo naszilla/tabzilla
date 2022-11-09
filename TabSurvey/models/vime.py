@@ -34,13 +34,13 @@ class VIME(BaseModelTorch):
                 self.model_semi, device_ids=self.args.gpu_ids
             )
 
-        print("On Device:", self.device)
+        # print("On Device:", self.device)
 
         self.encoder_layer = None
 
     def fit(self, X, y, X_val=None, y_val=None):
-        X = np.array(X, dtype=np.float)
-        X_val = np.array(X_val, dtype=np.float)
+        X = np.array(X, dtype=float)
+        X_val = np.array(X_val, dtype=float)
 
         X_unlab = np.concatenate([X, X_val], axis=0)
 
@@ -69,7 +69,7 @@ class VIME(BaseModelTorch):
         self.model_self.eval()
         self.model_semi.eval()
 
-        X = np.array(X, dtype=np.float)
+        X = np.array(X, dtype=float)
         X = torch.tensor(X).float()
 
         test_dataset = TensorDataset(X)
@@ -157,7 +157,7 @@ class VIME(BaseModelTorch):
                 loss.backward()
                 optimizer.step()
 
-        print("Fitted encoder")
+        # print("Fitted encoder")
 
     def fit_semi(self, X, y, x_unlab, X_val=None, y_val=None, p_m=0.3, K=3, beta=1):
         X = torch.tensor(X).float()

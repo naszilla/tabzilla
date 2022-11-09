@@ -25,7 +25,7 @@ class ModelTree(BaseModel):
             self.model = ModelTreeClassifier(**self.params)
 
     def fit(self, X, y, X_val=None, y_val=None):
-        X = np.array(X, dtype=np.float)
+        X = np.array(X, dtype=float)
         return super().fit(X, y, X_val, y_val)
 
     @classmethod

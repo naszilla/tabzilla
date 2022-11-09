@@ -64,8 +64,8 @@ class DANet(BaseModelTorch):
 
     def fit(self, X, y, X_val=None, y_val=None):
 
-        X = np.array(X, dtype=np.float)
-        X_val = np.array(X_val, dtype=np.float)
+        X = np.array(X, dtype=float)
+        X_val = np.array(X_val, dtype=float)
 
         if self.task == "regression":
             self.mu, self.std = y.mean(), y.std()
@@ -100,7 +100,7 @@ class DANet(BaseModelTorch):
     def predict_helper(self, X):
         assert self.task == "regression"
 
-        X = np.array(X, dtype=np.float)
+        X = np.array(X, dtype=float)
         preds = self.model.predict(X)
 
         # How to get the un-normalized prediction? (Regression label is normalized during training)
@@ -110,7 +110,7 @@ class DANet(BaseModelTorch):
     def predict_proba(self, X):
         assert self.task == "classification"
 
-        X = np.array(X, dtype=np.float)
+        X = np.array(X, dtype=float)
         self.prediction_probabilities = self.model.predict_proba(X)
         return self.prediction_probabilities
 

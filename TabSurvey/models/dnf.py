@@ -63,7 +63,7 @@ class DNFNet(BaseModel):
             }
         )
 
-        print(self.config)
+        # print(self.config)
 
         os.environ["CUDA_VISIBLE_DEVICES"] = self.config["GPU"]
         tf.reset_default_graph()
@@ -196,7 +196,7 @@ class DNFNet(BaseModel):
             for dim in shape:
                 variable_parameters *= dim.value
             total_parameters += variable_parameters
-        print(total_parameters)
+        # print(total_parameters)
 
         return total_parameters
 

@@ -181,7 +181,7 @@ class NODE(BaseModelTorch):
 
     def predict_helper(self, X):
         X_test = torch.as_tensor(
-            np.array(X, dtype=np.float), device=self.device, dtype=torch.float32
+            np.array(X, dtype=np.float32), device=self.device, dtype=torch.float32
         )
         self.model.train(False)
         with torch.no_grad():

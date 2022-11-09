@@ -46,7 +46,7 @@ class DeepGBM(BaseModelTorch):
         )
         deepgbm_config.update(**params)
 
-        print(deepgbm_config)
+        # print(deepgbm_config)
 
     def fit(self, X, y, X_val=None, y_val=None):
         # preprocess
