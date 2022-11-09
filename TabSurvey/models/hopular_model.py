@@ -13,7 +13,7 @@ from .hopular.blocks import Hopular
 from .hopular.auxiliary.data import FixedDataset, DataModule
 from models.basemodel_torch import BaseModelTorch
 
-class HopularModel(BaseModelTorch):
+class Hopular(BaseModelTorch):
     """
     Model class for Hopular Networks for Tabular Data
     """
