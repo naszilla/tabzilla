@@ -1,5 +1,5 @@
 # this is the list of datasets used in our first round of experiments
-DATASETS_A=(
+DATASETS=(
   openml__sick__3021
   openml__kr-vs-kp__3
   openml__letter__6
