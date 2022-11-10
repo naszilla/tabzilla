@@ -7,8 +7,14 @@
 # 2) activate the conda environment you want to test
 # 3) run the unittests **for only the conda env you want to test**, one of the three:
 # 
-# python -m unittest unittests/test_experiments.TestSklearn
+# python -m unittest unittests.test_experiments.TestExperiment.test_torch
+# 
+# 
+### To manually test only some models, add your own definition for ALL_MODELS below the imports, like this:
 #
+# ALL_MODELS = {
+#     "NAM": ("torch", None),
+# }
 # 
 
 import shutil
@@ -20,6 +26,7 @@ from unittest import TestCase
 from tabzilla_alg_handler import ALL_MODELS
 import tabzilla_experiment
 from pathlib import Path
+from tabzilla_alg_handler import get_model
 from tabzilla_utils import get_experiment_parser
 
 TEST_DATASETS = {
@@ -42,57 +49,65 @@ def test_experiment(self, model_name, dataset_name, obj_type):
         args="-experiment_config " + CONFIG_FILE
     )
 
-    # run experiment
-    tabzilla_experiment.main(experiment_args, model_name, DATASET_DIR + "/" + dataset_name)
+    # try to get the model
+    model_class = get_model(model_name)
 
-    #### read results and run some sanity checks
+    # if the objective type is not implemented, skip this test
+    if obj_type in model_class.objtype_not_implemented:
+        print(f"obj type {obj_type} not implemented for model {model_name}. skipping this test.")
 
-    # make sure there are two results files
-    result_files = glob.glob(RESULTS_DIR + "/*results.json")
-    predictions_files = glob.glob(RESULTS_DIR + "/*predictions.json")
-    self.assertEqual(len(result_files), 2)
-    self.assertEqual(len(predictions_files), 2)
-
-    # read the first result file
-    with open(result_files[0], "r") as f:
-        result = json.load(f)
-
-    # make sure dataset and model name is correct
-    self.assertEqual(dataset_name, result["dataset"]["name"])
-    self.assertEqual(model_name, result["model"]["name"])
-
-    ## check timer results
-    self.assertIn("timers", result.keys())
-    self.assertIn("train", result["timers"].keys())
-    self.assertIn("val", result["timers"].keys())
-    self.assertIn("test", result["timers"].keys())
-
-    # get number of folds
-    num_folds = len(result["timers"]["train"])
-    self.assertEqual(num_folds, len(result["timers"]["val"]))
-    self.assertEqual(num_folds, len(result["timers"]["test"]))
-
-    # make sure training time is positive number for each fold
-    self.assertTrue(all([t > 0 for t in result["timers"]["train"]]))
-
-    ## check objective results
-    self.assertIn("scorers", result.keys())
-    self.assertIn("train", result["scorers"].keys())
-    self.assertIn("val", result["scorers"].keys())
-    self.assertIn("test", result["scorers"].keys())
-
-    if obj_type == "classification":
-        # classification objective: check log-loss
-        metric = "Log Loss"
     else:
-        # binary objective: check AUC
-        metric = "AUC"
+        # run experiment
+        tabzilla_experiment.main(experiment_args, model_name, DATASET_DIR + "/" + dataset_name)
 
-    self.assertIn(metric, result["scorers"]["val"].keys())
-    self.assertIn(metric, result["scorers"]["test"].keys())
-    self.assertEqual(num_folds, len(result["scorers"]["val"][metric]))
-    self.assertEqual(num_folds, len(result["scorers"]["test"][metric]))
-    self.assertTrue(all([isinstance(x, float) for x in result["scorers"]["test"][metric]]))
+        #### read results and run some sanity checks
+
+        # make sure there are two results files
+        result_files = glob.glob(RESULTS_DIR + "/*results.json")
+        predictions_files = glob.glob(RESULTS_DIR + "/*predictions.json")
+        self.assertEqual(len(result_files), 2)
+        self.assertEqual(len(predictions_files), 2)
+
+        # read the first result file
+        with open(result_files[0], "r") as f:
+            result = json.load(f)
+
+        # make sure dataset and model name is correct
+        self.assertEqual(dataset_name, result["dataset"]["name"])
+        self.assertEqual(model_name, result["model"]["name"])
+
+        ## check timer results
+        self.assertIn("timers", result.keys())
+        self.assertIn("train", result["timers"].keys())
+        self.assertIn("val", result["timers"].keys())
+        self.assertIn("test", result["timers"].keys())
+
+        # get number of folds
+        num_folds = len(result["timers"]["train"])
+        self.assertEqual(num_folds, len(result["timers"]["val"]))
+        self.assertEqual(num_folds, len(result["timers"]["test"]))
+
+        # make sure training time is positive number for each fold
+        self.assertTrue(all([t > 0 for t in result["timers"]["train"]]))
+
+        ## check objective results
+        self.assertIn("scorers", result.keys())
+        self.assertIn("train", result["scorers"].keys())
+        self.assertIn("val", result["scorers"].keys())
+        self.assertIn("test", result["scorers"].keys())
+
+        if obj_type == "classification":
+            # classification objective: check log-loss
+            metric = "Log Loss"
+        else:
+            # binary objective: check AUC
+            metric = "AUC"
+
+        self.assertIn(metric, result["scorers"]["val"].keys())
+        self.assertIn(metric, result["scorers"]["test"].keys())
+        self.assertEqual(num_folds, len(result["scorers"]["val"][metric]))
+        self.assertEqual(num_folds, len(result["scorers"]["test"][metric]))
+        self.assertTrue(all([isinstance(x, float) for x in result["scorers"]["test"][metric]]))
 
 
 def test_env(self, test_env):
