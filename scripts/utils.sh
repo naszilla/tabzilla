@@ -167,6 +167,7 @@ run_experiment_gpu() {
     --machine-type=${machine_type} \
     --service-account $service_account \
     --maintenance-policy TERMINATE \
+    --boot-disk-size=200GB \
     --scopes=https://www.googleapis.com/auth/devstorage.read_write \
     --accelerator type=${ACCELERATOR_TYPE},count=${ACCELERATOR_COUNT}
 
