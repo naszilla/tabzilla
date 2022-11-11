@@ -7,12 +7,12 @@ source ../utils.sh
 # begin: EXPERIMENT PARAMETERS
 
 # this defines MODELS_ENVS
-source ../ALGS_CPU_1.sh
+source ../ALGS_GPU_1.sh
 
 # this defines DATASETS
 source ../DATASETS_B.sh
 
-name=algs-cpu-1-datasets-b
+name=algs-gpu-1-datasets-b
 
 # base name for the gcloud instances
 instance_base=$name
@@ -73,7 +73,7 @@ do
     echo "DATASET: ${DATASETS[j]}"
     echo "EXPERIMENT_NAME: ${experiment_name}"
 
-    run_experiment "${model}" ${DATASETS[j]} ${env} ${instance_base}-${i}-${j} ${experiment_name} ${config_file} >> ${LOG_DIR}/log_${i}_${j}_$(date +"%m%d%y_%H%M%S").txt 2>&1 &
+    run_experiment_gpu "${model}" ${DATASETS[j]} ${env} ${instance_base}-${i}-${j} ${experiment_name} ${config_file} >> ${LOG_DIR}/log_${i}_${j}_$(date +"%m%d%y_%H%M%S").txt 2>&1 &
     num_experiments=$((num_experiments + 1))
 
     # add instance name to the instance list

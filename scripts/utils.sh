@@ -127,7 +127,7 @@ run_experiment() {
 
 run_experiment_gpu() {
 
-  # identical to run_experiment(), but attaches a teslsa T4 GPU to the instance
+  # identical to run_experiment(), but attaches a teslsa T4 GPU to the instance and uses a 200GB disk rather than default 100GB
 
   # $1 = model name
   # $2 = dataset name

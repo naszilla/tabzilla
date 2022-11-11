@@ -1,3 +1,5 @@
+# spring 2022
+
 name: cpu-expt
 algs: ALGS_CPU_1
 datasets: DATASETS_A
@@ -6,5 +8,9 @@ name: gpu-expt-a
 algs: ALGS_GPU_1
 datasets: DATASETS_A
 
+# early november 2022
 
+name: algs-cpu-1-datasets-b
+algs: ALGS_CPU_1
+datasets: DATASETS_B
 
