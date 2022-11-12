@@ -1,7 +1,7 @@
 # run an experiment with small models on all datasets
 # run one test for each env
 #
-# you can run these tests by taking the following steps the following:
+# you can run these tests by taking the following steps:
 # 
 # 1) cd to TabSurvey directory
 # 2) activate the conda environment you want to test
