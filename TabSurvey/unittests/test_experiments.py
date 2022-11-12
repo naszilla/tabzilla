@@ -5,9 +5,11 @@
 # 
 # 1) cd to TabSurvey directory
 # 2) activate the conda environment you want to test
-# 3) run the unittests **for only the conda env you want to test**, one of the three:
+# 3) run the unittests **for only the conda env you want to test**, one of the three below:
 # 
 # python -m unittest unittests.test_experiments.TestExperiment.test_torch
+# python -m unittest unittests.test_experiments.TestExperiment.test_gbdt
+# python -m unittest unittests.test_experiments.TestExperiment.test_sklearn
 # 
 # 
 ### To manually test only some models, add your own definition for ALL_MODELS below the imports, like this:
