@@ -14,3 +14,6 @@ name: algs-cpu-1-datasets-b
 algs: ALGS_CPU_1
 datasets: DATASETS_B
 
+name: algs-gpu-1-datasets-b
+algs: ALGS_GPU_1
+datasets: DATASETS_B
