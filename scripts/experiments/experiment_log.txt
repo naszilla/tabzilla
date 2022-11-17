@@ -17,3 +17,8 @@ datasets: DATASETS_B
 name: algs-gpu-1-datasets-b
 algs: ALGS_GPU_1
 datasets: DATASETS_B
+
+# had to rerun the above experiments after fixing a bug in the scripts
+name: algs-gpu-1-datasets-b-v2
+algs: ALGS_GPU_1
+datasets: DATASETS_B
