@@ -14,6 +14,8 @@ from .deepfm_lib.models.deepfm import DeepFM as DeepFMModel
 
 
 class DeepFM(BaseModelTorch):
+    objtype_not_implemented = ["classification"]
+
     def __init__(self, params, args):
         super().__init__(params, args)
 
@@ -56,10 +58,10 @@ class DeepFM(BaseModelTorch):
         )
 
     def fit(self, X, y, X_val=None, y_val=None):
-        X = np.array(X, dtype=np.float)
+        X = np.array(X, dtype=float)
         X_dict = {str(name): X[:, name] for name in range(self.args.num_features)}
 
-        X_val = np.array(X_val, dtype=np.float)
+        X_val = np.array(X_val, dtype=float)
         X_val_dict = {
             str(name): X_val[:, name] for name in range(self.args.num_features)
         }
@@ -97,7 +99,7 @@ class DeepFM(BaseModelTorch):
         return loss_history, val_loss_history
 
     def predict_helper(self, X):
-        X = np.array(X, dtype=np.float)
+        X = np.array(X, dtype=float)
         X_dict = {str(name): X[:, name] for name in range(self.args.num_features)}
 
         # Adding dummy spare feature

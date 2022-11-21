@@ -24,7 +24,7 @@ class TabTransformer(BaseModelTorch):
             self.num_idx = list(range(args.num_features))
             num_continuous = args.num_features
             categories_unique = ()
-        print(categories_unique)
+        # print(categories_unique)
         print("On Device:", self.device)
 
         # Decreasing some hyperparameter to cope with memory issues
@@ -56,8 +56,8 @@ class TabTransformer(BaseModelTorch):
         )
 
         # For some reason this has to be set explicitly to work with categorical data
-        X = np.array(X, dtype=np.float)
-        X_val = np.array(X_val, dtype=np.float)
+        X = np.array(X, dtype=float)
+        X_val = np.array(X_val, dtype=float)
 
         X = torch.tensor(X).float()
         X_val = torch.tensor(X_val).float()
@@ -167,7 +167,7 @@ class TabTransformer(BaseModelTorch):
 
     def predict_helper(self, X):
         self.model.eval()
-        X = np.array(X, dtype=np.float)
+        X = np.array(X, dtype=float)
         X = torch.tensor(X).float()
 
         test_dataset = TensorDataset(X)
@@ -250,7 +250,7 @@ class TabTransformer(BaseModelTorch):
         of the attention map.
         return array with the same shape as X. The number of columns is equal to the number of categorical values in X.
         """
-        X = np.array(X, dtype=np.float)
+        X = np.array(X, dtype=float)
         # Unroll and Rerun until first attention stage.
 
         X = torch.tensor(X).float()
@@ -293,7 +293,7 @@ class TabTransformer(BaseModelTorch):
                     )
                     attn = sim.softmax(dim=-1)
                     if strategy == "diag":
-                        print(attn.shape)
+                        # print(attn.shape)
                         attentions_list.append(attn.diagonal(0, 2, 3))
                     else:
                         attentions_list.append(attn.sum(dim=1))

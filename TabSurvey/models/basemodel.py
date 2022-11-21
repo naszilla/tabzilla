@@ -37,6 +37,10 @@ class BaseModel:
         is necessary for the cross validation.
     """
 
+    # this list should be populated with "classification", "regression", and "binary" for each subclass if 
+    # the model is not implemented for these objective types
+    objtype_not_implemented = []
+
     def __init__(self, params: tp.Dict, args):
         """Defines the model architecture.
 

@@ -127,7 +127,7 @@ run_experiment() {
 
 run_experiment_gpu() {
 
-  # identical to run_experiment(), but attaches a teslsa T4 GPU to the instance
+  # identical to run_experiment(), but attaches a teslsa T4 GPU to the instance and uses a 200GB disk rather than default 100GB
 
   # $1 = model name
   # $2 = dataset name
@@ -167,6 +167,7 @@ run_experiment_gpu() {
     --machine-type=${machine_type} \
     --service-account $service_account \
     --maintenance-policy TERMINATE \
+    --boot-disk-size=200GB \
     --scopes=https://www.googleapis.com/auth/devstorage.read_write \
     --accelerator type=${ACCELERATOR_TYPE},count=${ACCELERATOR_COUNT}
 

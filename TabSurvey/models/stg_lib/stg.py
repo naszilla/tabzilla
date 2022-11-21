@@ -180,7 +180,7 @@ class STG(object):
         data_loader = self.get_dataloader(X, y, shuffle=None)
         meters = GroupMeters()
         self.validate(data_loader, self.metric, meters, mode='test')
-        print(meters.format_simple(''))
+        # print(meters.format_simple(''))
 
     def predict(self, X, verbose=True):
         dataset = SimpleDataset(X)
@@ -237,7 +237,7 @@ class STG(object):
             if verbose and epoch % print_interval == 0:
                 self.validate(val_data_loader, self.metric, meters)
                 caption = 'Epoch: {}:'.format(epoch)
-                print(meters.format_simple(caption))
+                # print(meters.format_simple(caption))
 
                 val_loss_history.append(meters.avg["valid_loss"].item())
 

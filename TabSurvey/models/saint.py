@@ -87,12 +87,12 @@ class SAINT(BaseModelTorch):
 
         train_ds = DataSetCatCon(X, y, self.args.cat_idx, self.args.objective)
         trainloader = DataLoader(
-            train_ds, batch_size=self.batch_size, shuffle=True, num_workers=4
+            train_ds, batch_size=self.batch_size, shuffle=True, num_workers=2
         )
 
         val_ds = DataSetCatCon(X_val, y_val, self.args.cat_idx, self.args.objective)
         valloader = DataLoader(
-            val_ds, batch_size=self.args.val_batch_size, shuffle=True, num_workers=4
+            val_ds, batch_size=self.args.val_batch_size, shuffle=True, num_workers=2
         )
 
         min_val_loss = float("inf")
@@ -205,7 +205,7 @@ class SAINT(BaseModelTorch):
 
         test_ds = DataSetCatCon(X, y, self.args.cat_idx, self.args.objective)
         testloader = DataLoader(
-            test_ds, batch_size=self.args.val_batch_size, shuffle=False, num_workers=4
+            test_ds, batch_size=self.args.val_batch_size, shuffle=False, num_workers=2
         )
 
         self.model.eval()
@@ -249,7 +249,7 @@ class SAINT(BaseModelTorch):
 
         test_ds = DataSetCatCon(X, y, self.args.cat_idx, self.args.objective)
         testloader = DataLoader(
-            test_ds, batch_size=self.args.val_batch_size, shuffle=False, num_workers=4
+            test_ds, batch_size=self.args.val_batch_size, shuffle=False, num_workers=2
         )
 
         self.model.eval()

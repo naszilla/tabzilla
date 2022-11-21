@@ -233,7 +233,6 @@ def cross_validation(model: BaseModel, dataset: TabularDataset, time_limit: int)
         # Train model
         timers["train"].start()
         # loss history can be saved if needed
-        # TODO: check how X_test, y_test are used here. it appears that they are sometimes used for training... this would not be good.
         loss_history, val_loss_history = curr_model.fit(
             X_train,
             y_train,

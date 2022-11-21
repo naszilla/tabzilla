@@ -302,3 +302,24 @@ You can follow the [original TabSurvey readme](TabSurvey/TabSurvey_README.md) to
 For any model supporting multi-class classification, you need to ensure the model follows one of the next two approaches:
 1. The model always encodes its output with `args.num_classes` dimension (this is set to 1 for binary classification). In the case of multi-class classification, dimension `i` must match to the value `i` in the labels (which are encoded 0 through `args.num_classes-1` in the output). **Note**: inferring the number of classes from the labels in training may not be sufficient if there are missing labels on the training set (which happens for some datasets), so you must use `args.num_classes` directly.
 2. If there is a chance for the prediction probabilities for the model to have less than `args.num_classes` dimension (this can mainly happen if there are missing classes in training for models such as those from `sklearn`) implement a method `get_classes()` that returns the list of the labels corresponding to the dimensions. See [examples here](TabSurvey/models/baseline_models.py).
+
+
+# Unit Tests
+
+The unit tests in [TabSurvey/unittests/test_experiments.py](TabSurvey/unittests/test_experiments.py) test each algorithm on three datasets using our experiment function. There is one test for each *conda environment*: each test runs all algorithms implemented in the conda environment, for the same three datasets, and checks that the algorithms produce output. You need to manually actiave the conda env before running each test (if you run tests using the wrong conda env, then these tests will fail). You can also modify this unit test file to only run specific algorithms.
+
+To run all tests for all environments, run the following from the TabSurvey directory:
+
+```
+conda activate sklearn
+python -m unittest unittests.test_experiments.TestExperiment.test_sklearn
+
+conda activate gbdt
+python -m unittest unittests.test_experiments.TestExperiment.test_gbdt
+
+conda activate torch
+python -m unittest unittests.test_experiments.TestExperiment.test_torch
+
+conda activate tensorflow
+python -m unittest unittests.test_experiments.TestExperiment.test_tensorflow
+```
