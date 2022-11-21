@@ -51,24 +51,6 @@ def get_SVM():
 
     return model
 
-@register_model("sklearn")
-def get_SVM_LINEAR():
-    from models.baseline_models import SVM_LINEAR as model
-
-    return model
-
-@register_model("sklearn")
-def get_SVM_SIGMOID():
-    from models.baseline_models import SVM_SIGMOID as model
-
-    return model
-
-@register_model("sklearn")
-def get_SVM_POLY():
-    from models.baseline_models import SVM_POLY as model
-
-    return model
-
 
 @register_model("sklearn")
 def get_DecisionTree():

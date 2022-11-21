@@ -1,5 +1,5 @@
 ###### directory where results will be written
-output_dir: ./results/361089/svm/rbf/1/
+output_dir: ./results/361089/svm/1/
 
 ###### experiment & trial time limit in seconds (10 hours / 2 hours)
 experiment_time_limit: 36000
@@ -7,9 +7,9 @@ trial_time_limit: 7200
 
 
 ###### number of trials for hyperparameter search & optimization
-n_random_trials: 1
+n_random_trials: 3
 n_opt_trials: 0
-hparam_seed: 0
+hparam_seed: 2
 
 ###### GPU parameters
 use_gpu: True

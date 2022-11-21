@@ -68,6 +68,7 @@ class KNN(BaseModel):
                 algorithm=params["knn_alg"],
                 leaf_size=params["leaf_size"],
                 n_jobs=-1,
+                # metric = 'cityblock',
             )
         elif args.objective == "classification" or args.objective == "binary":
             self.model = neighbors.KNeighborsClassifier(
@@ -75,6 +76,7 @@ class KNN(BaseModel):
                 algorithm=params["knn_alg"],
                 leaf_size=params["leaf_size"],
                 n_jobs=-1,
+                # metric = 'cityblock',
             )
 
     def fit(self, X, y, X_val=None, y_val=None):
@@ -88,16 +90,19 @@ class KNN(BaseModel):
             ),
             "knn_alg": trial.suggest_categorical("knn_alg", ["kd_tree", "ball_tree"]),
             "leaf_size": trial.suggest_int("leaf_size", [30, 50, 70, 100, 300]),
+            "metric": trial.suggest_categorical("metric",  ["cityblock", "cosine", "euclidean", "l1", "l2", "manhattan"]),
         }
         return params
 
     @classmethod
     def get_random_parameters(cls, seed: int):
         rs = np.random.RandomState(seed)
+        metrics_arr = ["cityblock", "cosine", "euclidean", "l1", "l2", "manhattan"]
         params = {
             "n_neighbors": 1 + 2 * rs.randint(1, 21),
             "knn_alg": rs.choice(["kd_tree", "ball_tree"]),
             "leaf_size": rs.choice([30, 50, 70, 100, 300]),
+            "metric": rs.choice(metrics_arr, 1, p=np.ones(len(metrics_arr))/len(metrics_arr))[0],
         }
         return params
 
@@ -107,11 +112,13 @@ class KNN(BaseModel):
             "n_neighbors": 9,
             "knn_alg": "kd_tree",
             "leaf_size": 30,
+            "metric": "minkowski",
         }
         return params
 
     def get_classes(self):
         return self.model.classes_
+
 
 """
     Support Vector Machines - Epsilon-Support Vector Regression / C-Support Vector Classification
@@ -131,18 +138,23 @@ class SVM(BaseModel):
 
     @classmethod
     def define_trial_parameters(cls, trial, args):
-        params = {"C": trial.suggest_float("C", 1e-10, 1e10, log=True)}
+        params = {"C": trial.suggest_float("C", 1e-10, 1e10, log=True), 
+                  "kernel": trial.suggest_categorical("kernel",  ["linear", "poly", "rbf", "sigmoid"]),
+                 }
         return params
 
     @classmethod
     def get_random_parameters(cls, seed: int):
         rs = np.random.RandomState(seed)
-        params = {"C": np.power(10, rs.uniform(-10, 10))}
+        kernel_arr = ["linear", "poly", "rbf", "sigmoid"]
+        params = {"C": np.power(10, rs.uniform(-10, 10)),
+                  "kernel": rs.choice(kernel_arr, 1, p=np.ones(len(kernel_arr))/len(kernel_arr))[0],
+                }
         return params
 
     @classmethod
     def default_parameters(cls):
-        params = {"C": 1.0}
+        params = {"C": 1.0, "kernel": "rbf"}
         return params
 
     def get_classes(self):
@@ -240,99 +252,3 @@ class RandomForest(BaseModel):
 
     def get_classes(self):
         return self.model.classes_
-
-class SVM_LINEAR(BaseModel):
-    def __init__(self, params, args):
-        super().__init__(params, args)
-
-        if args.objective == "regression":
-            self.model = svm.SVR(C=params["C"], kernel = 'linear')
-        elif args.objective == "classification" or args.objective == "binary":
-            self.model = svm.SVC(C=params["C"], probability=True, kernel = 'linear')
-
-    @classmethod
-    def define_trial_parameters(cls, trial, args):
-        params = {"C": trial.suggest_float("C", 1e-10, 1e10, log=True)}
-        return params
-
-    @classmethod
-    def get_random_parameters(cls, seed: int):
-        rs = np.random.RandomState(seed)
-        params = {"C": np.power(10, rs.uniform(-10, 10))}
-        return params
-
-    @classmethod
-    def default_parameters(cls):
-        params = {"C": 1.0}
-        return params
-
-    def get_classes(self):
-        return self.model.classes_
-
-    def get_kernel(self):
-        return self.model.kernel
-
-class SVM_SIGMOID(BaseModel):
-    def __init__(self, params, args):
-        super().__init__(params, args)
-
-        if args.objective == "regression":
-            self.model = svm.SVR(C=params["C"], kernel = 'sigmoid')
-        elif args.objective == "classification" or args.objective == "binary":
-            self.model = svm.SVC(C=params["C"], probability=True, kernel = 'sigmoid')
-
-    @classmethod
-    def define_trial_parameters(cls, trial, args):
-        params = {"C": trial.suggest_float("C", 1e-10, 1e10, log=True)}
-        return params
-
-    @classmethod
-    def get_random_parameters(cls, seed: int):
-        rs = np.random.RandomState(seed)
-        params = {"C": np.power(10, rs.uniform(-10, 10))}
-        return params
-
-    @classmethod
-    def default_parameters(cls):
-        params = {"C": 1.0}
-        return params
-
-    def get_classes(self):
-        return self.model.classes_
-
-    def get_kernel(self):
-        return self.model.kernel
-
-class SVM_POLY(BaseModel):
-    def __init__(self, params, args):
-        super().__init__(params, args)
-
-        if args.objective == "regression":
-            self.model = svm.SVR(C=params["C"], kernel = 'poly')
-        elif args.objective == "classification" or args.objective == "binary":
-            self.model = svm.SVC(C=params["C"], probability=True, kernel = 'poly')
-
-    @classmethod
-    def define_trial_parameters(cls, trial, args):
-        params = {"C": trial.suggest_float("C", 1e-10, 1e10, log=True)}
-        return params
-
-    @classmethod
-    def get_random_parameters(cls, seed: int):
-        rs = np.random.RandomState(seed)
-        params = {"C": np.power(10, rs.uniform(-10, 10))}
-        return params
-
-    @classmethod
-    def default_parameters(cls):
-        params = {"C": 1.0}
-        return params
-
-    def get_classes(self):
-        return self.model.classes_
-
-    def get_kernel(self):
-        return self.model.kernel
-
-
-
