@@ -148,6 +148,9 @@ class SVM(BaseModel):
     def get_classes(self):
         return self.model.classes_
 
+    def get_kernel(self):
+        return self.model.kernel
+
 
 """
     Decision Tree - Decision Tree Regressor/Classifier
@@ -237,3 +240,99 @@ class RandomForest(BaseModel):
 
     def get_classes(self):
         return self.model.classes_
+
+class SVM_LINEAR(BaseModel):
+    def __init__(self, params, args):
+        super().__init__(params, args)
+
+        if args.objective == "regression":
+            self.model = svm.SVR(C=params["C"], kernel = 'linear')
+        elif args.objective == "classification" or args.objective == "binary":
+            self.model = svm.SVC(C=params["C"], probability=True, kernel = 'linear')
+
+    @classmethod
+    def define_trial_parameters(cls, trial, args):
+        params = {"C": trial.suggest_float("C", 1e-10, 1e10, log=True)}
+        return params
+
+    @classmethod
+    def get_random_parameters(cls, seed: int):
+        rs = np.random.RandomState(seed)
+        params = {"C": np.power(10, rs.uniform(-10, 10))}
+        return params
+
+    @classmethod
+    def default_parameters(cls):
+        params = {"C": 1.0}
+        return params
+
+    def get_classes(self):
+        return self.model.classes_
+
+    def get_kernel(self):
+        return self.model.kernel
+
+class SVM_SIGMOID(BaseModel):
+    def __init__(self, params, args):
+        super().__init__(params, args)
+
+        if args.objective == "regression":
+            self.model = svm.SVR(C=params["C"], kernel = 'sigmoid')
+        elif args.objective == "classification" or args.objective == "binary":
+            self.model = svm.SVC(C=params["C"], probability=True, kernel = 'sigmoid')
+
+    @classmethod
+    def define_trial_parameters(cls, trial, args):
+        params = {"C": trial.suggest_float("C", 1e-10, 1e10, log=True)}
+        return params
+
+    @classmethod
+    def get_random_parameters(cls, seed: int):
+        rs = np.random.RandomState(seed)
+        params = {"C": np.power(10, rs.uniform(-10, 10))}
+        return params
+
+    @classmethod
+    def default_parameters(cls):
+        params = {"C": 1.0}
+        return params
+
+    def get_classes(self):
+        return self.model.classes_
+
+    def get_kernel(self):
+        return self.model.kernel
+
+class SVM_POLY(BaseModel):
+    def __init__(self, params, args):
+        super().__init__(params, args)
+
+        if args.objective == "regression":
+            self.model = svm.SVR(C=params["C"], kernel = 'poly')
+        elif args.objective == "classification" or args.objective == "binary":
+            self.model = svm.SVC(C=params["C"], probability=True, kernel = 'poly')
+
+    @classmethod
+    def define_trial_parameters(cls, trial, args):
+        params = {"C": trial.suggest_float("C", 1e-10, 1e10, log=True)}
+        return params
+
+    @classmethod
+    def get_random_parameters(cls, seed: int):
+        rs = np.random.RandomState(seed)
+        params = {"C": np.power(10, rs.uniform(-10, 10))}
+        return params
+
+    @classmethod
+    def default_parameters(cls):
+        params = {"C": 1.0}
+        return params
+
+    def get_classes(self):
+        return self.model.classes_
+
+    def get_kernel(self):
+        return self.model.kernel
+
+
+

@@ -1,5 +1,5 @@
 ###### directory where results will be written
-output_dir: ./results/2/
+output_dir: ./results/svm/all/
 
 ###### experiment & trial time limit in seconds (10 hours / 2 hours)
 experiment_time_limit: 36000

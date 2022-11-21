@@ -136,3 +136,6 @@ TabSurvey/models/hopular/auxiliary/resources/*
 TabSurvey/datasets/
 TabSurvey/results/
 TabSurvey/results_openml__APSFailure__168868_LinearModel.zip
+TabSurvey/results_openml__Amazon_employee_access__34539_SVM.zip
+TabSurvey/results_openml__APSFailure__168868_SVM.zip
+TabSurvey/results_openml__Australian__146818_SVM.zip

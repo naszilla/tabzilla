@@ -157,6 +157,7 @@ class TabZillaObjective(object):
         result.experiment_args = vars(self.experiment_args)
 
         # write results to file
+        print("Model kernel:", model.get_kernel())
         result_file_base = self.output_path.joinpath(
             f"{hparam_source}_trial{trial.number}"
         )

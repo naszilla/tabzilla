@@ -16,7 +16,7 @@ DATASET_BASE_DIR=./datasets
 # define lists of datasets and models to evaluate them on
 
 MODELS_ENVS=(
-  "NODE:$TORCH_ENV"
+  "SVM:$SKLEARN_ENV"
   )
 
 CONFIG_FILE=tabzilla_experiment_config.yml

@@ -1,5 +1,5 @@
 ###### directory where results will be written
-output_dir: ./results/1/
+output_dir: ./results/361089/svm/rbf/1/
 
 ###### experiment & trial time limit in seconds (10 hours / 2 hours)
 experiment_time_limit: 36000

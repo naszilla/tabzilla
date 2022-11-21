@@ -17,6 +17,18 @@ def str2model(model):
         from models.baseline_models import SVM
         return SVM
 
+    elif model == "SVM_LINEAR":
+        from models.baseline_models import SVM_LINEAR
+        return SVM_LINEAR
+    
+    elif model == "SVM_SIGMOID":
+        from models.baseline_models import SVM_SIGMOID
+        return SVM_SIGMOID
+    
+    elif model == "SVM_POLY":
+        from models.baseline_models import SVM_POLY
+        return SVM_POLY
+
     elif model == "DecisionTree":
         from models.baseline_models import DecisionTree
         return DecisionTree
