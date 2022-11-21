@@ -90,14 +90,14 @@ class KNN(BaseModel):
             ),
             "knn_alg": trial.suggest_categorical("knn_alg", ["kd_tree", "ball_tree"]),
             "leaf_size": trial.suggest_int("leaf_size", [30, 50, 70, 100, 300]),
-            "metric": trial.suggest_categorical("metric",  ["cityblock", "cosine", "euclidean", "l1", "l2", "manhattan"]),
+            "metric": trial.suggest_categorical("metric",  ["minkowksi", "cityblock", "cosine", "euclidean", "l1", "l2", "manhattan"]),
         }
         return params
 
     @classmethod
     def get_random_parameters(cls, seed: int):
         rs = np.random.RandomState(seed)
-        metrics_arr = ["cityblock", "cosine", "euclidean", "l1", "l2", "manhattan"]
+        metrics_arr = ["minkowksi", "cityblock", "cosine", "euclidean", "l1", "l2", "manhattan"]
         params = {
             "n_neighbors": 1 + 2 * rs.randint(1, 21),
             "knn_alg": rs.choice(["kd_tree", "ball_tree"]),
