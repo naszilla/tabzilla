@@ -179,8 +179,10 @@ def get_DANet():
     return model
 
 @register_model("torch")
-def get_Hopular():
-    from models.hopular_model import HopularModel as model
+def get_Hopular_model():
+    from models.hopular_model import Hopular_model as model
+
+    return model
 
 
 ##############################################################

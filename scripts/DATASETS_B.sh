@@ -1,5 +1,5 @@
 # datasets added by Nov. 2, 2022, not included in DATASETS_A
-DATASETS_B=(
+DATASETS=(
   openml__acute-inflammations__10089
   openml__ada_agnostic__3896
   openml__aloi__12732

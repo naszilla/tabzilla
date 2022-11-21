@@ -18,12 +18,13 @@ import torch.nn as nn
 
 import rtdl
 from models.basemodel_torch import BaseModelTorch
-
+import torch.nn.functional as F
 
 class RTDL_MLP_Model(nn.Module):
     """model class for the rtdl MLP"""
 
     D_TOKEN = 8  # size of the embedding for a single feature
+    LAYERS = [128, 256, 128]
     DROPOUT = 0.1
 
     def __init__(
@@ -32,8 +33,11 @@ class RTDL_MLP_Model(nn.Module):
         cat_idx: List[Any],
         cat_dims: List[Any],
         d_out: int,
+        task: str,
     ):
         super().__init__()
+
+        self.task = task
 
         if len(cat_idx) > 0:
             self.cat_tokenizer = rtdl.CategoricalFeatureTokenizer(
@@ -60,7 +64,13 @@ class RTDL_MLP_Model(nn.Module):
         x_cat = x[:, self.cat_idx].to(torch.int)
 
         x_ordered = torch.cat([x_num, self.cat_tokenizer(x_cat).flatten(1, -1)], dim=1)
-        return self.model(x_ordered)
+
+        if self.task == "classification":
+            x = F.softmax(self.model(x_ordered), dim=1)
+        else:
+            x = self.model(x_ordered)
+
+        return x
 
 
 class RTDL_ResNet_Model(nn.Module):
@@ -79,8 +89,11 @@ class RTDL_ResNet_Model(nn.Module):
         cat_idx: List[Any],
         cat_dims: List[Any],
         d_out: int,
+        task: str,
     ):
         super().__init__()
+
+        self.task = task
 
         if len(cat_idx) > 0:
             self.cat_tokenizer = rtdl.CategoricalFeatureTokenizer(
@@ -110,7 +123,13 @@ class RTDL_ResNet_Model(nn.Module):
         x_cat = x[:, self.cat_idx].to(torch.int)
 
         x_ordered = torch.cat([x_num, self.cat_tokenizer(x_cat).flatten(1, -1)], dim=1)
-        return self.model(x_ordered)
+        
+        if self.task == "classification":
+            x = F.softmax(self.model(x_ordered), dim=1)
+        else:
+            x = self.model(x_ordered)
+            
+        return x
 
 
 class RTDL_FTTransformer_Model(nn.Module):
@@ -122,8 +141,11 @@ class RTDL_FTTransformer_Model(nn.Module):
         cat_idx: List[Any],
         cat_dims: List[Any],
         d_out: int,
+        task: str,
     ):
         super().__init__()
+
+        self.task = task
 
         self.model = rtdl.FTTransformer.make_default(
             n_num_features=len(num_idx),  # number of numerical features
@@ -141,11 +163,18 @@ class RTDL_FTTransformer_Model(nn.Module):
         x_num = x[:, self.num_idx]
         x_cat = x[:, self.cat_idx].to(torch.int)
 
-        return self.model(x_num, x_cat)
+        if self.task == "classification":
+            x = F.softmax(self.model(x_num, x_cat), dim=1)
+        else:
+            x = self.model(x_num, x_cat)
+            
+        return x
 
 
 class rtdl_MLP(BaseModelTorch):
     """default parameters. code is adapted from the rtdl example colab notebook"""
+
+    objtype_not_implemented = ["regression"]
 
     def __init__(self, params, args):
         super().__init__(params, args)
@@ -162,13 +191,14 @@ class rtdl_MLP(BaseModelTorch):
             cat_idx=args.cat_idx,
             cat_dims=args.cat_dims,
             d_out=args.num_classes,
+            task=args.objective,
         )
 
         self.to_device()
 
     # this is copied from TabSurvey's models.mlp.MLP
     def predict_helper(self, X):
-        X = np.array(X, dtype=np.float)
+        X = np.array(X, dtype=float)
         return super().predict_helper(X)
 
     @classmethod
@@ -194,14 +224,15 @@ class rtdl_MLP(BaseModelTorch):
         return params
 
     def fit(self, X, y, X_val=None, y_val=None):
-        X = np.array(X, dtype=np.float)
-        X_val = np.array(X_val, dtype=np.float)
+        X = np.array(X, dtype=float)
+        X_val = np.array(X_val, dtype=float)
 
         return super().fit(X, y, X_val, y_val)
 
 
 class rtdl_ResNet(BaseModelTorch):
     """default parameters. code is adapted from the rtdl example colab notebook"""
+    objtype_not_implemented = ["regression"]
 
     def __init__(self, params, args):
         super().__init__(params, args)
@@ -218,13 +249,14 @@ class rtdl_ResNet(BaseModelTorch):
             cat_idx=args.cat_idx,
             cat_dims=args.cat_dims,
             d_out=args.num_classes,
+            task=args.objective,
         )
 
         self.to_device()
 
     # this is copied from TabSurvey's models.mlp.MLP
     def predict_helper(self, X):
-        X = np.array(X, dtype=np.float)
+        X = np.array(X, dtype=float)
         return super().predict_helper(X)
 
     @classmethod
@@ -250,15 +282,16 @@ class rtdl_ResNet(BaseModelTorch):
         return params
 
     def fit(self, X, y, X_val=None, y_val=None):
-        X = np.array(X, dtype=np.float)
-        X_val = np.array(X_val, dtype=np.float)
+        X = np.array(X, dtype=float)
+        X_val = np.array(X_val, dtype=float)
 
         return super().fit(X, y, X_val, y_val)
 
 
 class rtdl_FTTransformer(BaseModelTorch):
     """default parameters. code is adapted from the rtdl example colab notebook"""
-
+    objtype_not_implemented = ["regression"]
+    
     def __init__(self, params, args):
         super().__init__(params, args)
 
@@ -274,13 +307,14 @@ class rtdl_FTTransformer(BaseModelTorch):
             cat_idx=args.cat_idx,
             cat_dims=args.cat_dims,
             d_out=args.num_classes,
+            task=args.objective,
         )
 
         self.to_device()
 
     # this is copied from TabSurvey's models.mlp.MLP
     def predict_helper(self, X):
-        X = np.array(X, dtype=np.float)
+        X = np.array(X, dtype=float)
         return super().predict_helper(X)
 
     @classmethod
@@ -306,7 +340,7 @@ class rtdl_FTTransformer(BaseModelTorch):
         return params
 
     def fit(self, X, y, X_val=None, y_val=None):
-        X = np.array(X, dtype=np.float)
-        X_val = np.array(X_val, dtype=np.float)
+        X = np.array(X, dtype=float)
+        X_val = np.array(X_val, dtype=float)
 
         return super().fit(X, y, X_val, y_val)

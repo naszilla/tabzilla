@@ -6,6 +6,7 @@ import shutil
 import warnings
 from pathlib import Path
 from zipfile import ZipFile
+import argparse
 
 import pandas as pd
 from google.cloud import storage
@@ -131,7 +132,7 @@ def parse_results_file(results_file, blob_path):
     return result_list, exception_list
 
 
-def download_and_process_results():
+def download_and_process_results(args):
     processed_file_set = set()
     if out_results_file.exists():
         done_results = pd.read_csv(out_results_file)
@@ -148,9 +149,18 @@ def download_and_process_results():
 
     storage_client = storage.Client(project=PROJECT_NAME)
     matching_blobs = storage_client.list_blobs(RESULTS_BUCKET_NAME, prefix=ROOT_PATH)
+
+    # don't process blobs that have already been processed
     matching_blobs = [
         blob.name for blob in matching_blobs if blob.name not in processed_file_set
     ]
+
+    # only process blobs that meet this 
+    if args.blob_name_contains != "":
+        matching_blobs = [
+            x for x in matching_blobs if args.blob_name_contains in x
+        ]
+
     num_blobs = len(matching_blobs)
     args = [(i, blobname, num_blobs) for i, blobname in enumerate(matching_blobs)]
     with multiprocessing.Pool(processes=num_processes) as pool:
@@ -196,4 +206,16 @@ def download_and_process_results():
 
 
 if __name__ == "__main__":
-    download_and_process_results()
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--blob_name_contains", 
+        type=str,
+        default="",
+        required=False,
+        help="only download blobs with a name that contains this string"
+    )
+
+    args = parser.parse_args()
+
+    download_and_process_results(args)
