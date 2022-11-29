@@ -59,6 +59,12 @@ do
     model="${model_env%%:*}"
     env="${model_env##*:}"
 
+    # if the experiment is already in the result log, skip it
+    if grep -Fxq "${DATASETS[j]},${model},${experiment_name}" result_log.txt; then
+      echo "experiment found in logs. skipping. dataset=${DATASETS[j]}, model=${model}, expt=${experiment_name}"
+      continue
+    fi
+
     instance_name=${instance_base}-${i}-${j}
 
     # args:

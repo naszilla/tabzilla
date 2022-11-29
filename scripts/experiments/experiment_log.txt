@@ -22,3 +22,12 @@ datasets: DATASETS_B
 name: algs-gpu-1-datasets-b-v2
 algs: ALGS_GPU_1
 datasets: DATASETS_B
+
+# again
+name: algs-gpu-1-datasets-b-v3
+algs: ALGS_GPU_1
+datasets: DATASETS_B
+
+name: algs-gpu-2-datasets-a
+algs: ALGS_GPU_2
+datasets: DATASETS_A
