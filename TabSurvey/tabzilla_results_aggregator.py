@@ -26,42 +26,58 @@ num_processes = 2
 
 def process_blob(args):
 
-    i = args[0]
+    i = args[0] + 1
     result_blob = args[1]
     num_blobs = args[2]
-    logging.info(f"[blob {i} {num_blobs}]: Processing...")
+    logging.info(f"[blob {i} of {num_blobs}]: Processing...")
     blob_path = Path(result_blob)
 
-    # Download and extract contents
-    local_path = local_results_folder / blob_path.relative_to(ROOT_PATH)
-    logging.info(f"[blob {i} of {num_blobs}]: Downloading...")
-    local_path.parent.mkdir(parents=True, exist_ok=True)
-
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore")
-        storage.Client(project=PROJECT_NAME).get_bucket(RESULTS_BUCKET_NAME).get_blob(
-            result_blob
-        ).download_to_filename(local_path)
-
-    logging.info(f"[blob {i} {num_blobs}]: Extracting...")
+    # if blob has already been downloaded, skip it
     dest_folder = save_results_folder / blob_path.relative_to(ROOT_PATH)
-    dest_folder.mkdir(parents=True, exist_ok=True)
-    with ZipFile(local_path, "r") as zf:
-        # extract only the "*_results.json" files
-        extract_files = []
-        for f in zf.namelist():
-            if f.endswith("results.json"):
-                extract_files.append(f)
+    
+    # check whether dest folder exists and is populated
+    if dest_folder.is_dir():
+        logging.info(f"[blob {i} of {num_blobs}]: Already parsed")
 
-        logging.info(
-            f"[blob {i} of {num_blobs}]: found {len(extract_files)} results files"
-        )
-        logging.info(f"[blob {i} of  {num_blobs}]: extracting...")
-        for f in extract_files:
-            zf.extract(f, dest_folder)
+        results_files = [
+            x for x in dest_folder.iterdir() 
+            if x.is_file() and x.name.endswith("results.json")
+        ]
+        logging.info(f"[blob {i} of {num_blobs}]: found {len(results_files)} results files")
 
-    # remove downloaded zip file
-    local_path.unlink()
+        if len(results_files) == 0:
+            raise Exception(f"results dir contains no results files: {dest_folder}")
+    else:
+        local_path = local_results_folder / blob_path.relative_to(ROOT_PATH)
+
+        # Download and extract contents
+        logging.info(f"[blob {i} of {num_blobs}]: Downloading...")
+        local_path.parent.mkdir(parents=True, exist_ok=True)
+
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore")
+            storage.Client(project=PROJECT_NAME).get_bucket(RESULTS_BUCKET_NAME).get_blob(
+                result_blob
+            ).download_to_filename(local_path)
+
+        logging.info(f"[blob {i} {num_blobs}]: Extracting...")
+        dest_folder.mkdir(parents=True, exist_ok=True)
+        with ZipFile(local_path, "r") as zf:
+            # extract only the "*_results.json" files
+            extract_files = []
+            for f in zf.namelist():
+                if f.endswith("results.json"):
+                    extract_files.append(f)
+
+            logging.info(
+                f"[blob {i} of {num_blobs}]: found {len(extract_files)} results files"
+            )
+            logging.info(f"[blob {i} of  {num_blobs}]: extracting...")
+            for f in extract_files:
+                zf.extract(f, dest_folder)
+
+        # remove downloaded zip file
+        local_path.unlink()
 
     # Parse results
     logging.info(f"[blob {i} of {num_blobs}]: Parsing...")
@@ -165,8 +181,6 @@ def download_and_process_results(args):
     args = [(i, blobname, num_blobs) for i, blobname in enumerate(matching_blobs)]
     with multiprocessing.Pool(processes=num_processes) as pool:
         results_and_exceptions = pool.map(process_blob, args)
-
-    shutil.rmtree(local_results_folder)
 
     # Flatten list of lists
     exceptions = list(itertools.chain(*(exc for _, exc in results_and_exceptions)))
