@@ -184,6 +184,12 @@ def get_Hopular_model():
 
     return model
 
+@register_model("torch")
+def get_TabPFN_model():
+    from models.tabpfn import TabPFNModel as model
+
+    return model
+
 
 ##############################################################
 # tensorflow models
