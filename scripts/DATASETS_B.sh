@@ -9,7 +9,6 @@ DATASETS=(
   openml__artificial-characters__14964
   openml__audiology__7
   openml__autos__9
-  openml__BNG\(credit-a\)__146047
   openml__bodyfat__5514
   openml__car-evaluation__146192
   openml__cardiotocography__9979
