@@ -26,6 +26,9 @@ MAX_PROCESSES=10
 # config file
 config_file=/home/shared/tabzilla/TabSurvey/tabzilla_experiment_config_gpu.yml
 
+# results file: check for results here before launching each experiment
+result_log=/home/shared/tabzilla/TabSurvey/result_log.txt
+
 # end: EXPERIMENT PARAMETERS
 ############################
 
@@ -60,7 +63,7 @@ do
     env="${model_env##*:}"
 
     # if the experiment is already in the result log, skip it
-    if grep -Fxq "${DATASETS[j]},${model},${experiment_name}" result_log.txt; then
+    if grep -Fxq "${DATASETS[j]},${model},${experiment_name}" ${result_log}; then
       echo "experiment found in logs. skipping. dataset=${DATASETS[j]}, model=${model}, expt=${experiment_name}"
       continue
     fi
