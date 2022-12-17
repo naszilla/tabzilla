@@ -66,13 +66,14 @@ def process_metafeatures(metafeatures_df, filter_families=None):
     
     
 
-def get_tuned_alg_perf(metadataset_df, metric="Accuracy"):
+def get_tuned_alg_perf(metadataset_df, metric="Accuracy", group_col="alg_name"):
     """ For each algorithm, for each dataset fold, tune on "validation". Only one row per algorithm / dataset_fold_id
     pair will be kept. You should analyze the performance on "test" after this, with the same metric used to tune.
 
     Args:
         metadataset_df: DataFrame, as output by get_metadata
         metric: Metric name (choices as in the keys of is_max_metric)
+        group_on: column to group rows for each algorithm. all rows with the same value of group_col will be treated as the same algorithm. 
 
     Returns:
         tuned_alg_perf: dataframe with tuned performance
@@ -81,7 +82,7 @@ def get_tuned_alg_perf(metadataset_df, metric="Accuracy"):
     """  """
     if metric not in is_max_metric:
         raise RuntimeError(f"metric must be one of: {is_max_metric.keys()}")
-    groups = metadataset_df.groupby(["alg_name", "dataset_fold_id"])[f"{metric}__val"]
+    groups = metadataset_df.groupby([group_col, "dataset_fold_id"])[f"{metric}__val"]
     
     if is_max_metric[metric]:
         idxopt = groups.idxmax()
