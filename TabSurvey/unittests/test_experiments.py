@@ -35,6 +35,7 @@ TEST_DATASETS = {
     "openml__collins__3567": "classification",      # 15-class, 21 features 500 instances
     "openml__dermatology__35": "classification",    # 6-class, 34 features 366 instances
     "openml__credit-approval__29": "binary",        # binary, 15 features 690 instances
+    "openml__sonar__39": "binary",                  # binary, 60 features, 208 instances, with no cat features
 }
 
 CONFIG_FILE = "./unittests/test_config.yml"
