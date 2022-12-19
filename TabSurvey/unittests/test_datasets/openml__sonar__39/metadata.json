@@ -1,0 +1,10 @@
+{
+    "name": "openml__sonar__39",
+    "cat_idx": [],
+    "cat_dims": [],
+    "target_type": "binary",
+    "num_classes": 1,
+    "num_features": 60,
+    "num_instances": 208,
+    "split_source": "openml"
+}
