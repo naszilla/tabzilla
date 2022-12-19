@@ -39,20 +39,29 @@ class RTDL_MLP_Model(nn.Module):
 
         self.task = task
 
-        if len(cat_idx) > 0:
+        self.has_cat_features = len(cat_idx) > 0
+
+        if self.has_cat_features:
             self.cat_tokenizer = rtdl.CategoricalFeatureTokenizer(
                 cat_dims, self.D_TOKEN, False, "uniform"
             )
+            self.model = rtdl.MLP.make_baseline(
+                d_in=len(num_idx)
+                + self.cat_tokenizer.n_tokens * self.cat_tokenizer.d_token,
+                d_layers=self.LAYERS,
+                dropout=self.DROPOUT,
+                d_out=d_out,
+            )
         else:
             self.cat_tokenizer = None
+            self.model = rtdl.MLP.make_baseline(
+                d_in=len(num_idx),
+                d_layers=self.LAYERS,
+                dropout=self.DROPOUT,
+                d_out=d_out,
+            )
 
-        self.model = rtdl.MLP.make_baseline(
-            d_in=len(num_idx)
-            + self.cat_tokenizer.n_tokens * self.cat_tokenizer.d_token,
-            d_layers=self.LAYERS,
-            dropout=self.DROPOUT,
-            d_out=d_out,
-        )
+        
         self.num_idx = num_idx  # indices of numerical variables
         self.cat_idx = cat_idx  # indices of categorical variables
         self.cat_dims = cat_dims  # numer of levels in each categorical variable
@@ -61,9 +70,12 @@ class RTDL_MLP_Model(nn.Module):
     def forward(self, x):
 
         x_num = x[:, self.num_idx]
-        x_cat = x[:, self.cat_idx].to(torch.int)
 
-        x_ordered = torch.cat([x_num, self.cat_tokenizer(x_cat).flatten(1, -1)], dim=1)
+        if self.has_cat_features:
+            x_cat = x[:, self.cat_idx].to(torch.int)
+            x_ordered = torch.cat([x_num, self.cat_tokenizer(x_cat).flatten(1, -1)], dim=1)
+        else:
+            x_ordered = x_num
 
         if self.task == "classification":
             x = F.softmax(self.model(x_ordered), dim=1)
@@ -95,23 +107,34 @@ class RTDL_ResNet_Model(nn.Module):
 
         self.task = task
 
-        if len(cat_idx) > 0:
+        self.has_cat_features = len(cat_idx) > 0
+
+        if self.has_cat_features:
             self.cat_tokenizer = rtdl.CategoricalFeatureTokenizer(
                 cat_dims, self.D_TOKEN, False, "uniform"
             )
+            self.model = rtdl.ResNet.make_baseline(
+                d_in=len(num_idx)
+                + self.cat_tokenizer.n_tokens * self.cat_tokenizer.d_token,
+                n_blocks=self.N_BLOCKS,
+                d_main=self.D_MAIN,
+                d_hidden=self.D_HIDDEN,
+                dropout_first=self.DROPOUT_FIRST,
+                dropout_second=self.DROPOUT_SECOND,
+                d_out=d_out,
+            )
         else:
             self.cat_tokenizer = None
+            self.model = rtdl.ResNet.make_baseline(
+                d_in=len(num_idx),
+                n_blocks=self.N_BLOCKS,
+                d_main=self.D_MAIN,
+                d_hidden=self.D_HIDDEN,
+                dropout_first=self.DROPOUT_FIRST,
+                dropout_second=self.DROPOUT_SECOND,
+                d_out=d_out,
+            )
 
-        self.model = rtdl.ResNet.make_baseline(
-            d_in=len(num_idx)
-            + self.cat_tokenizer.n_tokens * self.cat_tokenizer.d_token,
-            n_blocks=self.N_BLOCKS,
-            d_main=self.D_MAIN,
-            d_hidden=self.D_HIDDEN,
-            dropout_first=self.DROPOUT_FIRST,
-            dropout_second=self.DROPOUT_SECOND,
-            d_out=d_out,
-        )
         self.num_idx = num_idx  # indices of numerical variables
         self.cat_idx = cat_idx  # indices of categorical variables
         self.cat_dims = cat_dims  # numer of levels in each categorical variable
@@ -120,10 +143,13 @@ class RTDL_ResNet_Model(nn.Module):
     def forward(self, x):
 
         x_num = x[:, self.num_idx]
-        x_cat = x[:, self.cat_idx].to(torch.int)
 
-        x_ordered = torch.cat([x_num, self.cat_tokenizer(x_cat).flatten(1, -1)], dim=1)
-        
+        if self.has_cat_features:
+            x_cat = x[:, self.cat_idx].to(torch.int)
+            x_ordered = torch.cat([x_num, self.cat_tokenizer(x_cat).flatten(1, -1)], dim=1)
+        else:
+            x_ordered = x_num
+
         if self.task == "classification":
             x = F.softmax(self.model(x_ordered), dim=1)
         else:
@@ -161,7 +187,11 @@ class RTDL_FTTransformer_Model(nn.Module):
     def forward(self, x):
 
         x_num = x[:, self.num_idx]
-        x_cat = x[:, self.cat_idx].to(torch.int)
+
+        if len(self.cat_idx) > 0:
+            x_cat = x[:, self.cat_idx].to(torch.int)
+        else:
+            x_cat = None        
 
         if self.task == "classification":
             x = F.softmax(self.model(x_num, x_cat), dim=1)
