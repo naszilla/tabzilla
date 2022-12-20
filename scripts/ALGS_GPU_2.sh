@@ -8,11 +8,11 @@ SKLEARN_ENV="sklearn"
 GBDT_ENV="gbdt"
 
 MODELS_ENVS=(
-    TabTransformer:$TORCH_ENV
+    TabTransformer:$TORCH_ENV  # Quite a few bugs here.
     NODE:$TORCH_ENV
     STG:$TORCH_ENV
-    NAM:$TORCH_ENV
-    DeepFM:$TORCH_ENV
+    NAM:$TORCH_ENV  # Not implemented for classification
+    DeepFM:$TORCH_ENV  # Not implemented for classification
     SAINT:$TORCH_ENV
     DANet:$TORCH_ENV
     rtdl_MLP:$TORCH_ENV
@@ -22,6 +22,7 @@ MODELS_ENVS=(
 
 # Not included:
 # DeepGBM (bug)
+# Hopular
 
 
 
