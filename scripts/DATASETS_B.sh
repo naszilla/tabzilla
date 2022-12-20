@@ -2,29 +2,22 @@
 DATASETS=(
   openml__acute-inflammations__10089
   openml__ada_agnostic__3896
-  openml__aloi__12732
   openml__analcatdata_boxing1__3540
   openml__analcatdata_chlamydia__3739
   openml__anneal__2867
   openml__artificial-characters__14964
   openml__audiology__7
   openml__autos__9
-  openml__bodyfat__5514
   openml__car-evaluation__146192
   openml__cardiotocography__9979
   openml__Census-Income__168340
   openml__chess__3952
-  openml__chscase_foot__5012
   openml__cjs__14967
-  openml__cleveland__2285
   openml__Click_prediction_small__190408
   openml__colic__25
   openml__colic__27
   openml__collins__3567
-  openml__cpu_small__4883
-  openml__dataset_sales__190418
   openml__dermatology__35
-  openml__EgyptianSkulls__5040
   openml__elevators__3711
   openml__fertility__9984
   openml__fl2000__3566
@@ -42,25 +35,21 @@ DATASETS=(
   openml__iris__59
   openml__irish__3543
   openml__JapaneseVowels__3510
-  openml__kin8nm__2280
   openml__kropt__2076
   openml__labor__4
   openml__ldpa__9974
   openml__LED-display-domain-7digit__125921
   openml__libras__360948
-  openml__liver-disorders__52948
   openml__lung-cancer__146024
   openml__lymph__10
   openml__magic__146206
   openml__MagicTelescope__3954
-  openml__meta__4729
   openml__monks-problems-2__146065
   openml__mushroom__24
   openml__musk__3950
   openml__nursery__9892
   openml__one-hundred-plants-texture__9956
   openml__page-blocks__30
-  openml__pbc__4850
   openml__poker-hand__9890
   openml__pollen__3735
   openml__postoperative-patient-data__146210
@@ -79,7 +68,5 @@ DATASETS=(
   openml__visualizing_environmental__3602
   openml__visualizing_livestock__3731
   openml__walking-activity__9945
-  openml__Wine__190420
-  openml__Wisconsin-breast-cancer-cytology-features__361003
   openml__yeast__145793
 )

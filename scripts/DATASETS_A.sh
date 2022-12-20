@@ -72,7 +72,6 @@ DATASETS=(
   openml__Internet-Advertisements__167125
   openml__dna__167140
   openml__churn__167141
-  openml__california__361089
   openml__covertype__7593
   openml__adult-census__3953
   openml__Amazon_employee_access__34539
@@ -98,19 +97,14 @@ DATASETS=(
   openml__eye_movements__3897
   openml__arrhythmia__5
   openml__skin-segmentation__9965
-  openml__colleges__359942
   openml__philippine__190410
   openml__gas-drift-different-concentrations__9987
   openml__eeg-eye-state__14951
   openml__house_16H__3686
-  openml__mv__4774
   openml__bank-marketing__9899
-  openml__Bank-Note-Authentication-UCI__361002
-  openml__sulfur__360966
   openml__soybean__41
   openml__breast-cancer__145799
   openml__haberman__42
-  openml__veteran__4828
   openml__primary-tumor__146032
   openml__ecoli__145977
   openml__blood-transfusion-service-center__145836
