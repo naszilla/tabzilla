@@ -105,6 +105,10 @@ run_experiment() {
 
     SSH_RETURN_CODE=$?
 
+    # was this instance preempted?
+    echo gcloud compute operations list \
+      --filter="operationType=compute.instances.preempted AND targetLink:instances/${instance_name}"
+
     if [ $SSH_RETURN_CODE -ne 0 ]; then
       # failed to run experiment
       let COUNT=COUNT+1
@@ -216,6 +220,11 @@ run_experiment_gpu() {
       /bin/bash ${instance_script}"
 
     SSH_RETURN_CODE=$?
+
+    # was this instance preempted?
+    echo gcloud compute operations list \
+      --filter="operationType=compute.instances.preempted AND targetLink:instances/${instance_name}"
+
 
     if [ $SSH_RETURN_CODE -ne 0 ]; then
       # failed to run experiment
