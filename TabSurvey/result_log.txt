@@ -2590,6 +2590,7 @@ openml__ldpa__9974,VIME,algs-gpu-1-datasets-b
 openml__ldpa__9974,XGBoost,algs-gpu-1-datasets-b-v2
 openml__ldpa__9974,XGBoost,algs-gpu-1-datasets-b-v3
 openml__ldpa__9974,XGBoost,algs-gpu-1-datasets-b
+openml__ldpa__9974,rtdl_FTTransformer,algs-gpu-2-datasets-b
 openml__letter__6,CatBoost,gpu-expt-a
 openml__letter__6,DANet,algs-gpu-2-datasets-a
 openml__letter__6,DecisionTree,cpu-expt
