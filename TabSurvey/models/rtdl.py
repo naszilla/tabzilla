@@ -183,12 +183,18 @@ class RTDL_FTTransformer_Model(nn.Module):
         self.cat_idx = cat_idx  # indices of categorical variables
         self.cat_dims = cat_dims  # numer of levels in each categorical variable
 
+        self.has_cat_features = len(self.cat_idx) > 0
+        self.has_num_features = len(self.num_idx) > 0
+
     # define forward, separating numerical and categorical features
     def forward(self, x):
 
-        x_num = x[:, self.num_idx]
+        if self.has_num_features:
+            x_num = x[:, self.num_idx]
+        else:
+            x_num = None
 
-        if len(self.cat_idx) > 0:
+        if self.has_cat_features:
             x_cat = x[:, self.cat_idx].to(torch.int)
         else:
             x_cat = None        
