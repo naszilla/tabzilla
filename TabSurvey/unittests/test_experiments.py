@@ -43,11 +43,6 @@ CONFIG_FILE = "./unittests/test_config.yml"
 DATASET_DIR = "./unittests/test_datasets"
 RESULTS_DIR = "./unittests/results"
 
-ALL_MODELS = {
-    "rtdl_FTTransformer": ("torch", None),
-    "rtdl_MLP": ("torch", None),
-    "rtdl_ResNet": ("torch", None),
-}
 
 def test_experiment(self, model_name, dataset_name, obj_type):
     """run an experiment and check results"""
