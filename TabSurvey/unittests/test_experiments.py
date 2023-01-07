@@ -36,13 +36,19 @@ TEST_DATASETS = {
     "openml__dermatology__35": "classification",    # 6-class, 34 features 366 instances
     "openml__credit-approval__29": "binary",        # binary, 15 features 690 instances
     "openml__sonar__39": "binary",                  # binary, 60 features, 208 instances, with no cat features
+    "openml__analcatdata_dmft__3560": "classification",    # classification, 4 features, no numerical features, 797 instances
 }
 
 CONFIG_FILE = "./unittests/test_config.yml"
 DATASET_DIR = "./unittests/test_datasets"
 RESULTS_DIR = "./unittests/results"
 
-    
+ALL_MODELS = {
+    "rtdl_FTTransformer": ("torch", None),
+    "rtdl_MLP": ("torch", None),
+    "rtdl_ResNet": ("torch", None),
+}
+
 def test_experiment(self, model_name, dataset_name, obj_type):
     """run an experiment and check results"""
 
@@ -130,6 +136,7 @@ class TestExperiment(TestCase):
     @classmethod
     def setUp(cls):
         # create results folder. this is run before each test (not each subtest)
+        shutil.rmtree(RESULTS_DIR, ignore_errors=True)
         os.mkdir(RESULTS_DIR)
 
     @classmethod
