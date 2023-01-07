@@ -178,14 +178,15 @@ def get_DANet():
 
     return model
 
-@register_model("torch")
-def get_Hopular_model():
-    from models.hopular_model import Hopular_model as model
+# not implemented yet.
+# @register_model("torch")
+# def get_Hopular_model():
+#     from models.hopular_model import Hopular_model as model
 
-    return model
+#     return model
 
 @register_model("torch")
-def get_TabPFN_model():
+def get_TabPFNModel():
     from models.tabpfn import TabPFNModel as model
 
     return model

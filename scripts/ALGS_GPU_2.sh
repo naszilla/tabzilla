@@ -17,7 +17,6 @@ MODELS_ENVS=(
     DANet:$TORCH_ENV
     rtdl_MLP:$TORCH_ENV
     rtdl_ResNet:$TORCH_ENV
-    rtdl_FTTransformer:$TORCH_ENV
 )
 
 # Not included:

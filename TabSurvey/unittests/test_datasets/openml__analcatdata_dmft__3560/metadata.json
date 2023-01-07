@@ -1,0 +1,20 @@
+{
+    "name": "openml__analcatdata_dmft__3560",
+    "cat_idx": [
+        0,
+        1,
+        2,
+        3
+    ],
+    "cat_dims": [
+        9,
+        7,
+        2,
+        3
+    ],
+    "target_type": "classification",
+    "num_classes": 6,
+    "num_features": 4,
+    "num_instances": 797,
+    "split_source": "openml"
+}

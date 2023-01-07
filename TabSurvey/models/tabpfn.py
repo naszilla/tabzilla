@@ -8,12 +8,12 @@ class TabPFNModel(BaseModel):
         if args.objective == "regression":
             raise NotImplementedError("Does not support")
         elif args.objective == "classification":
-            self.model = TabPFNClassifier(device='cpu', N_ensemble_configurations=32)
+            self.model = TabPFNClassifier(device='cuda', N_ensemble_configurations=32)
         elif args.objective == "binary":
-            self.model = TabPFNClassifier(device='cpu', N_ensemble_configurations=32)
+            self.model = TabPFNClassifier(device='cuda', N_ensemble_configurations=32)
 
     def fit(self, X, y, X_val=None, y_val=None):
-        self.model.fit(X, y)
+        return super().fit(X, y)
 
     def predict_helper(self, X):
         return self.model.predict(X)
