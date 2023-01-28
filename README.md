@@ -1,10 +1,16 @@
-# Overview
+<br/>
+<p align="center"><img src="img/tabzilla_logo.png" width=700 /></p>
 
-...
+----
+![Crates.io](https://img.shields.io/crates/l/Ap?color=orange)
+
+
+`TabZilla` is a framework which provides the functionality to compare many different tabular algorithms across a large, diverse set of tabular datasets, as well as to determine dataset properties associated with the performance of certain algorithms and algorithm families.
+
 
 # Python Environments
 
-This repository uses four conda python environments, which are also defined in the TabSurvey dockerfiles. We need to use different environments because some algorithms have different requirements. These four environments are specified in files created using command `conda env export --no-builds > {env name}.yml`.
+Our repository is based off of the TabSurvey repository. Our repository uses four conda python environments, which are also defined in the TabSurvey dockerfiles. We need to use different environments because some algorithms have different, conflicting requirements. These four environments are specified in files created using command `conda env export --no-builds > {env name}.yml`.
 
 Each environment is specified in a yml file:
 - [`conda_envs/sklearn.yml`](conda_envs/sklearn.yml)
@@ -23,7 +29,7 @@ conda env create -f ./conda_envs/tensorflow.yml
 **Note:** These environments were created in linux, and some packages may not be available on Windows or OSX. If you get a `ResolvePackageNotFound` error when creating these environments, try removing these incompatible packages from the environment files.
 
 
-# Running Tabzilla Experiments
+# Running TabZilla Experiments
 
 We modified the TabSurvey code in order to run experiments to generate results for our meta-learning tasks. The script [`TabSurvey/tabzilla_experiment.py`](TabSurvey/tabzilla_experiment.py) runs these experiments (this is adapted from the script [`TabSurvey/train.py`](TabSurvey/train.py)).
 
@@ -31,7 +37,7 @@ Similar to `train.py`, this script writes a database of various results from eac
 
 ## `TabSurvey/tabzilla_experiment.py`
 
-Each call to `tabzilla_experiment.py` runs a hyperparameter search for a single algorithm on a single dataset. There are three inputs to this script: the dataset and general parameters (including hyperparameter search params) are passed using their own yml config files; the algorihtm name is passed as a string. 
+Each call to `tabzilla_experiment.py` runs a hyperparameter search for a single algorithm on a single dataset. There are three inputs to this script: the dataset and general parameters (including hyperparameter search params) are passed using their own yml config files; the algorithm name is passed as a string. 
 
 The three inputs are:
 - `--experiment_config`: a yml config file specifying general parameters of the experiment. Our default config file is here: [`TabSurvey/tabzilla_experiment_config.yml`](TabSurvey/tabzilla_experiment_config.yml) 
