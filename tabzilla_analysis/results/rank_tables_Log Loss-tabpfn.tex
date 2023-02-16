@@ -1,0 +1,30 @@
+\begin{tabular}{lrrrrr}
+\toprule
+{} & \multicolumn{3}{l}{Log Loss_rank_mean} & normalized_Log Loss__test_mean & count \\
+{} &                min & max &   mean & \multicolumn{2}{l}{mean} \\
+alg_name           &                    &     &        &                                &       \\
+\midrule
+TabPFNModel        &                  1 &  13 &   3.63 &                           0.03 &    63 \\
+CatBoost           &                  1 &  15 &   5.42 &                           0.04 &    62 \\
+XGBoost            &                  1 &  16 &   6.24 &                           0.05 &    63 \\
+SAINT              &                  1 &  19 &   7.62 &                           0.07 &    48 \\
+DeepFM             &                  1 &  22 &   8.36 &                           0.16 &    42 \\
+LinearModel        &                  1 &  20 &   8.65 &                           0.12 &    63 \\
+SVM                &                  1 &  20 &   8.81 &                           0.10 &    63 \\
+rtdl_ResNet        &                  1 &  18 &   8.87 &                           0.09 &    63 \\
+STG                &                  1 &  20 &   9.44 &                           0.11 &    63 \\
+rtdl_FTTransformer &                  1 &  19 &   9.92 &                           0.12 &    63 \\
+DANet              &                  1 &  21 &  10.27 &                           0.12 &    63 \\
+TabTransformer     &                  1 &  20 &  10.71 &                           0.19 &    41 \\
+LightGBM           &                  1 &  22 &  11.48 &                           0.17 &    63 \\
+RandomForest       &                  1 &  21 &  12.34 &                           0.20 &    62 \\
+NODE               &                  1 &  19 &  12.48 &                           0.20 &    63 \\
+rtdl_MLP           &                  2 &  20 &  12.76 &                           0.24 &    63 \\
+NAM                &                  2 &  21 &  13.14 &                           0.23 &    42 \\
+MLP                &                  2 &  20 &  13.27 &                           0.22 &    63 \\
+VIME               &                  3 &  21 &  14.65 &                           0.28 &    63 \\
+KNN                &                  1 &  22 &  15.51 &                           0.41 &    63 \\
+TabNet             &                  4 &  22 &  17.13 &                           0.56 &    63 \\
+DecisionTree       &                  1 &  22 &  17.78 &                           0.56 &    63 \\
+\bottomrule
+\end{tabular}
