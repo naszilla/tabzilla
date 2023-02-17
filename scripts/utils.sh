@@ -58,8 +58,7 @@ run_experiment() {
     --project=$project --image-family=$image_family \
     --machine-type=${machine_type} \
     --service-account $service_account \
-    --scopes=https://www.googleapis.com/auth/devstorage.read_write \
-    --provisioning-model=SPOT
+    --scopes=https://www.googleapis.com/auth/devstorage.read_write
 
     # keep this for later
     INSTANCE_RETURN_CODE=$?
@@ -174,8 +173,7 @@ run_experiment_gpu() {
     --maintenance-policy TERMINATE \
     --boot-disk-size=200GB \
     --scopes=https://www.googleapis.com/auth/devstorage.read_write \
-    --accelerator type=${ACCELERATOR_TYPE},count=${ACCELERATOR_COUNT} \
-    --provisioning-model=SPOT
+    --accelerator type=${ACCELERATOR_TYPE},count=${ACCELERATOR_COUNT}
 
     # keep this for later
     INSTANCE_RETURN_CODE=$?
