@@ -225,11 +225,12 @@ class BaseModel(nn.Module):
                     for _, (x_train, y_train) in t:
                         x = x_train.to(self.device).float()
                         y = y_train.to(self.device).float()
-
-                        y_pred = model(x).squeeze()
-
+                        y_pred = model(x)#.squeeze()
+                        if len(y_pred)!=1:
+                            y_pred = y_pred.squeeze()
+                            y = y.squeeze()
                         optim.zero_grad()
-                        loss = loss_func(y_pred, y.squeeze(), reduction='sum')
+                        loss = loss_func(y_pred, y, reduction='sum')
                         reg_loss = self.get_regularization_loss()
 
                         total_loss = loss + reg_loss + self.aux_loss

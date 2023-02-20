@@ -22,13 +22,13 @@ cd /home/shared/tabzilla/TabSurvey
 # make sure environment variables are defined
 
 # define the conda env that should be used {sklearn | gbdt | torch | tensorflow}
-ENV_NAME=NONE
+ENV_NAME=torch
 
 # name of the model/algorithm
-MODEL_NAME=NONE
+MODEL_NAME=DeepFM
 
 # name of the dataset
-DATASET_NAME=NONE
+DATASET_NAME=openml__sulfur__360966
 
 #########################################################
 # prepare conda, in case it has not already been prepared
