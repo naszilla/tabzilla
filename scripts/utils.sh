@@ -285,7 +285,7 @@ run_experiment_a100() {
     # attempt to create instance
     gcloud compute instances create $instance_name --zone=$zone \
     --project=$project --image-family=$image_family \
-    --machine-type=type=a2-highgpu-1g \
+    --machine-type=a2-highgpu-1g \
     --service-account $service_account \
     --maintenance-policy TERMINATE \
     --boot-disk-size=200GB \
