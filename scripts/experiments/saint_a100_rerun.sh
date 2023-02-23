@@ -28,7 +28,7 @@ experiment_name=$name
 MAX_PROCESSES=10
 
 # config file
-config_file=/home/shared/tabzilla/TabSurvey/tabzilla_experiment_config_gpu.yml
+config_file=/home/shared/tabzilla/TabSurvey/tabzilla_experiment_config_a100.yml
 
 # results file: check for results here before launching each experiment
 result_log=/home/shared/tabzilla/TabSurvey/result_log.txt
