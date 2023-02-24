@@ -1,11 +1,14 @@
 import argparse
 from pathlib import Path
+import sys
 
 import tabzilla_preprocessors
 
 # Import all preprocessor modules and add them to list for them to be in list of preprocessors
-import tabzilla_preprocessors_openml
-
+try:
+    import tabzilla_preprocessors_openml
+except Exception as e:
+    sys.exit('failed with error {}, skipping..'.format(e))
 preprocessor_modules = [tabzilla_preprocessors, tabzilla_preprocessors_openml]
 
 dataset_path = Path("datasets")

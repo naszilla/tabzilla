@@ -175,7 +175,6 @@ class TabularDataset(object):
             y = np.load(f)
         with gzip.GzipFile(split_indeces_path, "rb") as f:
             split_indeces = np.load(f, allow_pickle=True)
-
         # read metadata
         with open(metadata_path, "r") as f:
             kwargs = json.load(f)

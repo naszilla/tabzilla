@@ -25,9 +25,10 @@ from ..layers.utils import slice_arrays
 
 
 class Linear(nn.Module):
-    def __init__(self, feature_columns, feature_index, init_std=0.0001, device='cpu'):
+    def __init__(self, feature_columns, feature_index, out_dim, init_std=0.0001, device='cpu'):
         super(Linear, self).__init__()
         self.feature_index = feature_index
+        self.out_dim = out_dim
         self.device = device
         self.sparse_feature_columns = list(
             filter(lambda x: isinstance(x, SparseFeat), feature_columns)) if len(feature_columns) else []
@@ -37,7 +38,7 @@ class Linear(nn.Module):
         self.varlen_sparse_feature_columns = list(
             filter(lambda x: isinstance(x, VarLenSparseFeat), feature_columns)) if len(feature_columns) else []
 
-        self.embedding_dict = create_embedding_matrix(feature_columns, init_std, linear=True, sparse=False,
+        self.embedding_dict = create_embedding_matrix(feature_columns, self.out_dim, init_std, linear=True, sparse=False,
                                                       device=device)
 
         #         nn.ModuleDict(
@@ -49,7 +50,7 @@ class Linear(nn.Module):
             nn.init.normal_(tensor.weight, mean=0, std=init_std)
 
         if len(self.dense_feature_columns) > 0:
-            self.weight = nn.Parameter(torch.Tensor(sum(fc.dimension for fc in self.dense_feature_columns), 1).to(
+            self.weight = nn.Parameter(torch.Tensor(sum(fc.dimension for fc in self.dense_feature_columns), out_dim).to(
                 device))
             torch.nn.init.normal_(self.weight, mean=0, std=init_std)
 
@@ -69,13 +70,13 @@ class Linear(nn.Module):
 
         sparse_embedding_list += varlen_embedding_list
 
-        linear_logit = torch.zeros([X.shape[0], 1]).to(sparse_embedding_list[0].device)
+        linear_logit = torch.zeros([X.shape[0], self.out_dim]).to(sparse_embedding_list[0].device)
         if len(sparse_embedding_list) > 0:
             sparse_embedding_cat = torch.cat(sparse_embedding_list, dim=-1)
             if sparse_feat_refine_weight is not None:
                 # w_{x,i}=m_{x,i} * w_i (in IFM and DIFM)
                 sparse_embedding_cat = sparse_embedding_cat * sparse_feat_refine_weight.unsqueeze(1)
-            sparse_feat_logit = torch.sum(sparse_embedding_cat, dim=-1, keepdim=False)
+            sparse_feat_logit = torch.sum(sparse_embedding_cat, dim=1, keepdim=False)
             linear_logit += sparse_feat_logit
         if len(dense_value_list) > 0:
             dense_value_logit = torch.cat(
@@ -87,7 +88,7 @@ class Linear(nn.Module):
 
 class BaseModel(nn.Module):
     def __init__(self, linear_feature_columns, dnn_feature_columns, l2_reg_linear=1e-5, l2_reg_embedding=1e-5,
-                 init_std=0.0001, seed=1024, task='binary', device='cpu', gpus=None):
+                 init_std=0.0001, seed=1024, task='binary', device='cpu', gpus=None, out_dim=1):
 
         super(BaseModel, self).__init__()
         torch.manual_seed(seed)
@@ -110,9 +111,8 @@ class BaseModel(nn.Module):
         #             {feat.embedding_name: nn.Embedding(feat.dimension, embedding_size, sparse=True) for feat in
         #              self.dnn_feature_columns}
         #         )
-
         self.linear_model = Linear(
-            linear_feature_columns, self.feature_index, device=device)
+            linear_feature_columns, self.feature_index, out_dim, device=device)
 
         self.regularization_weight = []
 
@@ -143,7 +143,6 @@ class BaseModel(nn.Module):
         """
         if isinstance(x, dict):
             x = [x[feature] for feature in self.feature_index]
-
         do_validation = False
         if validation_data:
             do_validation = True
@@ -232,7 +231,7 @@ class BaseModel(nn.Module):
                         optim.zero_grad()
                         loss = loss_func(y_pred, y, reduction='sum')
                         reg_loss = self.get_regularization_loss()
-
+                        #print(y_pred.shape, y.shape)
                         total_loss = loss + reg_loss + self.aux_loss
 
                         loss_epoch += loss.item()
@@ -245,9 +244,13 @@ class BaseModel(nn.Module):
                                 if name not in train_result:
                                     train_result[name] = []
 
-                                if labels:
+                                if labels is not None:
+                                    if len(y.shape)>1 and y.shape[1]>1:
+                                        y = np.argmax(y.cpu().data.numpy(), axis=1)
+                                    else:
+                                        y = y.cpu().data.numpy()
                                     train_result[name].append(metric_fun(
-                                        y.cpu().data.numpy(), y_pred.cpu().data.numpy().astype("float64"),
+                                        y, y_pred.cpu().data.numpy().astype("float64"),
                                         labels=labels))
                                 else:
                                     train_result[name].append(metric_fun(
@@ -257,17 +260,16 @@ class BaseModel(nn.Module):
                 t.close()
                 raise
             t.close()
-
             # Add epoch_logs
             epoch_logs["loss"] = total_loss_epoch / sample_num
             for name, result in train_result.items():
                 epoch_logs[name] = np.sum(result) / steps_per_epoch
-
             if do_validation:
                 eval_result = self.evaluate(val_x, val_y, batch_size)
                 for name, result in eval_result.items():
                     epoch_logs["val_" + name] = result
             # verbose
+
             if verbose > 0:
                 epoch_time = int(time.time() - start_time)
                 print('Epoch {0}/{1}'.format(epoch + 1, epochs))
@@ -284,7 +286,6 @@ class BaseModel(nn.Module):
                         eval_str += " - " + "val_" + name + \
                                     ": {0: .4f}".format(epoch_logs["val_" + name])
                 print(eval_str)
-
             loss_history.append(epoch_logs['loss'])
             val_loss_history.append(epoch_logs["val_" + next(iter(self.metrics))])
 
@@ -458,8 +459,11 @@ class BaseModel(nn.Module):
 
     def _get_loss_func(self, loss):
         if isinstance(loss, str):
+            print(loss)
             if loss == "binary_crossentropy":
                 loss_func = F.binary_cross_entropy
+            elif loss == 'cross_entropy':
+                loss_func = F.cross_entropy
             elif loss == "mse":
                 loss_func = F.mse_loss
             elif loss == "mae":

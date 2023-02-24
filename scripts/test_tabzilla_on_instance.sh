@@ -28,7 +28,7 @@ ENV_NAME=torch
 MODEL_NAME=DeepFM
 
 # name of the dataset
-DATASET_NAME=openml__sulfur__360966
+DATASET_NAME=openml__Fashion-MNIST__146825
 
 #########################################################
 # prepare conda, in case it has not already been prepared

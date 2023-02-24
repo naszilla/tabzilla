@@ -18,11 +18,12 @@ class DeepFM(BaseModelTorch):
 
     def __init__(self, params, args):
         super().__init__(params, args)
-
+        objective = args.objective
         if args.objective == "classification":
             print("DeepFM not yet implemented for classification")
-            import sys
-            sys.exit()
+            objective = 'multiclass'
+            #import sys
+            #sys.exit()
 
         if args.cat_idx:
             dense_features = list(set(range(args.num_features)) - set(args.cat_idx))
@@ -37,8 +38,8 @@ class DeepFM(BaseModelTorch):
 
         self.model = DeepFMModel(linear_feature_columns=fixlen_feature_columns,
                                  dnn_feature_columns=fixlen_feature_columns,
-                                 task=args.objective, device=self.device, dnn_dropout=self.params["dnn_dropout"],
-                                 gpus=self.gpus)
+                                 task=objective, device=self.device, dnn_dropout=self.params["dnn_dropout"],
+                                 gpus=self.gpus, out_dim = args.num_classes)
 
     def fit(self, X, y, X_val=None, y_val=None):
         X = np.array(X, dtype=np.float)
@@ -51,6 +52,20 @@ class DeepFM(BaseModelTorch):
             loss = "binary_crossentropy"
             metric = "binary_crossentropy"
             labels = [0, 1]
+        
+        elif self.args.objective == "classification":
+            loss = "cross_entropy"
+            metric = "logloss"
+            labels = np.unique(y)
+            res = np.zeros((y.size, len(labels)), dtype=int)
+            res[np.arange(y.size), y] = 1
+            y = res
+
+            res = np.zeros((y_val.size, len(labels)), dtype=int)
+            res[np.arange(y_val.size), y_val] = 1
+            y_val = res
+            print(labels)
+        
         elif self.args.objective == "regression":
             loss = "mse"
             metric = "mse"
@@ -63,7 +78,6 @@ class DeepFM(BaseModelTorch):
         if not self.args.cat_idx:
             X_dict["dummy"] = np.zeros(X.shape[0])
             X_val_dict["dummy"] = np.zeros(X_val.shape[0])
-
         loss_history, val_loss_history = self.model.fit(X_dict, y, batch_size=self.args.batch_size,
                                                         epochs=self.args.epochs,
                                                         validation_data=(X_val_dict, y_val), labels=labels,

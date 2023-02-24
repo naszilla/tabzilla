@@ -155,7 +155,7 @@ def get_varlen_pooling_list(embedding_dict, features, feature_index, varlen_spar
     return varlen_sparse_embedding_list
 
 
-def create_embedding_matrix(feature_columns, init_std=0.0001, linear=False, sparse=False, device='cpu'):
+def create_embedding_matrix(feature_columns, out_dim=1, init_std=0.0001, linear=False, sparse=False, device='cpu'):
     # Return nn.ModuleDict: for sparse features, {embedding_name: nn.Embedding}
     # for varlen sparse features, {embedding_name: nn.EmbeddingBag}
     sparse_feature_columns = list(
@@ -163,9 +163,8 @@ def create_embedding_matrix(feature_columns, init_std=0.0001, linear=False, spar
 
     varlen_sparse_feature_columns = list(
         filter(lambda x: isinstance(x, VarLenSparseFeat), feature_columns)) if len(feature_columns) else []
-
     embedding_dict = nn.ModuleDict(
-        {feat.embedding_name: nn.Embedding(feat.vocabulary_size, feat.embedding_dim if not linear else 1, sparse=sparse)
+        {feat.embedding_name: nn.Embedding(feat.vocabulary_size, feat.embedding_dim if not linear else out_dim, sparse=sparse)
          for feat in
          sparse_feature_columns + varlen_sparse_feature_columns}
     )
