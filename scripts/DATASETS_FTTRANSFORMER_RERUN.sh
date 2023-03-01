@@ -1,0 +1,40 @@
+# this is the list of datasets used to re-run FTTransformer with A100 GPUs
+DATASETS=(
+openml__APSFailure__168868
+  openml__Bioresponse__9910
+  openml__Census-Income__168340
+  openml__Fashion-MNIST__146825
+  openml__Internet-Advertisements__167125
+  openml__MiniBooNE__168335
+  openml__airlines__189354
+  openml__albert__189356
+  openml__christine__168908
+  openml__cnae-9__9981
+  openml__connect-4__146195
+  openml__dilbert__168909
+  openml__fabert__168910
+  openml__gas-drift-different-concentrations__9987
+  openml__gas-drift__9986
+  openml__gina_agnostic__3891
+  openml__har__14970
+  openml__higgs__146606
+  openml__jannis__168330
+  openml__madelon__9976
+  openml__mnist_784__3573
+  openml__musk__3950
+  openml__nomao__9977
+  openml__numerai28.6__167120
+  openml__philippine__190410
+  openml__poker-hand__9890
+  openml__scene__3485
+  openml__sylva_agnostic__3889
+  openml__volkert__168331
+  openml__isolet__3481
+  openml__robert__168332
+  openml__CIFAR_10__167124
+  openml__Devnagari-Script__167121
+  openml__covertype__7593
+  openml__guillermo__168337
+  openml__helena__168329
+  openml__riccardo__168338
+)
