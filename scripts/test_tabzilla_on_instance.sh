@@ -25,10 +25,10 @@ cd /home/shared/tabzilla/TabSurvey
 ENV_NAME=gbdt
 
 # name of the model/algorithm
-MODEL_NAME=XGBoost
+MODEL_NAME=CatBoost
 
 # name of the dataset
-DATASET_NAME=/openml__arrhythmia__5
+DATASET_NAME=/openml__pendigits__32
 
 #########################################################
 # prepare conda, in case it has not already been prepared
@@ -45,8 +45,8 @@ printf 'running experiment with model %s on dataset %s in env %s\n\n' "$MODEL_NA
 conda activate ${ENV_NAME}
 
 # search parameters - this is the default
-# CONFIG_FILE=tabzilla_experiment_config.yml
-CONFIG_FILE=tabzilla_experiment_config_gpu.yml
+CONFIG_FILE=tabzilla_experiment_config.yml
+#CONFIG_FILE=tabzilla_experiment_config_gpu.yml
 
 # all datasets should be in this folder. the dataset folder should be in ${DATASET_BASE_DIR}/<dataset-name>
 DATASET_BASE_DIR=./datasets

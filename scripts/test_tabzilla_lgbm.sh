@@ -16,7 +16,7 @@ DATASET_BASE_DIR=./datasets
 # define lists of datasets and models to evaluate them on
 
 MODELS_ENVS=(
-  "CatBoost:$GBDT_ENV"
+  "LightGBM:$GBDT_ENV"
   )
 
 CONFIG_FILE=tabzilla_experiment_config.yml
@@ -24,17 +24,17 @@ CONFIG_FILE=tabzilla_experiment_config.yml
 
 
 DATASETS=(
- openml__isolet__3481
- openml__pendigits__32
+ openml__Fashion-MNIST__146825
+ openml__albert__189356
+ openml__christine__168908
+ openml__dilbert__168909
+ openml__one-hundred-plants-texture__9956
+ openml__poker-hand__9890
  openml__robert__168332
- openml__solar-flare__2068
  openml__CIFAR_10__167124
  openml__Devnagari-Script__167121
- openml__covertype__7593
  openml__guillermo__168337
  openml__helena__168329
- openml__riccardo__168338
- openml__shuttle__146212
 )
 
 # conda init bash
