@@ -81,7 +81,6 @@ TabNet,openml__airlines__189354,0.0,True,True,False,False,False,binary
 TabPFNModel,openml__airlines__189354,0.0,True,False,False,False,False,binary
 TabTransformer,openml__airlines__189354,0.0,True,True,True,False,False,binary
 VIME,openml__airlines__189354,0.0,True,True,False,False,False,binary
-rtdl_FTTransformer,openml__airlines__189354,0.0,True,False,True,False,False,binary
 DANet,openml__albert__189356,0.0,True,True,False,False,False,binary
 DeepFM,openml__albert__189356,0.0,True,True,False,False,False,binary
 KNN,openml__albert__189356,0.0,True,True,False,False,False,binary
@@ -174,7 +173,6 @@ NAM,openml__connect-4__146195,0.0,,,,,,classification
 SVM,openml__connect-4__146195,0.0,True,True,False,False,False,classification
 TabPFNModel,openml__connect-4__146195,0.0,True,False,False,False,False,classification
 TabTransformer,openml__connect-4__146195,0.0,True,False,False,True,False,classification
-rtdl_FTTransformer,openml__connect-4__146195,0.0,True,False,True,False,False,classification
 SAINT,openml__credit-g__31,0.0,,,,,,binary
 DeepFM,openml__dermatology__35,0.0,,,,,,classification
 NAM,openml__dermatology__35,0.0,,,,,,classification
@@ -224,13 +222,11 @@ NODE,openml__gas-drift-different-concentrations__9987,0.0,True,True,False,False,
 SAINT,openml__gas-drift-different-concentrations__9987,0.0,True,True,False,False,False,classification
 SVM,openml__gas-drift-different-concentrations__9987,0.0,,,,,,classification
 TabPFNModel,openml__gas-drift-different-concentrations__9987,0.0,True,False,False,False,False,classification
-rtdl_FTTransformer,openml__gas-drift-different-concentrations__9987,0.0,True,False,True,False,False,classification
 DeepFM,openml__gas-drift__9986,0.0,,,,,,classification
 NAM,openml__gas-drift__9986,0.0,,,,,,classification
 NODE,openml__gas-drift__9986,0.0,True,True,False,False,False,classification
 SAINT,openml__gas-drift__9986,0.0,True,True,False,False,False,classification
 TabPFNModel,openml__gas-drift__9986,0.0,True,False,False,False,False,classification
-rtdl_FTTransformer,openml__gas-drift__9986,0.0,True,False,True,False,False,classification
 NAM,openml__gina_agnostic__3891,0.0,True,True,False,False,False,binary
 SAINT,openml__gina_agnostic__3891,0.0,True,True,True,False,False,binary
 TabPFNModel,openml__gina_agnostic__3891,0.0,True,False,False,False,False,binary
@@ -254,7 +250,6 @@ NAM,openml__higgs__146606,0.0,True,True,False,False,False,binary
 STG,openml__higgs__146606,0.0,True,True,False,False,False,binary
 SVM,openml__higgs__146606,0.0,,,,,,binary
 TabPFNModel,openml__higgs__146606,0.0,True,False,False,False,False,binary
-rtdl_FTTransformer,openml__higgs__146606,0.0,True,False,True,False,False,binary
 SVM,openml__house_16H__3686,0.0,,,,,,binary
 TabPFNModel,openml__house_16H__3686,0.0,True,False,False,False,False,binary
 DeepFM,openml__iris__59,0.0,,,,,,classification
@@ -346,7 +341,6 @@ TabTransformer,openml__monks-problems-2__146065,0.0,True,False,False,True,False,
 TabPFNModel,openml__mushroom__24,0.0,True,False,False,False,False,binary
 TabTransformer,openml__mushroom__24,0.0,True,False,False,True,False,binary
 TabPFNModel,openml__musk__3950,0.0,True,False,False,False,False,binary
-rtdl_FTTransformer,openml__musk__3950,0.0,True,False,True,False,False,binary
 DANet,openml__nomao__9977,0.0,True,True,False,False,False,binary
 NAM,openml__nomao__9977,0.0,True,True,False,False,False,binary
 SAINT,openml__nomao__9977,0.0,True,True,False,False,False,binary
@@ -357,7 +351,6 @@ LinearModel,openml__numerai28.6__167120,0.0,,,,,,binary
 STG,openml__numerai28.6__167120,0.0,True,True,False,False,False,binary
 SVM,openml__numerai28.6__167120,0.0,,,,,,binary
 TabPFNModel,openml__numerai28.6__167120,0.0,True,False,False,False,False,binary
-rtdl_FTTransformer,openml__numerai28.6__167120,0.0,True,False,True,False,False,binary
 DeepFM,openml__nursery__9892,0.0,,,,,,classification
 NAM,openml__nursery__9892,0.0,,,,,,classification
 NODE,openml__nursery__9892,0.0,True,True,False,False,False,classification
@@ -413,7 +406,6 @@ DeepFM,openml__satimage__2074,0.0,,,,,,classification
 NAM,openml__satimage__2074,0.0,,,,,,classification
 TabPFNModel,openml__satimage__2074,0.0,True,False,False,False,False,classification
 TabPFNModel,openml__scene__3485,0.0,True,False,False,False,False,binary
-rtdl_FTTransformer,openml__scene__3485,0.0,True,False,True,False,False,binary
 DeepFM,openml__segment__146822,0.0,,,,,,classification
 NAM,openml__segment__146822,0.0,,,,,,classification
 SAINT,openml__segment__146822,0.0,,,,,,classification
@@ -582,7 +574,6 @@ RandomForest,openml__helena__168329,0.0,,,,,,classification
 SVM,openml__helena__168329,0.0,,,,,,classification
 TabPFNModel,openml__helena__168329,0.0,True,False,False,False,False,classification
 XGBoost,openml__helena__168329,0.0,,,,,,classification
-rtdl_FTTransformer,openml__helena__168329,0.0,True,False,True,False,False,classification
 CatBoost,openml__riccardo__168338,0.0,,,,,,binary
 DANet,openml__riccardo__168338,0.0,True,True,False,False,False,binary
 KNN,openml__riccardo__168338,0.0,True,True,False,False,False,binary
