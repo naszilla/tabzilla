@@ -1,0 +1,26 @@
+\begin{tabular}{lrrrrr}
+\toprule
+{} & \multicolumn{3}{l}{train_per_1000_inst_rank} & train_per_1000_inst & count \\
+{} &                      min & max &   mean & \multicolumn{2}{l}{mean} \\
+alg_name                &                          &     &        &                     &       \\
+\midrule
+KNN (default)           &                        1 &   4 &   1.35 &                0.01 &   104 \\
+DecisionTree (default)  &                        1 &   3 &   1.98 &                0.02 &   104 \\
+LinearModel             &                        1 &   4 &   2.84 &                0.04 &   104 \\
+RandomForest (default)  &                        4 &   8 &   5.30 &                0.50 &   104 \\
+SVM (default)           &                        3 &  17 &   5.72 &                1.09 &   104 \\
+XGBoost (default)       &                        3 &   9 &   5.92 &                1.20 &   104 \\
+LightGBM (default)      &                        4 &  11 &   6.11 &                1.30 &   104 \\
+CatBoost (default)      &                        5 &  18 &   8.22 &               21.95 &   104 \\
+MLP-rtdl (default)      &                        6 &  16 &   9.74 &               13.07 &   104 \\
+ResNet (default)        &                        8 &  15 &  10.65 &               15.26 &   104 \\
+MLP (default)           &                        7 &  16 &  11.29 &               17.37 &   104 \\
+VIME (default)          &                        8 &  16 &  12.02 &               15.75 &   104 \\
+STG (default)           &                        8 &  17 &  12.27 &               16.39 &   104 \\
+FTTransformer (default) &                       10 &  17 &  12.98 &               25.92 &   104 \\
+TabNet (default)        &                        9 &  17 &  14.51 &               28.39 &   104 \\
+DANet (default)         &                       14 &  18 &  16.19 &               45.04 &   104 \\
+NODE (default)          &                       12 &  18 &  16.69 &               67.54 &   104 \\
+SAINT (default)         &                       13 &  18 &  17.18 &              135.22 &    99 \\
+\bottomrule
+\end{tabular}
