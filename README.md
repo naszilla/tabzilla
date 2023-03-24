@@ -20,7 +20,7 @@ Adding new datasets and algorithms to this codebase is fairly easy. Most dataset
 
 ## Table of Contents
 
-1. [Preparing Python Environments](#Python)
+1. [Preparing Python Environments](README.md#Python)
 2. [Running TabZilla Experiments](#RunningExperiments)
     1. [Experiment Script](#ExperimentScript)
     2. [Experiment Config Parser](#ExperimentConfig)
