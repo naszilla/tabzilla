@@ -7,10 +7,34 @@
 
 `TabZilla` is a framework which provides the functionality to compare many different tabular algorithms across a large, diverse set of tabular datasets, as well as to determine dataset properties associated with the performance of certain algorithms and algorithm families.
 
+# Overview
 
-# Python Environments
+The `TabZilla` codebase implements a wide range of machine learning algorithms and tabular datasets, using a common interface. This allows users to train and evaluate different many different algorithms on many different datasets using the same procedures, with the same dataset splits---in a true "apples-to-apples" comparison. This codebase extends the public repository [TabSurvey](https://github.com/kathrinse/TabSurvey).
 
-Our repository is based off of the TabSurvey repository. Our repository uses four conda python environments, which are also defined in the TabSurvey dockerfiles. We need to use different environments because some algorithms have different, conflicting requirements. These four environments are specified in files created using command `conda env export --no-builds > {env name}.yml`.
+This codebase has two primary compoents:
+1. **Running Experiments:** In this codebase, an "experiment" refers to a running a single algorithm on a single dataset. An experiment can run multiple hyperparameter samples for the algorithm, and each hyperparameter is trained and evaluated for each dataset split. See section [Running TabZilla Experiments](#RunningExperiments) for details.
+2. **Extracting Dataset Metafeature:** Each dataset can be represented by a set of numerical "metafeatures". Our codebase uses [PyMFE](https://github.com/ealcobaca/pymfe) to calculate metafeatures for each dataset fold. These metafeatures can be used for a variety of meta-learning tasks, which is one focus of our paper. See section [Metafeature Extraction](#Metafeatures) for details.
+
+Adding new datasets and algorithms to this codebase is fairly easy. Most datasets implemented in this repo are from [OpenML](https://www.openml.org/), and adding new OpenML datasets is especially easy (see section [Adding New Datasets](#NewDatasets)). Adding new algorithms basically just requires an sklearn-style interface (see section [Implementing New Models](#NewModels)). If a new algorithm requires a new python environment, this new environment can be added to our codebase pretty easily as well (see section [Preparing Python Environments](#Python)).
+
+
+## Table of Contents
+
+1. [Preparing Python Environments](#Python)
+2. [Running TabZilla Experiments](#RunningExperiments)
+    1. [Experiment Script](#ExperimentScript)
+    2. [Experiment Config Parser](#ExperimentConfig)
+    3. [Running Individual Experiments](#RunningExperiments)
+3. [Datasets](#Datasets)
+    1. [Reading Preprocessed Datasets](#ReadingProcessedDatasets)
+    2. [Adding New Datasets](#NewDatasets)
+4. [Metafeature Extraction](#Metafeatures)
+5. [Implementing New Models](#NewModels)
+6. [Unit Tests](#UnitTests)
+
+# Preparing Python Environments<a name="Python"></a>
+
+This repository uses four conda python environments, because some algorithms have different, conflicting requirements. These four environments are specified in files created using command `conda env export --no-builds > {env name}.yml`.
 
 Each environment is specified in a yml file:
 - [`conda_envs/sklearn.yml`](conda_envs/sklearn.yml)
@@ -29,13 +53,11 @@ conda env create -f ./conda_envs/tensorflow.yml
 **Note:** These environments were created in linux, and some packages may not be available on Windows or OSX. If you get a `ResolvePackageNotFound` error when creating these environments, try removing these incompatible packages from the environment files.
 
 
-# Running TabZilla Experiments
+# Running TabZilla Experiments<a name="RunningExperiments"></a>
 
-We modified the TabSurvey code in order to run experiments to generate results for our meta-learning tasks. The script [`TabSurvey/tabzilla_experiment.py`](TabSurvey/tabzilla_experiment.py) runs these experiments (this is adapted from the script [`TabSurvey/train.py`](TabSurvey/train.py)).
+The script [`TabSurvey/tabzilla_experiment.py`](TabSurvey/tabzilla_experiment.py) runs an "experiment", which trains and tests a single algorithm with a single dataset. This experiment can test multiple hyperparameter sets for the algorithm; for each hyperparameter sample, we train & evaluate on each dataset split.
 
-Similar to `train.py`, this script writes a database of various results from each train/test cycle, which are recorded and written via [optuna](https://optuna.org/).
-
-## `TabSurvey/tabzilla_experiment.py`
+## Experiment Script: `TabSurvey/tabzilla_experiment.py`<a name="ExperimentScript"></a>
 
 Each call to `tabzilla_experiment.py` runs a hyperparameter search for a single algorithm on a single dataset. There are three inputs to this script: the dataset and general parameters (including hyperparameter search params) are passed using their own yml config files; the algorithm name is passed as a string. 
 
@@ -45,7 +67,7 @@ The three inputs are:
 - `--dataset_dir`: the directory of the processed dataset to use. This directory should be created 
 
 
-## Experiment Config Parser
+## Experiment Config Parser<a name="ExperimentConfig"></a>
 
 General parameters for each experiment are read from a yml config file, by the parser returned by [`TabSurvey.tabzilla_utils.get_general_parser`](TabSurvey/tabzilla_utils.py). Below is a description of each of the general parameters read by this parser. For debugging, you can use the example config file here: [TabSurvey/tabzilla_experiment_config.yml](TabSurvey/tabzilla_experiment_config.yml).
 
@@ -73,11 +95,11 @@ General parameters for each experiment are read from a yml config file, by the p
                         Number of iteration after which validation is printed. (default: 100)
 ```
 
-## Running Individual Experiments
+## Running Individual Experiments <a name="RunningExperiments"></a>
 
 The script [`scripts/test_tabzilla_on_instance.sh`](scripts/test_tabzilla_on_instance.sh) gives an example of a single experiment. That is, running a single algorithm on a single dataset, using parameters specified in an experiment config file. We wrote this script to run experiments on a cloud instance (GCP), but it can be run anywhere as long as all python environments and datasets are present.
 
-# Datasets
+# Datasets<a name="Datasets"></a>
 
 **Note:** Our code downloads datasets from [OpenML](https://www.openml.org/), so you will need to install the openml python module. If this code hangs or raises an error when downloading datasets, you may need to create an OpenML account (on their website) and authenticate your local machine in order to download datasets. We have no idea why, but authentication is required for some users and not for others. If you run into any issues, please follow [these installation and authentication instructions](https://openml.github.io/openml-python/main/examples/20_basic/introduction_tutorial.html#sphx-glr-examples-20-basic-introduction-tutorial-py).  
 
@@ -104,7 +126,7 @@ If you wish to process all of the datasets instead, you can execute the followin
 > python tabzilla_data_preprocessing.py --process_all
 ```
 
-## Reading Preprocessed Datasets
+## Reading Preprocessed Datasets<a name="ReadingProcessedDatasets"></a>
 
 Once a dataset has been preprocessed, as in the above example, it can be read directly into a `TabularDataset` object. For example, if we preprocess `CaliforniaHousing` as shown above, then the following code will read this dataset:
 
@@ -115,7 +137,7 @@ from pathlib import Path
 dataset = TabularDataset.read(Path("tabzilla/TabSurvey/datasets/openml__california__361089"))
 ```
 
-## Adding New Datasets
+## Adding New Datasets<a name="NewDatasets"></a>
 
 Currently, there are two main procedures to add datasets: one for OpenML datasets, and one for more general datasets. Whenever possible, you should use the OpenML version of the dataset, since it will result in a more seamless process.
 
@@ -278,7 +300,7 @@ The final step is running pre-processing on the dataset. From `TabSurvey`, run t
 
 This should output a folder under `TabSurvey/datasets/YOUR_DATASET_NAME` with files `metadata.json`, `split_indeces.npy.gz`, `X.npy.gz`, and `y.npy.gz`. Open `metadata.json` and check that the metadata corresponds to what you expect (especially `target_type`). Note that running the pre-processing also performs the checks within `inspect_openml_task` again, which is particularly useful if you had to make any changes (for Option 2 of OpenML dataset addition). This ensures the final dataset saved to disk passes the checks.
 
-# Metafeature Extraction
+# Metafeature Extraction<a name="Metafeatures"></a>
 
 The script for extracting metafeatures is provided in [`TabSurvey/tabzilla_featurizer.py`](TabSurvey/tabzilla_featurizer.py). It uses [PyMFE](https://pymfe.readthedocs.io/en/latest/index.html) to extract metafeatures from the datasets. Note that PyMFE currently does not support regression tasks, so the featurizer will skip regression datasets.
 
@@ -301,7 +323,8 @@ There are a few additional settings that control PyMFE's metafeature extraction 
 
 Extracting metafeatures can take several days for all datasets, so it is recommended to run the script within a terminal multiplexer such as screen. Paralellization of the script might be desirable in the future, but memory issues might arise with some of the computations if done on a single instance.
 
-# Implementing new models
+# Implementing new models<a name="NewModels"></a>
+
 
 You can follow the [original TabSurvey readme](TabSurvey/TabSurvey_README.md) to implement new models, with the following additions.
 
@@ -310,7 +333,7 @@ For any model supporting multi-class classification, you need to ensure the mode
 2. If there is a chance for the prediction probabilities for the model to have less than `args.num_classes` dimension (this can mainly happen if there are missing classes in training for models such as those from `sklearn`) implement a method `get_classes()` that returns the list of the labels corresponding to the dimensions. See [examples here](TabSurvey/models/baseline_models.py).
 
 
-# Unit Tests
+# Unit Tests<a name="UnitTests"></a>
 
 The unit tests in [TabSurvey/unittests/test_experiments.py](TabSurvey/unittests/test_experiments.py) test each algorithm on three datasets using our experiment function. There is one test for each *conda environment*: each test runs all algorithms implemented in the conda environment, for the same three datasets, and checks that the algorithms produce output. You need to manually actiave the conda env before running each test (if you run tests using the wrong conda env, then these tests will fail). You can also modify this unit test file to only run specific algorithms.
 
