@@ -9,6 +9,8 @@
 
 See our paper at [https://arxiv.org/abs/2305.02997](https://arxiv.org/abs/2305.02997).
 
+⚠️ This repository is in beta and is still actively being updated. We will soon release the analysis code and raw results. ⚠️
+
 # Overview
 
 This codebase extends the excellent public repository [TabSurvey](https://github.com/kathrinse/TabSurvey), by Vadim Borisov, Tobias Leemann, Kathrin Seßler, Johannes Haug, Martin Pawelczyk, and Gjergji Kasneci.
