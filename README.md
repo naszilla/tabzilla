@@ -7,15 +7,19 @@
 
 `TabZilla` is a framework which provides the functionality to compare many different tabular algorithms across a large, diverse set of tabular datasets, as well as to determine dataset properties associated with the performance of certain algorithms and algorithm families.
 
+See our paper at [https://arxiv.org/abs/2305.02997](https://arxiv.org/abs/2305.02997).
+
 # Overview
 
-The `TabZilla` codebase implements a wide range of machine learning algorithms and tabular datasets, using a common interface. This allows users to train and evaluate different many different algorithms on many different datasets using the same procedures, with the same dataset splits---in a true "apples-to-apples" comparison. This codebase extends the public repository [TabSurvey](https://github.com/kathrinse/TabSurvey).
+This codebase extends the excellent public repository [TabSurvey](https://github.com/kathrinse/TabSurvey), by Vadim Borisov, Tobias Leemann, Kathrin Seßler, Johannes Haug, Martin Pawelczyk, and Gjergji Kasneci.
 
-This codebase has two primary compoents:
+The `TabZilla` codebase implements a wide range of machine learning algorithms and tabular datasets, using a common interface. This allows users to train and evaluate different many different algorithms on many different datasets using the same procedures, with the same dataset splits---in a true "apples-to-apples" comparison.
+
+This codebase has two primary components:
 1. **Running Experiments:** In this codebase, an "experiment" refers to a running a single algorithm on a single dataset. An experiment can run multiple hyperparameter samples for the algorithm, and each hyperparameter is trained and evaluated for each dataset split. See section [Running TabZilla Experiments](#running-tabzilla-experiments) for details.
-2. **Extracting Dataset Metafeature:** Each dataset can be represented by a set of numerical "metafeatures". Our codebase uses [PyMFE](https://github.com/ealcobaca/pymfe) to calculate metafeatures for each dataset fold. These metafeatures can be used for a variety of meta-learning tasks, which is one focus of our paper. See section [Metafeature Extraction](#metafeature-extraction) for details.
+2. **Extracting Dataset Metafeature:** Each dataset can be represented by a set of numerical "metafeatures". Our codebase uses [PyMFE](https://github.com/ealcobaca/pymfe) to calculate metafeatures for each dataset fold. These metafeatures can be used for analyzing what properties of a dataset make a certain algorithm better-suited to perform well, which is one focus of our paper. See section [Metafeature Extraction](#metafeature-extraction) for details.
 
-Adding new datasets and algorithms to this codebase is fairly easy. Most datasets implemented in this repo are from [OpenML](https://www.openml.org/), and adding new OpenML datasets is especially easy (see section [Adding New Datasets](#adding-new-datasets)). Adding new algorithms basically just requires an sklearn-style interface (see section [Implementing New Models](#implementing-new-models)). If a new algorithm requires a new python environment, this new environment can be added to our codebase pretty easily as well (see section [Preparing Python Environments](#Python)).
+Adding new datasets and algorithms to this codebase is fairly easy. All datasets implemented in this repo are from [OpenML](https://www.openml.org/), and adding new OpenML datasets is especially easy (see section [Adding New Datasets](#adding-new-datasets)). Adding new algorithms requires an sklearn-style interface (see section [Implementing New Models](#implementing-new-models)). If a new algorithm requires a new python environment, this new environment can be added to our codebase pretty easily as well (see section [Preparing Python Environments](#Python)).
 
 
 ## Table of Contents
@@ -34,7 +38,7 @@ Adding new datasets and algorithms to this codebase is fairly easy. Most dataset
 
 # Preparing Python Environments
 
-This repository uses four conda python environments, because some algorithms have different, conflicting requirements. These four environments are specified in files created using command `conda env export --no-builds > {env name}.yml`.
+Due to the diverse algorithms used in this work, some algorithms have different, conflicting requirements. Therefore, this repository uses four conda python environments. These four environments are specified in files created using command `conda env export --no-builds > {env name}.yml`.
 
 Each environment is specified in a yml file:
 - [`conda_envs/sklearn.yml`](conda_envs/sklearn.yml)
@@ -101,7 +105,7 @@ The script [`scripts/test_tabzilla_on_instance.sh`](scripts/test_tabzilla_on_ins
 
 # Datasets
 
-**Note:** Our code downloads datasets from [OpenML](https://www.openml.org/), so you will need to install the openml python module. If this code hangs or raises an error when downloading datasets, you may need to create an OpenML account (on their website) and authenticate your local machine in order to download datasets. We have no idea why, but authentication is required for some users and not for others. If you run into any issues, please follow [these installation and authentication instructions](https://openml.github.io/openml-python/main/examples/20_basic/introduction_tutorial.html#sphx-glr-examples-20-basic-introduction-tutorial-py).  
+**Note:** Our code downloads datasets from [OpenML](https://www.openml.org/), so you will need to install the openml python module. If this code hangs or raises an error when downloading datasets, you may need to create an OpenML account (on their website) and authenticate your local machine in order to download datasets. If you run into any issues, please follow [these installation and authentication instructions](https://openml.github.io/openml-python/main/examples/20_basic/introduction_tutorial.html#sphx-glr-examples-20-basic-introduction-tutorial-py).  
 
 Datasets are handled using the class [`TabSurvey.tabzilla_datasets.TabularDataset`](TabSurvey/tabzilla_datasets.py); all datasets are accessed using an instance of this class. Each dataset is initialized using a function with the decorator `dataset_preprocessor` defined in [`TabSurvey/tabzilla_preprocessor_utils.py`](TabSurvey/tabzilla_preprocessor_utils.py). Each of these functions is accessed through function `preprocess_dataset()`, which returns any defined datasets by name. For example, the following code will return a `TabularDataset` object representing the `openml__california__361089` dataset, and will write it to a local directory unless it already has been written:
 
@@ -212,7 +216,7 @@ The first step is identifying the OpenML task ID. This can either be obtained by
 
 A convenience function has been added to fetch a dataframe with all relevant OpenML tasks. Call `get_openml_task_metadata` within `tabzilla_preprocessors_openml.py` to obtain a dataframe listing all available tasks, indexed by task ID. The column `in_repo` indicates whether the task has already been added to the repo or not. **Please do not add a task for which there is already a task in the repo that uses the same dataset.**
 
-Note that we are focusing on either regression tasks or supervised classification tasks, so please ensure whatever OpenML task you look at belongs to these task types. Furthermore, please ensure the evaluation procedure for the task is "10-fold Crossvalidation" (if this is not the case, try seeing if there is another task that uses 10-fold crossvalidation using the same dataset). If this kind of split is not available, please let the rest of the team know (this might require either modifying the code or using the procedure for general datasets).
+All datasets currently have the evaluation procedure set to "10-fold Crossvalidation".
 
 
 #### Step 2: Inspection
