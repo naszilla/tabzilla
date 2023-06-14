@@ -9,7 +9,6 @@
 
 See our paper at [https://arxiv.org/abs/2305.02997](https://arxiv.org/abs/2305.02997).
 
-⚠️ This repository is in beta and is still actively being updated. We will soon release the analysis code and raw results. ⚠️
 
 # Overview
 
