@@ -60,21 +60,21 @@ conda env create -f ./conda_envs/tensorflow.yml
 
 # Running TabZilla Experiments
 
-The script [`TabSurvey/tabzilla_experiment.py`](TabSurvey/tabzilla_experiment.py) runs an "experiment", which trains and tests a single algorithm with a single dataset. This experiment can test multiple hyperparameter sets for the algorithm; for each hyperparameter sample, we train & evaluate on each dataset split.
+The script [`TabZilla/tabzilla_experiment.py`](TabZilla/tabzilla_experiment.py) runs an "experiment", which trains and tests a single algorithm with a single dataset. This experiment can test multiple hyperparameter sets for the algorithm; for each hyperparameter sample, we train & evaluate on each dataset split.
 
 ## Experiment Script
 
 Each call to `tabzilla_experiment.py` runs a hyperparameter search for a single algorithm on a single dataset. There are three inputs to this script: the dataset and general parameters (including hyperparameter search params) are passed using their own yml config files; the algorithm name is passed as a string. 
 
 The three inputs are:
-- `--experiment_config`: a yml config file specifying general parameters of the experiment. Our default config file is here: [`TabSurvey/tabzilla_experiment_config.yml`](TabSurvey/tabzilla_experiment_config.yml) 
-- `--model_name`: a string indicating the model to evaluate. The list of valid model names is the set of keys for dictionary `ALL_MODELS` in file [`TabSurvey/tabzilla_alg_handler.py`](TabSurvey/tabzilla_alg_handler.py)
+- `--experiment_config`: a yml config file specifying general parameters of the experiment. Our default config file is here: [`TabZilla/tabzilla_experiment_config.yml`](TabZilla/tabzilla_experiment_config.yml) 
+- `--model_name`: a string indicating the model to evaluate. The list of valid model names is the set of keys for dictionary `ALL_MODELS` in file [`TabZilla/tabzilla_alg_handler.py`](TabZilla/tabzilla_alg_handler.py)
 - `--dataset_dir`: the directory of the processed dataset to use. This directory should be created 
 
 
 ## Experiment Config Parser
 
-General parameters for each experiment are read from a yml config file, by the parser returned by [`TabSurvey.tabzilla_utils.get_general_parser`](TabSurvey/tabzilla_utils.py). Below is a description of each of the general parameters read by this parser. For debugging, you can use the example config file here: [TabSurvey/tabzilla_experiment_config.yml](TabSurvey/tabzilla_experiment_config.yml).
+General parameters for each experiment are read from a yml config file, by the parser returned by [`TabZilla.tabzilla_utils.get_general_parser`](TabZilla/tabzilla_utils.py). Below is a description of each of the general parameters read by this parser. For debugging, you can use the example config file here: [TabZilla/tabzilla_experiment_config.yml](TabZilla/tabzilla_experiment_config.yml).
 
 **General config parameters**
 ```
@@ -108,10 +108,10 @@ The script [`scripts/test_tabzilla_on_instance.sh`](scripts/test_tabzilla_on_ins
 
 **Note:** Our code downloads datasets from [OpenML](https://www.openml.org/), so you will need to install the openml python module. If this code hangs or raises an error when downloading datasets, you may need to create an OpenML account (on their website) and authenticate your local machine in order to download datasets. If you run into any issues, please follow [these installation and authentication instructions](https://openml.github.io/openml-python/main/examples/20_basic/introduction_tutorial.html#sphx-glr-examples-20-basic-introduction-tutorial-py).  
 
-Datasets are handled using the class [`TabSurvey.tabzilla_datasets.TabularDataset`](TabSurvey/tabzilla_datasets.py); all datasets are accessed using an instance of this class. Each dataset is initialized using a function with the decorator `dataset_preprocessor` defined in [`TabSurvey/tabzilla_preprocessor_utils.py`](TabSurvey/tabzilla_preprocessor_utils.py). Each of these functions is accessed through function `preprocess_dataset()`, which returns any defined datasets by name. For example, the following code will return a `TabularDataset` object representing the `openml__california__361089` dataset, and will write it to a local directory unless it already has been written:
+Datasets are handled using the class [`TabZilla.tabzilla_datasets.TabularDataset`](TabZilla/tabzilla_datasets.py); all datasets are accessed using an instance of this class. Each dataset is initialized using a function with the decorator `dataset_preprocessor` defined in [`TabZilla/tabzilla_preprocessor_utils.py`](TabZilla/tabzilla_preprocessor_utils.py). Each of these functions is accessed through function `preprocess_dataset()`, which returns any defined datasets by name. For example, the following code will return a `TabularDataset` object representing the `openml__california__361089` dataset, and will write it to a local directory unless it already has been written:
 
 ```python
-from TabSurvey.tabzilla_data_preprocessing import preprocess_dataset
+from TabZilla.tabzilla_data_preprocessing import preprocess_dataset
 
 dataset = preprocess_dataset("openml__california__361089", overwrite=False)
 ```
@@ -124,7 +124,7 @@ Calling `tabzilla_data_preprocessing.py` as a script will preprocess selected da
 > python tabzilla_data_preprocessing.py --dataset_name openml__california__361089
 ```
 
-will preprocess and write the `CaliforniaHousing` dataset to local directory `tabzilla/TabSurvey/datasets/CaliforniaHousing`.
+will preprocess and write the `CaliforniaHousing` dataset to local directory `tabzilla/TabZilla/datasets/CaliforniaHousing`.
 
 If you wish to process all of the datasets instead, you can execute the following:
 ```bash
@@ -136,10 +136,10 @@ If you wish to process all of the datasets instead, you can execute the followin
 Once a dataset has been preprocessed, as in the above example, it can be read directly into a `TabularDataset` object. For example, if we preprocess `CaliforniaHousing` as shown above, then the following code will read this dataset:
 
 ```python
-from TabSurvey.tabzilla_datasets import TabularDataset
+from TabZilla.tabzilla_datasets import TabularDataset
 from pathlib import Path
 
-dataset = TabularDataset.read(Path("tabzilla/TabSurvey/datasets/openml__california__361089"))
+dataset = TabularDataset.read(Path("tabzilla/TabZilla/datasets/openml__california__361089"))
 ```
 
 ## Adding New Datasets
@@ -148,7 +148,7 @@ Currently, there are two main procedures to add datasets: one for OpenML dataset
 
 ### General (non-OpenML) datasets
 
-To add a new dataset, you need to add a new function to [`TabSurvey/tabzilla_preprocessors.py`](TabSurvey/tabzilla_preprocessor_utils.py), which defines all information about the dataset. This function needs to use the decorator `dataset_preproccessor`, and is invoked through `tabzilla_data_preprocessing.py`.
+To add a new dataset, you need to add a new function to [`TabZilla/tabzilla_preprocessors.py`](TabZilla/tabzilla_preprocessor_utils.py), which defines all information about the dataset. This function needs to use the decorator `dataset_preproccessor`, and is invoked through `tabzilla_data_preprocessing.py`.
 
 In general, the function must take no arguments, and it must return a dictionary with keys used to initialize a `TabularDataset` object. The following keys are required (since they are required by the constructor):
 1. `X`: features, as numpy array of shape `(n_examples, n_features)`
@@ -196,16 +196,16 @@ def preprocess_covertype():
 ```
 This dataset will be named `"ExampleDataset"`, with Label Encoding being applied to the target and the categorical features, and a default split being generated using `split_dataset`.
 
-Once you have implemented a new dataset, verify that pre-processing runs as expected. From `TabSurvey`, run the following:
+Once you have implemented a new dataset, verify that pre-processing runs as expected. From `TabZilla`, run the following:
 
 ```bash
 > python tabzilla_data_preprocessing.py --dataset_name YOUR_DATASET_NAME
 ```
 
-This should output a folder under `TabSurvey/datasets/YOUR_DATASET_NAME` with files `metadata.json`, `split_indeces.npy.gz`, `X.npy.gz`, and `y.npy.gz`. Open `metadata.json` and check that the metadata corresponds to what you expect.
+This should output a folder under `TabZilla/datasets/YOUR_DATASET_NAME` with files `metadata.json`, `split_indeces.npy.gz`, `X.npy.gz`, and `y.npy.gz`. Open `metadata.json` and check that the metadata corresponds to what you expect.
 
 ### OpenML datasets
-OpenML datasets need to be added under [`TabSurvey/tabzilla_preprocessors_openml.py`](TabSurvey/tabzilla_preprocessors_openml.py).
+OpenML datasets need to be added under [`TabZilla/tabzilla_preprocessors_openml.py`](TabZilla/tabzilla_preprocessors_openml.py).
 
 OpenML distinguishes tasks from datasets, where tasks are specific prediction tasks associated with a dataset. For our purposes, we will be using OpenML tasks to obtain datasets for training and evaluation.
 
@@ -222,7 +222,7 @@ All datasets currently have the evaluation procedure set to "10-fold Crossvalida
 
 #### Step 2: Inspection
 
-Once you have found the task id for a dataset, the next step is to inspect the dataset. For that, run the following from a Python console with `TabSurvey` as the working directory:
+Once you have found the task id for a dataset, the next step is to inspect the dataset. For that, run the following from a Python console with `TabZilla` as the working directory:
 
 ```python
 from tabzilla_preprocessors_openml import inspect_openml_task
@@ -295,7 +295,7 @@ You do not need to provide all of the fields. Once you are done, add the diction
 
 #### Step 4: Testing pre-processing on the dataset
 
-The final step is running pre-processing on the dataset. From `TabSurvey`, run the following:
+The final step is running pre-processing on the dataset. From `TabZilla`, run the following:
 
 ```bash
 > python tabzilla_data_preprocessing.py --dataset_name YOUR_DATASET_NAME
@@ -303,11 +303,11 @@ The final step is running pre-processing on the dataset. From `TabSurvey`, run t
 
 (If you do not know the dataset name, it will the format `f"openml__DATASET_NAME__TASK_ID"`. You can find the `OPENML_DATASET_NAME` dataset name using `task.get_dataset().name`. Alternatively, run the script with the flag `--process_all` instead of the `--dataset_name` flag). 
 
-This should output a folder under `TabSurvey/datasets/YOUR_DATASET_NAME` with files `metadata.json`, `split_indeces.npy.gz`, `X.npy.gz`, and `y.npy.gz`. Open `metadata.json` and check that the metadata corresponds to what you expect (especially `target_type`). Note that running the pre-processing also performs the checks within `inspect_openml_task` again, which is particularly useful if you had to make any changes (for Option 2 of OpenML dataset addition). This ensures the final dataset saved to disk passes the checks.
+This should output a folder under `TabZilla/datasets/YOUR_DATASET_NAME` with files `metadata.json`, `split_indeces.npy.gz`, `X.npy.gz`, and `y.npy.gz`. Open `metadata.json` and check that the metadata corresponds to what you expect (especially `target_type`). Note that running the pre-processing also performs the checks within `inspect_openml_task` again, which is particularly useful if you had to make any changes (for Option 2 of OpenML dataset addition). This ensures the final dataset saved to disk passes the checks.
 
 # Metafeature Extraction
 
-The script for extracting metafeatures is provided in [`TabSurvey/tabzilla_featurizer.py`](TabSurvey/tabzilla_featurizer.py). It uses [PyMFE](https://pymfe.readthedocs.io/en/latest/index.html) to extract metafeatures from the datasets. Note that PyMFE currently does not support regression tasks, so the featurizer will skip regression datasets.
+The script for extracting metafeatures is provided in [`TabZilla/tabzilla_featurizer.py`](TabZilla/tabzilla_featurizer.py). It uses [PyMFE](https://pymfe.readthedocs.io/en/latest/index.html) to extract metafeatures from the datasets. Note that PyMFE currently does not support regression tasks, so the featurizer will skip regression datasets.
 
 To extract metafeatures, you first need to have the dataset(s) you want to extract metafeatures on disk (follow the instructions from the **Datasets** section for this). Next, run `tabzilla_featurizer.py` (no arguments needed). The script will walk the datasets folder, extract metafeatures for each dataset (that is not a regression task), and write the metafeatures to `metafeatures.csv`. Note that the script saves these metafeatures after each dataset has been processed, so if the script is killed halfway through a dataset, the progress is not lost and only datasets that have not been featurized are processed.
 
@@ -331,18 +331,18 @@ Extracting metafeatures can take several days for all datasets, so it is recomme
 # Implementing new models
 
 
-You can follow the [original TabSurvey readme](TabSurvey/TabSurvey_README.md) to implement new models, with the following additions.
+You can follow the [original TabSurvey readme](TabZilla/TabSurvey_README.md) to implement new models, with the following additions.
 
 For any model supporting multi-class classification, you need to ensure the model follows one of the next two approaches:
 1. The model always encodes its output with `args.num_classes` dimension (this is set to 1 for binary classification). In the case of multi-class classification, dimension `i` must match to the value `i` in the labels (which are encoded 0 through `args.num_classes-1` in the output). **Note**: inferring the number of classes from the labels in training may not be sufficient if there are missing labels on the training set (which happens for some datasets), so you must use `args.num_classes` directly.
-2. If there is a chance for the prediction probabilities for the model to have less than `args.num_classes` dimension (this can mainly happen if there are missing classes in training for models such as those from `sklearn`) implement a method `get_classes()` that returns the list of the labels corresponding to the dimensions. See [examples here](TabSurvey/models/baseline_models.py).
+2. If there is a chance for the prediction probabilities for the model to have less than `args.num_classes` dimension (this can mainly happen if there are missing classes in training for models such as those from `sklearn`) implement a method `get_classes()` that returns the list of the labels corresponding to the dimensions. See [examples here](TabZilla/models/baseline_models.py).
 
 
 # Unit Tests
 
-The unit tests in [TabSurvey/unittests/test_experiments.py](TabSurvey/unittests/test_experiments.py) test each algorithm on three datasets using our experiment function. There is one test for each *conda environment*: each test runs all algorithms implemented in the conda environment, for the same three datasets, and checks that the algorithms produce output. You need to manually actiave the conda env before running each test (if you run tests using the wrong conda env, then these tests will fail). You can also modify this unit test file to only run specific algorithms.
+The unit tests in [TabZilla/unittests/test_experiments.py](TabZilla/unittests/test_experiments.py) test each algorithm on three datasets using our experiment function. There is one test for each *conda environment*: each test runs all algorithms implemented in the conda environment, for the same three datasets, and checks that the algorithms produce output. You need to manually actiave the conda env before running each test (if you run tests using the wrong conda env, then these tests will fail). You can also modify this unit test file to only run specific algorithms.
 
-To run all tests for all environments, run the following from the TabSurvey directory:
+To run all tests for all environments, run the following from the TabZilla directory:
 
 ```
 conda activate sklearn

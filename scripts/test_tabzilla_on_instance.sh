@@ -16,7 +16,7 @@ set -e
 ###############################################################################################################
 
 # run from this directory
-cd /home/shared/tabzilla/TabSurvey
+cd /home/shared/tabzilla/TabZilla
 
 #############################################
 # make sure environment variables are defined
@@ -54,6 +54,6 @@ DATSET_DIR=${DATASET_BASE_DIR}/${DATASET_NAME}
 
 python tabzilla_experiment.py --experiment_config ${CONFIG_FILE} --dataset_dir ${DATSET_DIR} --model_name ${MODEL_NAME}
 
-# results will be written to /home/shared/tabzilla/TabSurvey/results
+# results will be written to /home/shared/tabzilla/TabZilla/results
 # you can zip them if you'd like:
 # > zip -r results.zip ./results

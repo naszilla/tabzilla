@@ -3,7 +3,7 @@
 #
 # you can run these tests by taking the following steps:
 # 
-# 1) cd to TabSurvey directory
+# 1) cd to TabZilla directory
 # 2) activate the conda environment you want to test
 # 3) run the unittests **for only the conda env you want to test**, one of the three below:
 # 
@@ -19,16 +19,16 @@
 # }
 # 
 
-import shutil
-import os
 import glob
 import json
+import os
+import shutil
 from collections import namedtuple
-from unittest import TestCase
-from tabzilla_alg_handler import ALL_MODELS
-import tabzilla_experiment
 from pathlib import Path
-from tabzilla_alg_handler import get_model
+from unittest import TestCase
+
+import tabzilla_experiment
+from tabzilla_alg_handler import ALL_MODELS, get_model
 from tabzilla_utils import get_experiment_parser
 
 TEST_DATASETS = {

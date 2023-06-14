@@ -69,7 +69,7 @@ DATASET_BASE_DIR=./datasets
 DATSET_DIR=${DATASET_BASE_DIR}/${DATASET_NAME}
 
 # run the experiment using command line args
-cd /home/shared/tabzilla/TabSurvey
+cd /home/shared/tabzilla/TabZilla
 
 python tabzilla_experiment.py --experiment_config ${CONFIG_FILE} --dataset_dir ${DATSET_DIR} --model_name ${MODEL_NAME}
 

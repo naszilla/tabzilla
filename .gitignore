@@ -130,4 +130,4 @@ dmypy.json
 
 
 # codebase specific 
-TabSurvey/models/hopular/auxiliary/resources/*
+TabZilla/models/hopular/auxiliary/resources/*

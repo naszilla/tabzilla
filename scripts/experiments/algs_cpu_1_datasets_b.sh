@@ -24,10 +24,10 @@ experiment_name=$name
 MAX_PROCESSES=10
 
 # config file
-config_file=/home/shared/tabzilla/TabSurvey/tabzilla_experiment_config.yml
+config_file=/home/shared/tabzilla/TabZilla/tabzilla_experiment_config.yml
 
 # results file: check for results here before launching each experiment
-result_log=/home/shared/tabzilla/TabSurvey/result_log.txt
+result_log=/home/shared/tabzilla/TabZilla/result_log.txt
 
 # end: EXPERIMENT PARAMETERS
 ############################
