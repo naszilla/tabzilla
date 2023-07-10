@@ -1,8 +1,8 @@
 import numpy as np
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
-from sklearn.pipeline import Pipeline
-from sklearn.impute import SimpleImputer
 from sklearn.compose import ColumnTransformer
+from sklearn.impute import SimpleImputer
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import OneHotEncoder, QuantileTransformer
 
 
 def process_data(
@@ -11,11 +11,19 @@ def process_data(
     val_index,
     test_index,
     verbose=False,
-    scale=False,
+    scaler="None",
     one_hot_encode=False,
     impute=True,
 ):
-    num_mask = np.ones(dataset.X.shape[1])
+    
+    # validate the scaler
+    assert scaler in ["None", "Quantile"], f"scaler not recognized: {scaler}"
+
+    if scaler == "Quantile":
+        scaler_function = QuantileTransformer()
+
+
+    num_mask = np.ones(dataset.X.shape[1], dtype=int)
     num_mask[dataset.cat_idx] = 0
     # TODO: Remove this assertion after sufficient testing
     assert num_mask.sum() + len(dataset.cat_idx) == dataset.X.shape[1]
@@ -70,13 +78,12 @@ def process_data(
         X_val = X_val[:, perm_idx]
         X_test = X_test[:, perm_idx]
 
-    if scale:
+    if scaler != "None":
         if verbose:
-            print("Scaling the data...")
-        scaler = StandardScaler()
-        X_train[:, num_mask] = scaler.fit_transform(X_train[:, num_mask])
-        X_val[:, num_mask] = scaler.transform(X_val[:, num_mask])
-        X_test[:, num_mask] = scaler.transform(X_test[:, num_mask])
+            print(f"Scaling the data using {scaler}...")
+        X_train[:, num_mask] = scaler_function.fit_transform(X_train[:, num_mask])
+        X_val[:, num_mask] = scaler_function.transform(X_val[:, num_mask])
+        X_test[:, num_mask] = scaler_function.transform(X_test[:, num_mask])
 
     if one_hot_encode:
         ohe = OneHotEncoder(sparse=False, handle_unknown="ignore")
