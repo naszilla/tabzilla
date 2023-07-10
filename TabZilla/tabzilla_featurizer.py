@@ -1,10 +1,10 @@
 from pathlib import Path
-from pymfe.mfe import MFE
-import pandas as pd
-from tqdm import tqdm
 
-from tabzilla_datasets import TabularDataset
+import pandas as pd
+from pymfe.mfe import MFE
 from tabzilla_data_processing import process_data
+from tabzilla_datasets import TabularDataset
+from tqdm import tqdm
 
 # Subset of: ['landmarking', 'general', 'statistical', 'model-based', 'info-theory', 'relative', 'clustering',
 # 'complexity', 'itemset', 'concept']
@@ -60,7 +60,7 @@ def featurize_dataset(dataset_path):
             split["train"],
             [0],
             [0],
-            scale=False,
+            scaler="None",
             one_hot_encode=False,
             impute=True, )
         X_train, y_train = processed_data["data_train"]
