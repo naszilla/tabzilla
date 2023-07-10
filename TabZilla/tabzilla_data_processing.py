@@ -20,7 +20,7 @@ def process_data(
     assert scaler in ["None", "Quantile"], f"scaler not recognized: {scaler}"
 
     if scaler == "Quantile":
-        scaler_function = QuantileTransformer()
+        scaler_function = QuantileTransformer(n_quantiles=min(len(train_index), 1000))  # use either 1000 quantiles or num. training instances, whichever is smaller
 
 
     num_mask = np.ones(dataset.X.shape[1], dtype=int)
