@@ -8,7 +8,6 @@ from contextlib import contextmanager
 from pathlib import Path
 
 import numpy as np
-
 from models.basemodel import BaseModel
 from tabzilla_data_processing import process_data
 from tabzilla_datasets import TabularDataset
@@ -58,6 +57,7 @@ class ExperimentResult:
 
     attributes:
     - dataset(TabularDataset): a dataset object
+    - scaler(str): scaler for numerical features
     - model(BaseModel): the model trained & evaluated on the dataset
     - timers(dict[Timer]): timers for training and evaluating model
     - scorers(dict): scorer objects for train, test, and val sets
@@ -73,6 +73,7 @@ class ExperimentResult:
     def __init__(
         self,
         dataset,
+        scaler,
         model,
         timers,
         scorers,
@@ -81,6 +82,7 @@ class ExperimentResult:
         ground_truth,
     ) -> None:
         self.dataset = dataset
+        self.scaler = scaler
         self.model = model
         self.timers = timers
         self.scorers = scorers
@@ -104,6 +106,7 @@ class ExperimentResult:
         # create a dict with all output we want to store
         result_dict = {
             "dataset": self.dataset.get_metadata(),
+            "scaler": self.scaler,
             "model": self.model.get_metadata(),
             "experiemnt_args": self.experiment_args,
             "hparam_source": self.hparam_source,
@@ -158,10 +161,11 @@ class ExperimentResult:
 class TimeoutException(Exception):
     pass
 
-def cross_validation(model: BaseModel, dataset: TabularDataset, time_limit: int) -> ExperimentResult:
+def cross_validation(model: BaseModel, dataset: TabularDataset, time_limit: int, scaler: str) -> ExperimentResult:
     """
     takes a BaseModel and TabularDataset as input, and trains and evaluates the model using cross validation with all
-    folds specified in the dataset property split_indeces. Time limit is checked after each fold, and an exception is raised
+    folds specified in the dataset property split_indeces. Time limit is checked after each fold, and an exception is raised.
+    Scaler is passed to tabzilla_data_processing.process_data()
 
     returns an ExperimentResult object, which contains all metadata and results from the cross validation run, including:
     - evlaution objects for the validation and test sets
@@ -220,7 +224,7 @@ def cross_validation(model: BaseModel, dataset: TabularDataset, time_limit: int)
             val_index,
             test_index,
             verbose=False,
-            scale=False,
+            scaler=scaler,
             one_hot_encode=False,
         )
         X_train, y_train = processed_data["data_train"]
@@ -286,6 +290,7 @@ def cross_validation(model: BaseModel, dataset: TabularDataset, time_limit: int)
 
     return ExperimentResult(
         dataset=dataset,
+        scaler=scaler,
         model=model,
         timers=timers,
         scorers=scorers,
@@ -390,6 +395,13 @@ def get_experiment_parser():
         type=int,
         default=128,
         help="Batch size used for training and testing",
+    )
+    experiment_parser.add(
+        "--scale_numerical_features",
+        type=str,
+        choices=["None", "Quantile"],
+        default="None",
+        help="Specify scaler for numerical features. Applied during data processing, prior to training and inference.",
     )
     experiment_parser.add(
         "--early_stopping_rounds",
