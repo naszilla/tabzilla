@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import NamedTuple
 
 import optuna
+
 optuna.logging.set_verbosity(optuna.logging.ERROR)
 
 from models.basemodel import BaseModel
@@ -89,6 +90,7 @@ class TabZillaObjective(object):
             [
                 "model_name",
                 "batch_size",
+                "scale_numerical_features",
                 "val_batch_size",
                 "objective",
                 "gpu_ids",
@@ -115,6 +117,7 @@ class TabZillaObjective(object):
             model_name=self.model_handle.__name__,
             batch_size=self.experiment_args.batch_size,
             val_batch_size=self.experiment_args.val_batch_size,
+            scale_numerical_features=self.experiment_args.scale_numerical_features,
             epochs=max_epochs,
             gpu_ids=self.experiment_args.gpu_ids,
             use_gpu=self.experiment_args.use_gpu,
@@ -134,13 +137,14 @@ class TabZillaObjective(object):
 
         # Cross validate the chosen hyperparameters
         try:
-            result = cross_validation(model, self.dataset, self.time_limit)
+            result = cross_validation(model, self.dataset, self.time_limit, scaler=args.scale_numerical_features)
             obj_val = result.scorers["val"].get_objective_result()
         except Exception as e:
             print(f"caught exception during cross-validation...")
             tb = traceback.format_exc()
             result = ExperimentResult(
                 dataset=self.dataset,
+                scaler=args.scale_numerical_features,
                 model=model,
                 timers={},
                 scorers={},
