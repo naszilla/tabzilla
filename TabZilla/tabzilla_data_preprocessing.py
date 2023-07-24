@@ -1,13 +1,13 @@
 import argparse
 from pathlib import Path
 import sys
-
-import tabzilla_preprocessors
+import warnings
+warnings.filterwarnings('ignore')
 
 # Import all preprocessor modules and add them to list for them to be in list of preprocessors
 import tabzilla_preprocessors_openml
 
-preprocessor_modules = [tabzilla_preprocessors, tabzilla_preprocessors_openml]
+preprocessor_modules = [tabzilla_preprocessors_openml]
 
 dataset_path = Path("datasets")
 
@@ -78,5 +78,7 @@ if __name__ == "__main__":
     if args.process_all:
         for dataset_name in sorted(preprocessors.keys()):
             _ = preprocess_dataset(dataset_name, args.overwrite)
+            print("Processed dataset {}".format(dataset_name))
     else:
         _ = preprocess_dataset(args.dataset_name, args.overwrite)
+        print("Processed dataset {}".format(args.dataset_name))

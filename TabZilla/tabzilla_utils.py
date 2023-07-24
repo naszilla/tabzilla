@@ -206,7 +206,7 @@ def cross_validation(model: BaseModel, dataset: TabularDataset, time_limit: int,
     }
 
     start_time = time.time()
-
+    print("Current model: ", model)
     # iterate over all train/val/test splits in the dataset property split_indeces
     for i, split_dictionary in enumerate(dataset.split_indeces):
 
@@ -237,29 +237,31 @@ def cross_validation(model: BaseModel, dataset: TabularDataset, time_limit: int,
         # Train model
         timers["train"].start()
         # loss history can be saved if needed
+        print("Fitting model")
         loss_history, val_loss_history = curr_model.fit(
             X_train,
             y_train,
             X_val,
             y_val,
         )
+        print("Done fitting model, history is: ", loss_history, val_loss_history)
         timers["train"].end()
 
         # evaluate on train set
         timers["train-eval"].start()
         train_predictions, train_probs = curr_model.predict_wrapper(X_train)
         timers["train-eval"].end()
-
+        print("Train eval done")
         # evaluate on val set
         timers["val"].start()
         val_predictions, val_probs = curr_model.predict_wrapper(X_val)
         timers["val"].end()
-
+        print("Val eval done")
         # evaluate on test set
         timers["test"].start()
         test_predictions, test_probs = curr_model.predict_wrapper(X_test)
         timers["test"].end()
-
+        print("Test eval done")
         extra_scorer_args = {}
         if dataset.target_type == "classification":
             extra_scorer_args["labels"] = range(dataset.num_classes)

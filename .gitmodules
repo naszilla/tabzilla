@@ -1,0 +1,3 @@
+[submodule "ensemble-tabpfn"]
+	path = ensemble-tabpfn
+	url = https://github.com/ersilia-os/ensemble-tabpfn.git

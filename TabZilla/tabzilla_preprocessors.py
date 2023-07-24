@@ -1,6 +1,3 @@
-import pandas as pd
-import sklearn
-
 from tabzilla_preprocessor_utils import dataset_preprocessor
 
 preprocessor_dict = {}
