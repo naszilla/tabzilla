@@ -5,19 +5,6 @@
 # - writes each dataset to its own local directory. each dataset directory will contain:
 # -- a compressed version of the dataset (X.npy and y.npy)
 # -- a json containing metadata
-#
-# example use - initialize the CaliforniaHousing dataset, write it to a local folder, and then read it into a new TabularDataset object:
-#
-# >>> from tabzilla_prepare_data import CaliforniaHousing, TabularDataset
-# >>> from pathlib import Path
-# >>> c = CaliforniaHousing()
-# >>> c.name
-# 'CaliforniaHousing'
-# >>> p = Path("temp/cal-housing").resolve()
-# >>> c.write(p)
-# >>> c2 = TabularDataset.read(p)
-# >>> c2.name
-# 'CaliforniaHousing'
 
 
 import gzip
@@ -26,7 +13,6 @@ from pathlib import Path
 from typing import Optional
 
 import numpy as np
-import sklearn.datasets
 from sklearn.preprocessing import LabelEncoder
 
 
