@@ -219,3 +219,9 @@ def get_model(model_name):
         return model_getter()
     else:
         raise NotImplementedError(f"Model {model_name} not implemented")
+
+
+if __name__ == "__main__":
+    print("all algorithms:")
+    for n in ALL_MODELS.keys():
+        print(n)
