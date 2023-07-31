@@ -1,42 +1,22 @@
-# run an experiment with small models on all datasets
-# run one test for each env
-#
-# you can run these tests by taking the following steps:
-# 
-# 1) cd to TabZilla directory
-# 2) activate the conda environment you want to test
-# 3) run the unittests **for only the conda env you want to test**, one of the three below:
-# 
-# python -m unittest unittests.test_experiments.TestExperiment.test_torch
-# python -m unittest unittests.test_experiments.TestExperiment.test_gbdt
-# python -m unittest unittests.test_experiments.TestExperiment.test_sklearn
-# 
-# 
-### To manually test only some models, add your own definition for ALL_MODELS below the imports, like this:
-#
-# ALL_MODELS = {
-#     "NAM": ("torch", None),
-# }
-# 
+# test the expeirment function with two models (LinearModel, RandomForest) on four datasets
 
 import glob
 import json
 import os
 import shutil
-from collections import namedtuple
-from pathlib import Path
+import unittest
 from unittest import TestCase
 
 import tabzilla_experiment
-from tabzilla_alg_handler import ALL_MODELS, get_model
+from tabzilla_alg_handler import get_model
 from tabzilla_utils import get_experiment_parser
 
 TEST_DATASETS = {
-    "openml__collins__3567": "classification",      # 15-class, 21 features 500 instances
-    "openml__dermatology__35": "classification",    # 6-class, 34 features 366 instances
-    "openml__credit-approval__29": "binary",        # binary, 15 features 690 instances
-    "openml__sonar__39": "binary",                  # binary, 60 features, 208 instances, with no cat features
-    "openml__analcatdata_dmft__3560": "classification",    # classification, 4 features, no numerical features, 797 instances
+    "openml__collins__3567": "classification",  # 15-class, 21 features 500 instances
+    "openml__dermatology__35": "classification",  # 6-class, 34 features 366 instances
+    "openml__credit-approval__29": "binary",  # binary, 15 features 690 instances
+    "openml__sonar__39": "binary",  # binary, 60 features, 208 instances, with no cat features
+    "openml__analcatdata_dmft__3560": "classification",  # classification, 4 features, no numerical features, 797 instances
 }
 
 CONFIG_FILE = "./unittests/test_config.yml"
@@ -58,11 +38,15 @@ def test_experiment(self, model_name, dataset_name, obj_type):
 
     # if the objective type is not implemented, skip this test
     if obj_type in model_class.objtype_not_implemented:
-        print(f"obj type {obj_type} not implemented for model {model_name}. skipping this test.")
+        print(
+            f"obj type {obj_type} not implemented for model {model_name}. skipping this test."
+        )
 
     else:
         # run experiment
-        tabzilla_experiment.main(experiment_args, model_name, DATASET_DIR + "/" + dataset_name)
+        tabzilla_experiment.main(
+            experiment_args, model_name, DATASET_DIR + "/" + dataset_name
+        )
 
         #### read results and run some sanity checks
 
@@ -111,23 +95,12 @@ def test_experiment(self, model_name, dataset_name, obj_type):
         self.assertIn(metric, result["scorers"]["test"].keys())
         self.assertEqual(num_folds, len(result["scorers"]["val"][metric]))
         self.assertEqual(num_folds, len(result["scorers"]["test"][metric]))
-        self.assertTrue(all([isinstance(x, float) for x in result["scorers"]["test"][metric]]))
+        self.assertTrue(
+            all([isinstance(x, float) for x in result["scorers"]["test"][metric]])
+        )
 
-
-def test_env(self, test_env):
-    # only run tests for models using this environment
-    for model_name in ALL_MODELS.keys():
-        env, _ = ALL_MODELS[model_name]
-        if env == test_env:
-            # run subtest for this model
-            for dataset, obj_type in TEST_DATASETS.items():
-                with self.subTest(model=model_name, dataset=dataset):
-                    test_experiment(self, model_name, dataset, obj_type)
-                # remove all contents from results dir
-                self.cleanup_subtest()
 
 class TestExperiment(TestCase):
-
     @classmethod
     def setUp(cls):
         # create results folder. this is run before each test (not each subtest)
@@ -139,17 +112,37 @@ class TestExperiment(TestCase):
         # remove results folder. this is run before each test (not each subtest)
         shutil.rmtree(RESULTS_DIR)
 
+    @classmethod
     def cleanup_subtest(cls):
         # remove all contents from results folder
         for f in glob.glob(RESULTS_DIR + "/*"):
             os.remove(f)
 
-    # test factory for different environments
-    def test_sklearn(self):
-        test_env(self, "sklearn")
-    
-    def test_gbdt(self):
-        test_env(self, "gbdt")
+    def test_linearmodel(self):
+        # run subtest for this model
+        model_name = "LinearModel"
+        for dataset, obj_type in TEST_DATASETS.items():
+            with self.subTest(model=model_name, dataset=dataset):
+                test_experiment(self, model_name, dataset, obj_type)
+            # remove all contents from results dir
+            self.cleanup_subtest()
 
-    def test_torch(self):
-        test_env(self, "torch")
+    def test_randomforest(self):
+        # run subtest for this model
+        model_name = "RandomForest"
+        for dataset, obj_type in TEST_DATASETS.items():
+            with self.subTest(model=model_name, dataset=dataset):
+                test_experiment(self, model_name, dataset, obj_type)
+            # remove all contents from results dir
+            self.cleanup_subtest()
+
+    def test_alg(self, model_name):
+        for dataset, obj_type in TEST_DATASETS.items():
+            with self.subTest(model=model_name, dataset=dataset):
+                test_experiment(self, model_name, dataset, obj_type)
+            # remove all contents from results dir
+            self.cleanup_subtest()
+
+
+if __name__ == "__main__":
+    unittest.main()
