@@ -8,7 +8,7 @@ from tabzilla_preprocessor_utils import cv_n_folds, dataset_preprocessor
 
 preprocessor_dict = {}
 
-easy_import_task_file = "openml_easy_import_list.txt" # Datasets identified just by their ID can be easily imported from here
+easy_import_task_file = "openml_easy_import_list.txt"  # Datasets identified just by their ID can be easily imported from here
 
 debug_mode = False
 
@@ -42,8 +42,13 @@ with open(easy_import_task_file, "r") as f:
 
 
 # Based on: https://github.com/releaunifreiburg/WellTunedSimpleNets/blob/main/utilities.py
-def preprocess_openml(openml_task_id, target_type=None, force_cat_features=None, force_num_features=None,
-                      drop_features=None):
+def preprocess_openml(
+    openml_task_id,
+    target_type=None,
+    force_cat_features=None,
+    force_num_features=None,
+    drop_features=None,
+):
     if force_num_features is None:
         force_num_features = []
     if force_cat_features is None:
@@ -54,39 +59,74 @@ def preprocess_openml(openml_task_id, target_type=None, force_cat_features=None,
     task = openml.tasks.get_task(task_id=openml_task_id)
     n_repeats, n_folds, n_samples = task.get_split_dimensions()
     if n_repeats != 1 or n_folds != cv_n_folds or n_samples != 1:
-        raise NotImplementedError(f"Re-splitting required for split dimensions {n_repeats}, {n_folds}, {n_samples}.")
+        raise NotImplementedError(
+            f"Re-splitting required for split dimensions {n_repeats}, {n_folds}, {n_samples}."
+        )
 
     # Extract splits
     split_indeces = []
     for split_idx in range(cv_n_folds):
-        train_indices, test_indices = task.get_train_test_split_indices(repeat=0, fold=split_idx)
-        split_indeces.append({
-            "train": train_indices,
-            "test": test_indices,
-            "val": []
-        })
+        train_indices, test_indices = task.get_train_test_split_indices(
+            repeat=0, fold=split_idx
+        )
+        split_indeces.append({"train": train_indices, "test": test_indices, "val": []})
     # Build validation set by using n+1 th test set.
     for split_idx in range(cv_n_folds):
-        split_indeces[split_idx]["val"] = split_indeces[(split_idx+1) % cv_n_folds]["test"].copy()
-        split_indeces[split_idx]["train"] = np.setdiff1d(split_indeces[split_idx]["train"],
-                                                         split_indeces[split_idx]["val"], assume_unique=True)
+        split_indeces[split_idx]["val"] = split_indeces[(split_idx + 1) % cv_n_folds][
+            "test"
+        ].copy()
+        split_indeces[split_idx]["train"] = np.setdiff1d(
+            split_indeces[split_idx]["train"],
+            split_indeces[split_idx]["val"],
+            assume_unique=True,
+        )
 
     if debug_mode:
-    # Sanity check
+        # Sanity check
         for split_idx in range(cv_n_folds):
-            print("Dimensions: {}, {}, {}".format(len(split_indeces[split_idx]["train"]),
-                                                  len(split_indeces[split_idx]["val"]),
-                                                  len(split_indeces[split_idx]["test"])))
-            assert len(np.intersect1d(split_indeces[split_idx]["train"], split_indeces[split_idx]["test"])) == 0
-            assert len(np.intersect1d(split_indeces[split_idx]["train"], split_indeces[split_idx]["val"])) == 0
-            assert len(np.intersect1d(split_indeces[split_idx]["test"], split_indeces[split_idx]["val"])) == 0
-            for split_jdx in range(split_idx+1, cv_n_folds):
-                intersect = np.intersect1d(split_indeces[split_idx]["test"], split_indeces[split_jdx]["test"])
+            print(
+                "Dimensions: {}, {}, {}".format(
+                    len(split_indeces[split_idx]["train"]),
+                    len(split_indeces[split_idx]["val"]),
+                    len(split_indeces[split_idx]["test"]),
+                )
+            )
+            assert (
+                len(
+                    np.intersect1d(
+                        split_indeces[split_idx]["train"],
+                        split_indeces[split_idx]["test"],
+                    )
+                )
+                == 0
+            )
+            assert (
+                len(
+                    np.intersect1d(
+                        split_indeces[split_idx]["train"],
+                        split_indeces[split_idx]["val"],
+                    )
+                )
+                == 0
+            )
+            assert (
+                len(
+                    np.intersect1d(
+                        split_indeces[split_idx]["test"],
+                        split_indeces[split_idx]["val"],
+                    )
+                )
+                == 0
+            )
+            for split_jdx in range(split_idx + 1, cv_n_folds):
+                intersect = np.intersect1d(
+                    split_indeces[split_idx]["test"], split_indeces[split_jdx]["test"]
+                )
                 assert len(intersect) == 0
 
     dataset = task.get_dataset()
     X, y, categorical_indicator, col_names = dataset.get_data(
-        dataset_format='dataframe',
+        dataset_format="dataframe",
         target=task.target_name,
     )
 
@@ -102,7 +142,9 @@ def preprocess_openml(openml_task_id, target_type=None, force_cat_features=None,
         X.drop(columns=drop_features, inplace=True)
         categorical_indicator_old, categorical_indicator = categorical_indicator, []
         col_names_old, col_names = col_names, []
-        for idx, (col_name, is_categorical) in enumerate(zip(col_names_old, categorical_indicator_old)):
+        for idx, (col_name, is_categorical) in enumerate(
+            zip(col_names_old, categorical_indicator_old)
+        ):
             if idx in drop_indices:
                 continue
             col_names.append(col_name)
@@ -113,9 +155,11 @@ def preprocess_openml(openml_task_id, target_type=None, force_cat_features=None,
         "X": X,
         "y": y,
         "categorical_indicator": categorical_indicator,
-        "col_names": col_names
+        "col_names": col_names,
     }
-    errors = inspect_openml_task(openml_task_id, openml_data_dict=openml_data_dict, verbose=False, debug=False)
+    errors = inspect_openml_task(
+        openml_task_id, openml_data_dict=openml_data_dict, verbose=False, debug=False
+    )
     if errors:
         print("Dataset checks failed:")
         for error in errors:
@@ -129,17 +173,24 @@ def preprocess_openml(openml_task_id, target_type=None, force_cat_features=None,
         if task.task_type == "Supervised Regression":
             target_type = "regression"
         elif task.task_type == "Supervised Classification":
-            #n_unique_labels = len(task.class_labels)
+            # n_unique_labels = len(task.class_labels)
             n_unique_labels = len(np.unique(y))
             metadata_num_classes = dataset.qualities["NumberOfClasses"]
-            if not np.isnan(metadata_num_classes) and metadata_num_classes != n_unique_labels:
-                raise RuntimeError("Inconsistent metadata. Cannot automatically infer task type.")
+            if (
+                not np.isnan(metadata_num_classes)
+                and metadata_num_classes != n_unique_labels
+            ):
+                raise RuntimeError(
+                    "Inconsistent metadata. Cannot automatically infer task type."
+                )
             if n_unique_labels == 2:
                 target_type = "binary"
             elif n_unique_labels > 2:
                 target_type = "classification"
             else:
-                raise RuntimeError(f"Unexpected number of class labels: {n_unique_labels}")
+                raise RuntimeError(
+                    f"Unexpected number of class labels: {n_unique_labels}"
+                )
         else:
             raise RuntimeError(f"Unsupported task type: {task.task_type}")
 
@@ -164,8 +215,14 @@ def preprocess_openml(openml_task_id, target_type=None, force_cat_features=None,
     }
 
 
-def inspect_openml_task(openml_task_id, openml_data_dict=None, accept_nans=True, verbose=True,
-                        debug=True, exploratory_mode=False):
+def inspect_openml_task(
+    openml_task_id,
+    openml_data_dict=None,
+    accept_nans=True,
+    verbose=True,
+    debug=True,
+    exploratory_mode=False,
+):
     """
     Use this function to inspect an OpenML task. The checks include making sure that the task is of the correct type
     (supervised classification or regression), checking missing values, cross validation, and validity of categorical
@@ -191,22 +248,29 @@ def inspect_openml_task(openml_task_id, openml_data_dict=None, accept_nans=True,
     if openml_data_dict is None:
         dataset = task.get_dataset()
         X, y, categorical_indicator, col_names = dataset.get_data(
-            dataset_format='dataframe',
+            dataset_format="dataframe",
             target=task.target_name,
         )
     else:
-        X, y, categorical_indicator, col_names = (openml_data_dict["X"], openml_data_dict["y"],
-                                                  openml_data_dict["categorical_indicator"],
-                                                  openml_data_dict["col_names"])
+        X, y, categorical_indicator, col_names = (
+            openml_data_dict["X"],
+            openml_data_dict["y"],
+            openml_data_dict["categorical_indicator"],
+            openml_data_dict["col_names"],
+        )
 
     err_messages = []
+
     def check_true(condition, message):
         if not condition:
             err_messages.append(message)
 
     # Task type check
-    check_true((task.task_type == "Supervised Regression") or (
-                    task.task_type == "Supervised Classification"), f"Wrong task type: {task.task_type}")
+    check_true(
+        (task.task_type == "Supervised Regression")
+        or (task.task_type == "Supervised Classification"),
+        f"Wrong task type: {task.task_type}",
+    )
 
     # Missing values checks
     num_na = X.isna().sum().sum()
@@ -223,16 +287,26 @@ def inspect_openml_task(openml_task_id, openml_data_dict=None, accept_nans=True,
     # Cross validation checks
     estimation = task.estimation_procedure
     check_true(estimation["type"] == "crossvalidation", "Not cross validation")
-    check_true(estimation["parameters"]["number_repeats"] == '1', "Wrong number_repeats")
-    check_true(estimation["parameters"]["number_folds"] == str(cv_n_folds), "Wrong number of folds")
+    check_true(
+        estimation["parameters"]["number_repeats"] == "1", "Wrong number_repeats"
+    )
+    check_true(
+        estimation["parameters"]["number_folds"] == str(cv_n_folds),
+        "Wrong number of folds",
+    )
 
     # Categorical indicator checks
     cat_mask = np.array(categorical_indicator)
     # Confirm all columns labeled as categorical are categorical
-    check_true(len(X.loc[:, cat_mask].select_dtypes("category").columns) == cat_mask.sum(), "Mislabeled numerical columns")
+    check_true(
+        len(X.loc[:, cat_mask].select_dtypes("category").columns) == cat_mask.sum(),
+        "Mislabeled numerical columns",
+    )
     # Confirm rest of the columns are all numerical
-    check_true(len(X.loc[:, ~cat_mask].select_dtypes("number").columns) == (
-        ~cat_mask).sum(), "Mislabeled categorical columns")
+    check_true(
+        len(X.loc[:, ~cat_mask].select_dtypes("number").columns) == (~cat_mask).sum(),
+        "Mislabeled categorical columns",
+    )
     num_types = list(X.loc[:, ~cat_mask].dtypes.unique())
     cat_types = list(X.loc[:, cat_mask].dtypes.unique())
 
@@ -259,10 +333,14 @@ def get_openml_task_metadata(save=False):
     Returns:
     task_df: the dataframe.
     """
-    task_types = [openml.tasks.task.TaskType.SUPERVISED_CLASSIFICATION,
-                  openml.tasks.task.TaskType.SUPERVISED_REGRESSION]
-    task_df = [openml.tasks.list_tasks(task_type, output_format="dataframe")
-               for task_type in task_types]
+    task_types = [
+        openml.tasks.task.TaskType.SUPERVISED_CLASSIFICATION,
+        openml.tasks.task.TaskType.SUPERVISED_REGRESSION,
+    ]
+    task_df = [
+        openml.tasks.list_tasks(task_type, output_format="dataframe")
+        for task_type in task_types
+    ]
     task_df = pd.concat(task_df)
     task_df.set_index("tid", inplace=True)
 
@@ -312,14 +390,18 @@ def check_tasks_from_suite(suite_id):
     return succeeded_tasks, failed_tasks
 
 
-
 # Call the dataset preprocessor decorator for each of the selected OpenML datasets
 for kwargs in openml_tasks:
-    #if kwargs["openml_task_id"] in [48, 50]:
+    # if kwargs["openml_task_id"] in [48, 50]:
     #    continue
-    task = openml.tasks.get_task(task_id=kwargs["openml_task_id"], download_data=False, download_qualities=False)
-    ds = openml.datasets.get_dataset(task.dataset_id, download_data=False, download_qualities=False)
+    task = openml.tasks.get_task(
+        task_id=kwargs["openml_task_id"], download_data=False, download_qualities=False
+    )
+    ds = openml.datasets.get_dataset(
+        task.dataset_id, download_data=False, download_qualities=False
+    )
     dataset_name = f"openml__{ds.name}__{kwargs['openml_task_id']}"
 
     dataset_preprocessor(preprocessor_dict, dataset_name, generate_split=False)(
-        functools.partial(preprocess_openml, **kwargs))
+        functools.partial(preprocess_openml, **kwargs)
+    )
