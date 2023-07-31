@@ -1,4 +1,11 @@
-# test the expeirment function with a user-specified model on four datasets
+# test the expeirment function with a user-specified model on five datasets
+#
+# usage: run from command line **without** the unittest command, with one positional argument.
+# for example, to test the algorithm rtdl_MLP, run the following
+#
+# python -m unittests.test_alg rtdl_MLP
+#
+# *Do not* use the unittest command (for example: "python -m unittest unittests.test_alg <alg_name>"), since this will not pass the algorithm name as an argument
 
 import argparse
 import glob

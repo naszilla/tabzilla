@@ -1,4 +1,12 @@
 # test the expeirment function with two models (LinearModel, RandomForest) on four datasets
+# run using command line, from directory TabZilla:
+#
+# python -m unittest unittests.test_experiments
+#
+# OR
+#
+# python -m unittests.test_experiments
+
 
 import glob
 import json
@@ -130,13 +138,6 @@ class TestExperiment(TestCase):
     def test_randomforest(self):
         # run subtest for this model
         model_name = "RandomForest"
-        for dataset, obj_type in TEST_DATASETS.items():
-            with self.subTest(model=model_name, dataset=dataset):
-                test_experiment(self, model_name, dataset, obj_type)
-            # remove all contents from results dir
-            self.cleanup_subtest()
-
-    def test_alg(self, model_name):
         for dataset, obj_type in TEST_DATASETS.items():
             with self.subTest(model=model_name, dataset=dataset):
                 test_experiment(self, model_name, dataset, obj_type)
