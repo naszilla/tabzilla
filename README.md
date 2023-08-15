@@ -39,7 +39,7 @@ Adding new datasets and algorithms to this codebase is fairly easy. All datasets
 
 # Preparing a Python Environment
 
-The core functionality of TabZilla requires only three packages: [`optuna`](https://pypi.org/project/optuna/), [`scikit-learn`](https://pypi.org/project/scikit-learn/), and [`configargparse`](https://pypi.org/project/ConfigArgParse/). Below we give instructions to build a single python 3.10 environment that can run all 23 algorithms used in this study, as well as dealing with dataset preparation and featurization. Depending on your needs, you might not need all packages here.
+The core functionality of TabZilla requires only three packages: [`optuna`](https://pypi.org/project/optuna/), [`scikit-learn`](https://pypi.org/project/scikit-learn/), [`openml`](https://pypi.org/project/openml) and [`configargparse`](https://pypi.org/project/ConfigArgParse/). Below we give instructions to build a single python 3.10 environment that can run all 23 algorithms used in this study, as well as dealing with dataset preparation and featurization. Depending on your needs, you might not need all packages here.
 
 ### Creating a TabZilla virtual environment with `venv`
 
@@ -64,7 +64,7 @@ and activate the virtual environment:
 > source /home/virtual-environments/tabzilla/bin/activate
 ```
 
-3. Install all tabzilla dependencies using the pip requirements file `TabZilla/pip_requirements.txt`:
+3. Install all tabzilla dependencies using the pip requirements file [`TabZilla/pip_requirements.txt`](TabZilla/pip_requirements.txt):
 
 ```
 > pip install -r ./pip_requirements.txt
