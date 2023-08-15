@@ -63,7 +63,6 @@ class TabZillaObjective(object):
         self.time_limit = time_limit
 
     def __call__(self, trial):
-
         if self.random_parameters:
             # first trial is always default params. after that, sample using either random or optuna suggested hparams
             if trial.number == 0:
@@ -137,7 +136,12 @@ class TabZillaObjective(object):
 
         # Cross validate the chosen hyperparameters
         try:
-            result = cross_validation(model, self.dataset, self.time_limit, scaler=args.scale_numerical_features)
+            result = cross_validation(
+                model,
+                self.dataset,
+                self.time_limit,
+                scaler=args.scale_numerical_features,
+            )
             obj_val = result.scorers["val"].get_objective_result()
         except Exception as e:
             print(f"caught exception during cross-validation...")
@@ -171,7 +175,6 @@ class TabZillaObjective(object):
 
 
 def main(experiment_args, model_name, dataset_dir):
-
     # read dataset from folder
     dataset = TabularDataset.read(Path(dataset_dir).resolve())
 
@@ -247,7 +250,6 @@ def main(experiment_args, model_name, dataset_dir):
 
 
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser(description="parser for tabzilla experiments")
 
     parser.add_argument(
