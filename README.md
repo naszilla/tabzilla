@@ -24,18 +24,26 @@ Adding new datasets and algorithms to this codebase is fairly easy. All datasets
 
 
 ## Table of Contents
-
-1. [Preparing Python Environments](#preparing-a-python-environment)
-2. [Running TabZilla Experiments](#running-tabzilla-experiments)
+1. [Documentation](#documentation)
+2. [Preparing Python Environments](#preparing-a-python-environment)
+3. [Running TabZilla Experiments](#running-tabzilla-experiments)
     1. [Experiment Script](#experiment-script)
     2. [Experiment Config Parser](#experiment-config-parser)
     3. [Running Individual Experiments](#running-individual-experiments)
-3. [Datasets](#datasets)
+4. [Datasets](#datasets)
     1. [Reading Preprocessed Datasets](#reading-preprocessed-datasets)
     2. [Adding New Datasets](#adding-new-datasets)
-4. [Metafeature Extraction](#metafeature-extraction)
-5. [Implementing New Models](#implementing-new-models)
-6. [Unit Tests](#unit-tests)
+5. [Metafeature Extraction](#metafeature-extraction)
+6. [Implementing New Models](#implementing-new-models)
+7. [Unit Tests](#unit-tests)
+
+# Documentation
+Here, we describe our dataset documentation. All of this information is also available in our paper.
+- [Author Responsibility](docs/AUTHOR_RESPONSIBILITY.md)
+- [Code of Conduct](docs/CODE_OF_CONDUCT.md)
+- [Contributing](docs/CONTRIBUTING.md)
+- [Datasheet for TabZilla](docs/DATASHEET.md)
+- [Maintenance Plan](docs/MAINTENANCE_PLAN.md)
 
 # Preparing a Python Environment
 
