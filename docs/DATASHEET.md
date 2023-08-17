@@ -1,4 +1,4 @@
-# Datasheet for NAS-Bench-Suite-Zero
+# Datasheet for TabZilla
 
 We include a [Datasheet](https://arxiv.org/abs/1803.09010). 
 Thanks for the Markdown template from [Christian Garbin's repository](https://github.com/fau-masters-collected-works-cgarbin/datasheet-for-dataset-template).
