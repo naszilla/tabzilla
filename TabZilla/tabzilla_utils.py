@@ -5,6 +5,8 @@ import shutil
 import signal
 import time
 from contextlib import contextmanager
+from collections import namedtuple
+from typing import NamedTuple
 from pathlib import Path
 
 import numpy as np
@@ -13,7 +15,6 @@ from tabzilla_data_processing import process_data
 from tabzilla_datasets import TabularDataset
 from utils.scorer import BinScorer, ClassScorer, RegScorer
 from utils.timer import Timer
-
 
 class NpEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -161,7 +162,7 @@ class ExperimentResult:
 class TimeoutException(Exception):
     pass
 
-def cross_validation(model: BaseModel, dataset: TabularDataset, time_limit: int, scaler: str) -> ExperimentResult:
+def cross_validation(model: BaseModel, dataset: TabularDataset, time_limit: int, scaler: str, args : NamedTuple) -> ExperimentResult:
     """
     takes a BaseModel and TabularDataset as input, and trains and evaluates the model using cross validation with all
     folds specified in the dataset property split_indeces. Time limit is checked after each fold, and an exception is raised.
@@ -209,7 +210,6 @@ def cross_validation(model: BaseModel, dataset: TabularDataset, time_limit: int,
     print("Current model: ", model)
     # iterate over all train/val/test splits in the dataset property split_indeces
     for i, split_dictionary in enumerate(dataset.split_indeces):
-
         if time.time() - start_time > time_limit:
             raise TimeoutException(f"time limit of {time_limit}s reached during fold {i}")
 
@@ -226,18 +226,18 @@ def cross_validation(model: BaseModel, dataset: TabularDataset, time_limit: int,
             verbose=False,
             scaler=scaler,
             one_hot_encode=False,
+            args=args,
         )
         X_train, y_train = processed_data["data_train"]
         X_val, y_val = processed_data["data_val"]
         X_test, y_test = processed_data["data_test"]
-
         # Create a new unfitted version of the model
         curr_model = model.clone()
 
         # Train model
         timers["train"].start()
         # loss history can be saved if needed
-        print("Fitting model")
+        print("Fitting model, iteration ", i, " of ", len(dataset.split_indeces))
         loss_history, val_loss_history = curr_model.fit(
             X_train,
             y_train,
@@ -249,17 +249,17 @@ def cross_validation(model: BaseModel, dataset: TabularDataset, time_limit: int,
 
         # evaluate on train set
         timers["train-eval"].start()
-        train_predictions, train_probs = curr_model.predict_wrapper(X_train)
+        train_predictions, train_probs = curr_model.predict_wrapper(X_train, args.subset_rows)
         timers["train-eval"].end()
         print("Train eval done")
         # evaluate on val set
         timers["val"].start()
-        val_predictions, val_probs = curr_model.predict_wrapper(X_val)
+        val_predictions, val_probs = curr_model.predict_wrapper(X_val, args.subset_rows)
         timers["val"].end()
         print("Val eval done")
         # evaluate on test set
         timers["test"].start()
-        test_predictions, test_probs = curr_model.predict_wrapper(X_test)
+        test_predictions, test_probs = curr_model.predict_wrapper(X_test, args.subset_rows)
         timers["test"].end()
         print("Test eval done")
         extra_scorer_args = {}
@@ -289,6 +289,7 @@ def cross_validation(model: BaseModel, dataset: TabularDataset, time_limit: int,
         predictions["test"].append(test_predictions.tolist())
         probabilities["test"].append(test_probs.tolist())
         ground_truth["test"].append(y_test.tolist())
+        print("Sample accuracy scores from test set splits: ", scorers["test"].accs)
 
     return ExperimentResult(
         dataset=dataset,
@@ -432,5 +433,30 @@ def get_experiment_parser():
         default=10,
         help="Time limit for each train/test trial, in seconds.",
     )
-
+    experiment_parser.add(
+        "--subset_rows",
+        type=int,
+        default=-1,
+        help="Number of rows to use for training and testing. -1 means use all rows.",
+    )
+    experiment_parser.add(
+        "--subset_features",
+        type=int,
+        default=-1,
+        help="Number of features to use for training and testing. -1 means use all features.",
+    )
+    experiment_parser.add(
+        "--subset_rows_method",
+        type=str,
+        choices=["random", "first"],
+        default="random",
+        help="Method for selecting rows. 'random' means select randomly, 'first' means select the first rows.",
+    )
+    experiment_parser.add(
+        "--subset_features_method",
+        type=str,
+        choices=["random", "first", "mutual_information"],
+        default="random",
+        help="Method for selecting features. 'random' means select randomly, 'first' means select the first features, 'mutual information' wraps sklearn's mutual_info_classif.",
+    )
     return experiment_parser

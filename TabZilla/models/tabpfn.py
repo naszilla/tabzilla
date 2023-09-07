@@ -1,4 +1,4 @@
-from ensemble_tabpfn import EnsembleTabPFN
+from tabpfn import TabPFNClassifier
 from models.basemodel import BaseModel
 
 class TabPFNModel(BaseModel):
@@ -8,9 +8,9 @@ class TabPFNModel(BaseModel):
         if args.objective == "regression":
             raise NotImplementedError("Does not support")
         elif args.objective == "classification":
-            self.model = EnsembleTabPFN(max_iters=50, n_ensemble_configurations=4)
+            self.model = TabPFNClassifier(device='cuda', N_ensemble_configurations=32)
         elif args.objective == "binary":
-            self.model = EnsembleTabPFN(max_iters=50, n_ensemble_configurations=4)
+            self.model = TabPFNClassifier(device='cuda', N_ensemble_configurations=32)
 
     def fit(self, X, y, X_val=None, y_val=None):
         return super().fit(X, y)

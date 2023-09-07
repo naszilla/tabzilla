@@ -191,6 +191,11 @@ def get_TabPFNModel():
 
     return model
 
+@register_model("torch")
+def get_TabPFNEnsModel():
+    from models.tabpfn_ens import TabPFNEnsModel as model
+
+    return model
 
 ##############################################################
 # tensorflow models

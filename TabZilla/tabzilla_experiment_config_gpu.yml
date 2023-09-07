@@ -22,3 +22,9 @@ val_batch_size: 256
 early_stopping_rounds: 20
 epochs: 100
 logging_period: 100
+
+##### Subset parameters
+subset_features: -1
+subset_rows: -1
+subset_features_method: random
+subset_rows_method: random
