@@ -22,3 +22,4 @@ val_batch_size: 256
 early_stopping_rounds: 20
 epochs: 500
 logging_period: 100
+scale_numerical_features: Quantile
