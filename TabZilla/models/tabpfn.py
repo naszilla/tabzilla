@@ -13,7 +13,9 @@ class TabPFNModel(BaseModel):
             self.model = TabPFNClassifier(device='cuda', N_ensemble_configurations=32)
 
     def fit(self, X, y, X_val=None, y_val=None):
-        return super().fit(X, y)
+        #WARNING: When overwrite_warning is true, TabPFN will attempt to run on arbitrarily large datasets! This means if you run TabPFN on a large dataset without sketching/sampling it may crash rather than issuing a warning and refusing to run
+        self.model.fit(X, y, overwrite_warning=True)
+        return [], []
 
     def predict_helper(self, X):
         return self.model.predict(X)
