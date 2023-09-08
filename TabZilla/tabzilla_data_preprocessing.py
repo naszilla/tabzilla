@@ -4,14 +4,6 @@ from pathlib import Path
 # Import all openml preprocessor modules.
 # NOTE: To import datasets from sources other than openml, add them using a new module
 from tabzilla_preprocessors_openml import preprocessor_dict
-import sys
-import warnings
-warnings.filterwarnings('ignore')
-
-# Import all preprocessor modules and add them to list for them to be in list of preprocessors
-import tabzilla_preprocessors_openml
-
-preprocessor_modules = [tabzilla_preprocessors_openml]
 
 dataset_path = Path("datasets")
 
