@@ -105,13 +105,13 @@ def process_data(
     impute=True,
     args=None,
 ):
-    
     # validate the scaler
     assert scaler in ["None", "Quantile"], f"scaler not recognized: {scaler}"
 
     if scaler == "Quantile":
-        scaler_function = QuantileTransformer(n_quantiles=min(len(train_index), 1000))  # use either 1000 quantiles or num. training instances, whichever is smaller
-
+        scaler_function = QuantileTransformer(
+            n_quantiles=min(len(train_index), 1000)
+        )  # use either 1000 quantiles or num. training instances, whichever is smaller
 
     num_mask = np.ones(dataset.X.shape[1], dtype=int)
     num_mask[dataset.cat_idx] = 0
@@ -129,23 +129,23 @@ def process_data(
         # The imputer drops columns that are fully NaN. So, we first identify columns that are fully NaN and set them to
         # zero. This will effectively drop the columns without changing the column indexing and ordering that many of
         # the functions in this repository rely upon.
-        fully_nan_num_idcs = np.nonzero((~np.isnan(X_train[:, num_idx].astype("float"))).sum(axis=0) == 0)[0]
+        fully_nan_num_idcs = np.nonzero(
+            (~np.isnan(X_train[:, num_idx].astype("float"))).sum(axis=0) == 0
+        )[0]
         if fully_nan_num_idcs.size > 0:
             X_train[:, num_idx[fully_nan_num_idcs]] = 0
             X_val[:, num_idx[fully_nan_num_idcs]] = 0
             X_test[:, num_idx[fully_nan_num_idcs]] = 0
 
         # Impute numerical features, and pass through the rest
-        numeric_transformer = Pipeline(
-            steps=[("imputer", SimpleImputer())]
-        )
+        numeric_transformer = Pipeline(steps=[("imputer", SimpleImputer())])
         preprocessor = ColumnTransformer(
             transformers=[
                 ("num", numeric_transformer, num_idx),
-                ('pass', 'passthrough', dataset.cat_idx),
-                #("cat", categorical_transformer, categorical_features),
+                ("pass", "passthrough", dataset.cat_idx),
+                # ("cat", categorical_transformer, categorical_features),
             ],
-            #remainder="passthrough",
+            # remainder="passthrough",
         )
         X_train = preprocessor.fit_transform(X_train)
         X_val = preprocessor.transform(X_val)

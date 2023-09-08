@@ -1,5 +1,9 @@
 import argparse
 from pathlib import Path
+
+# Import all openml preprocessor modules.
+# NOTE: To import datasets from sources other than openml, add them using a new module
+from tabzilla_preprocessors_openml import preprocessor_dict
 import sys
 import warnings
 warnings.filterwarnings('ignore')
@@ -14,13 +18,12 @@ dataset_path = Path("datasets")
 
 def build_preprocessors_dict():
     preprocessors = {}
-    for module in preprocessor_modules:
-        duplicates = preprocessors.keys() & module.preprocessor_dict.keys()
-        if duplicates:
-            raise RuntimeError(
-                f"Duplicate dataset_name key found in module {module}: {duplicates}"
-            )
-        preprocessors.update(module.preprocessor_dict)
+    duplicates = preprocessors.keys() & preprocessor_dict.keys()
+    if duplicates:
+        raise RuntimeError(
+            f"Duplicate dataset_name key found preprocessor dict: {duplicates}"
+        )
+    preprocessors.update(preprocessor_dict)
     return preprocessors
 
 

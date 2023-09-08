@@ -64,7 +64,6 @@ class TabZillaObjective(object):
         self.time_limit = time_limit
 
     def __call__(self, trial):
-
         if self.random_parameters:
             # first trial is always default params. after that, sample using either random or optuna suggested hparams
             if trial.number == 0:
@@ -182,7 +181,6 @@ def iteration_callback(study, trial):
     print(f"Trial {trial.number + 1} complete")
 
 def main(experiment_args, model_name, dataset_dir):
-
     # read dataset from folder
     dataset = TabularDataset.read(Path(dataset_dir).resolve())
 
@@ -259,7 +257,6 @@ def main(experiment_args, model_name, dataset_dir):
 
 
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser(description="parser for tabzilla experiments")
 
     parser.add_argument(

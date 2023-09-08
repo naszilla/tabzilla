@@ -24,39 +24,71 @@ Adding new datasets and algorithms to this codebase is fairly easy. All datasets
 
 
 ## Table of Contents
-
-1. [Preparing Python Environments](#preparing-python-environments)
-2. [Running TabZilla Experiments](#running-tabzilla-experiments)
+1. [Documentation](#documentation)
+2. [Preparing Python Environments](#preparing-a-python-environment)
+3. [Running TabZilla Experiments](#running-tabzilla-experiments)
     1. [Experiment Script](#experiment-script)
     2. [Experiment Config Parser](#experiment-config-parser)
     3. [Running Individual Experiments](#running-individual-experiments)
-3. [Datasets](#datasets)
+4. [Datasets](#datasets)
     1. [Reading Preprocessed Datasets](#reading-preprocessed-datasets)
     2. [Adding New Datasets](#adding-new-datasets)
-4. [Metafeature Extraction](#metafeature-extraction)
-5. [Implementing New Models](#implementing-new-models)
-6. [Unit Tests](#unit-tests)
+5. [Metafeature Extraction](#metafeature-extraction)
+6. [Implementing New Models](#implementing-new-models)
+7. [Unit Tests](#unit-tests)
 
-# Preparing Python Environments
+# Documentation
+Here, we describe our dataset documentation. All of this information is also available in our paper.
+- [Author Responsibility](docs/AUTHOR_RESPONSIBILITY.md)
+- [Code of Conduct](docs/CODE_OF_CONDUCT.md)
+- [Contributing](docs/CONTRIBUTING.md)
+- [Datasheet for TabZilla](docs/DATASHEET.md)
+- [Maintenance Plan](docs/MAINTENANCE_PLAN.md)
 
-Due to the diverse algorithms used in this work, some algorithms have different, conflicting requirements. Therefore, this repository uses four conda python environments. These four environments are specified in files created using command `conda env export --no-builds > {env name}.yml`.
+# Preparing a Python Environment
 
-Each environment is specified in a yml file:
-- [`conda_envs/sklearn.yml`](conda_envs/sklearn.yml)
-- [`conda_envs/gbdt.yml`](conda_envs/gbdt.yml)
-- [`conda_envs/torch.yml`](conda_envs/torch.yml)
-- [`conda_envs/tensorflow.yml`](conda_envs/tensorflow.yml)
+The core functionality of TabZilla requires only three packages: [`optuna`](https://pypi.org/project/optuna/), [`scikit-learn`](https://pypi.org/project/scikit-learn/), [`openml`](https://pypi.org/project/openml) and [`configargparse`](https://pypi.org/project/ConfigArgParse/). Below we give instructions to build a single python 3.10 environment that can run all 23 algorithms used in this study, as well as dealing with dataset preparation and featurization. Depending on your needs, you might not need all packages here.
 
-Each of these four environments can be created using the command `conda env create`:
+### Creating a TabZilla virtual environment with `venv`
 
-```bash
-conda env create -f ./conda_envs/sklearn.yml
-conda env create -f ./conda_envs/gbdt.yml
-conda env create -f ./conda_envs/torch.yml
-conda env create -f ./conda_envs/tensorflow.yml
+We recommend using `venv` and `pip` to create an environment, since some ML algorithms require specific package versions. You can use the following instructions:
+
+1. Install python 3.10 (see these recommendations specific to [Mac](https://formulae.brew.sh/formula/python@3.10), for Windows and Linux see the [python site](https://www.python.org/downloads/release/python-31012/)). We use python 3.10 because a few algorithms currently require it. Make sure you can see the python 3.10 install, for example like this:
+
 ```
-**Note:** These environments were created in linux, and some packages may not be available on Windows or OSX. If you get a `ResolvePackageNotFound` error when creating these environments, try removing these incompatible packages from the environment files.
+> python3.10 --version
 
+Python 3.10.12
+```
+
+2. Create a virtual environment with `venv` called "tabzilla" (or whatever you want to call it), using this version of python. Change the name at the end of the path (tabzilla) if you want this virtual environment named differently. This will create a virtual environment in your current directory called "tabzilla" (Mac and Linux only):
+
+```
+> python3.10 -m venv ./tabzilla
+```
+
+and activate the virtual environment:
+```
+> source /home/virtual-environments/tabzilla/bin/activate
+```
+
+3. Install all tabzilla dependencies using the pip requirements file [`TabZilla/pip_requirements.txt`](TabZilla/pip_requirements.txt):
+
+```
+> pip install -r ./pip_requirements.txt
+```
+
+4. Test this python environment using TabZilla unittests. All tests should pass:
+
+```
+> python -m unittest unittests.test_experiments 
+```
+
+and test a specific algorithm using `unittests.test_alg`. For example, to test algorithm "rtdl_MLP", run:
+
+```
+> python -m unittest unittests.test_alg rtdl_MLP
+```
 
 # Running TabZilla Experiments
 
@@ -340,20 +372,33 @@ For any model supporting multi-class classification, you need to ensure the mode
 
 # Unit Tests
 
-The unit tests in [TabZilla/unittests/test_experiments.py](TabZilla/unittests/test_experiments.py) test each algorithm on three datasets using our experiment function. There is one test for each *conda environment*: each test runs all algorithms implemented in the conda environment, for the same three datasets, and checks that the algorithms produce output. You need to manually actiave the conda env before running each test (if you run tests using the wrong conda env, then these tests will fail). You can also modify this unit test file to only run specific algorithms.
+The unit tests in [TabZilla/unittests/test_expriments.py](TabZilla/unittests/test_experiments.py) and [TabZilla/unittests/test_alg.py](TabZilla/unittests/test_alg.py) test different algorithms on five datasets using our experiment function.
 
-To run all tests for all environments, run the following from the TabZilla directory:
+To run tests for two algorithms (linearmodel and randomforest), run the following from the TabZilla directory:
 
 ```
-conda activate sklearn
-python -m unittest unittests.test_experiments.TestExperiment.test_sklearn
+python -m unittests.test_experiments
+```
 
-conda activate gbdt
-python -m unittest unittests.test_experiments.TestExperiment.test_gbdt
+To test a specific algorithm, use `unittests.test_alg`, and pass a single positional argument, the algorithm name:
 
-conda activate torch
-python -m unittest unittests.test_experiments.TestExperiment.test_torch
+```
+python -m unittests.test_alg <alg_name>
+```
 
-conda activate tensorflow
-python -m unittest unittests.test_experiments.TestExperiment.test_tensorflow
+**Hint:** To see all available algorithm names, run the file `tabzilla_alg_handler.py` as a script:
+
+```
+python -m tabzilla_alg_handler
+```
+
+which will print:
+
+```
+all algorithms:
+LinearModel
+KNN
+SVM
+DecisionTree
+...
 ```
