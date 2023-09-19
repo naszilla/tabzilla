@@ -44,9 +44,8 @@ class TabZillaObjective(object):
         self.model_handle = model_handle
 
         self.dataset = dataset
-        self.made_subset = False
         self.experiment_args = experiment_args
-
+        self.dataset.subset_random_seed = self.experiment_args.subset_random_seed
         # directory where results will be written
         self.output_path = Path(self.experiment_args.output_dir).resolve()
 

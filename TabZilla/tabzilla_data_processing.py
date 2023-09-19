@@ -62,6 +62,7 @@ class SubsetMaker(object):
         X,
         y,
         split='train',
+        seed=0,
     ):
         """
         Make a subset of the data matrix X, with subset_features features and subset_rows rows.
@@ -73,6 +74,8 @@ class SubsetMaker(object):
         :param subset_rows_method: method to use for selecting rows
         :return: subset of X, y
         """
+        np.random.seed(seed)
+
         if X.shape[1] > self.subset_features > 0:
             print(f"making {self.subset_features}-sized subset of {X.shape[1]} features ...")
             if self.subset_features_method == "random":
@@ -187,7 +190,7 @@ def process_data(
             print("New Shape:", X_train.shape)
 
     # create subset of dataset if needed
-    if (args.subset_features > 0 or args.subset_rows > 0) and (args.subset_features < args.num_features or args.subset_rows < len(X_train)):
+    if args is not None and (args.subset_features > 0 or args.subset_rows > 0) and (args.subset_features < args.num_features or args.subset_rows < len(X_train)):
         print(f"making subset with {args.subset_features} features and {args.subset_rows} rows...")
         if getattr(dataset, 'ssm', None) is None:
             dataset.ssm = SubsetMaker(args.subset_features, args.subset_rows, args.subset_features_method, args.subset_rows_method)
@@ -195,22 +198,24 @@ def process_data(
             X_train,
             y_train,
             split='train',
+            seed=dataset.subset_random_seed,
         )
         if args.subset_features < args.num_features:
             X_val, y_val = dataset.ssm.make_subset(
                 X_val,
                 y_val,
                 split='val',
+                seed=dataset.subset_random_seed,
             )
             X_test, y_test = dataset.ssm.make_subset(
                 X_test,
                 y_test,
                 split='test',
+                seed=dataset.subset_random_seed,
             )
         print("subset created")
 
     return {
-        "args" : args,
         "data_train": (X_train, y_train),
         "data_val": (X_val, y_val),
         "data_test": (X_test, y_test),

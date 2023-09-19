@@ -62,7 +62,9 @@ def featurize_dataset(dataset_path):
             [0],
             scaler="None",
             one_hot_encode=False,
-            impute=True, )
+            impute=True,
+            args=None,
+            )
         X_train, y_train = processed_data["data_train"]
 
         # Extract metafeatures

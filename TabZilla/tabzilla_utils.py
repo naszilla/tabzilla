@@ -5,7 +5,6 @@ import shutil
 import signal
 import time
 from contextlib import contextmanager
-from collections import namedtuple
 from typing import NamedTuple
 from pathlib import Path
 
@@ -207,7 +206,6 @@ def cross_validation(model: BaseModel, dataset: TabularDataset, time_limit: int,
     }
 
     start_time = time.time()
-    print("Current model: ", model)
     # iterate over all train/val/test splits in the dataset property split_indeces
     for i, split_dictionary in enumerate(dataset.split_indeces):
         if time.time() - start_time > time_limit:
@@ -237,31 +235,26 @@ def cross_validation(model: BaseModel, dataset: TabularDataset, time_limit: int,
         # Train model
         timers["train"].start()
         # loss history can be saved if needed
-        print("Fitting model, iteration ", i, " of ", len(dataset.split_indeces))
         loss_history, val_loss_history = curr_model.fit(
             X_train,
             y_train,
             X_val,
             y_val,
         )
-        print("Done fitting model, history is: ", loss_history, val_loss_history)
         timers["train"].end()
 
         # evaluate on train set
         timers["train-eval"].start()
         train_predictions, train_probs = curr_model.predict_wrapper(X_train, args.subset_rows)
         timers["train-eval"].end()
-        print("Train eval done")
         # evaluate on val set
         timers["val"].start()
         val_predictions, val_probs = curr_model.predict_wrapper(X_val, args.subset_rows)
         timers["val"].end()
-        print("Val eval done")
         # evaluate on test set
         timers["test"].start()
         test_predictions, test_probs = curr_model.predict_wrapper(X_test, args.subset_rows)
         timers["test"].end()
-        print("Test eval done")
         extra_scorer_args = {}
         if dataset.target_type == "classification":
             extra_scorer_args["labels"] = range(dataset.num_classes)
@@ -289,7 +282,6 @@ def cross_validation(model: BaseModel, dataset: TabularDataset, time_limit: int,
         predictions["test"].append(test_predictions.tolist())
         probabilities["test"].append(test_probs.tolist())
         ground_truth["test"].append(y_test.tolist())
-        print("Sample accuracy scores from test set splits: ", scorers["test"].accs)
 
     return ExperimentResult(
         dataset=dataset,
@@ -458,5 +450,11 @@ def get_experiment_parser():
         choices=["random", "first", "mutual_information"],
         default="random",
         help="Method for selecting features. 'random' means select randomly, 'first' means select the first features, 'mutual information' wraps sklearn's mutual_info_classif.",
+    )
+    experiment_parser.add(
+        "--subset_random_seed",
+        type=int,
+        default=0,
+        help="Random seed for subset selection.",
     )
     return experiment_parser
