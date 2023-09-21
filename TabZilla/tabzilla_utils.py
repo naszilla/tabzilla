@@ -5,8 +5,8 @@ import shutil
 import signal
 import time
 from contextlib import contextmanager
-from typing import NamedTuple
 from pathlib import Path
+from typing import NamedTuple
 
 import numpy as np
 from models.basemodel import BaseModel
@@ -14,6 +14,7 @@ from tabzilla_data_processing import process_data
 from tabzilla_datasets import TabularDataset
 from utils.scorer import BinScorer, ClassScorer, RegScorer
 from utils.timer import Timer
+
 
 class NpEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -66,6 +67,7 @@ class ExperimentResult:
     - ground_truth(dict): ground truth for each prediction, stored here just for convenience.
     - hparam_source(str): a string describing how the hyperparameters were generated
     - trial_number(int): trial number
+    - write_predictions(bool): if False, do not write predictions
 
     attributes "predictions", "probabilities", and "ground_truth" each have the same shape as the lists in dataset.split_indeces.
     """
@@ -80,6 +82,7 @@ class ExperimentResult:
         predictions,
         probabilities,
         ground_truth,
+        write_predictions=False,
     ) -> None:
         self.dataset = dataset
         self.scaler = scaler
@@ -89,6 +92,7 @@ class ExperimentResult:
         self.predictions = predictions
         self.probabilities = probabilities
         self.ground_truth = ground_truth
+        self.write_predictions = write_predictions
 
         # we will set these after initialization
         self.hparam_source = None
@@ -118,17 +122,6 @@ class ExperimentResult:
             },
         }
 
-        # add the predictions (lots of data) to a new dict
-        prediction_dict = result_dict.copy()
-
-        prediction_dict["predictions"] = self.predictions
-        prediction_dict["probabilities"] = self.probabilities
-        prediction_dict["ground_truth"] = self.ground_truth
-        prediction_dict["splits"] = [
-            {key: list(val.tolist()) for key, val in split.items()}
-            for split in self.dataset.split_indeces
-        ]
-
         # write results
         for k, v in result_dict.items():
             if not is_jsonable(v, cls=NpEncoder):
@@ -143,25 +136,44 @@ class ExperimentResult:
             cls=NpEncoder,
         )
 
-        # write predictions
-        for k, v in prediction_dict.items():
-            if not is_jsonable(v, cls=NpEncoder):
-                raise Exception(
-                    f"writing predictions: value at key '{k}' is not json serializable: {v}"
-                )
+        if self.write_predictions:
+            # add the predictions (lots of data) to a new dict
+            prediction_dict = result_dict.copy()
 
-        write_dict_to_json(
-            prediction_dict,
-            Path(str(filepath_base) + "_predictions.json"),
-            compress=compress,
-            cls=NpEncoder,
-        )
+            prediction_dict["predictions"] = self.predictions
+            prediction_dict["probabilities"] = self.probabilities
+            prediction_dict["ground_truth"] = self.ground_truth
+            prediction_dict["splits"] = [
+                {key: list(val.tolist()) for key, val in split.items()}
+                for split in self.dataset.split_indeces
+            ]
+
+            # write predictions
+            for k, v in prediction_dict.items():
+                if not is_jsonable(v, cls=NpEncoder):
+                    raise Exception(
+                        f"writing predictions: value at key '{k}' is not json serializable: {v}"
+                    )
+
+            write_dict_to_json(
+                prediction_dict,
+                Path(str(filepath_base) + "_predictions.json"),
+                compress=compress,
+                cls=NpEncoder,
+            )
 
 
 class TimeoutException(Exception):
     pass
 
-def cross_validation(model: BaseModel, dataset: TabularDataset, time_limit: int, scaler: str, args : NamedTuple) -> ExperimentResult:
+
+def cross_validation(
+    model: BaseModel,
+    dataset: TabularDataset,
+    time_limit: int,
+    scaler: str,
+    args: NamedTuple,
+) -> ExperimentResult:
     """
     takes a BaseModel and TabularDataset as input, and trains and evaluates the model using cross validation with all
     folds specified in the dataset property split_indeces. Time limit is checked after each fold, and an exception is raised.
@@ -209,7 +221,9 @@ def cross_validation(model: BaseModel, dataset: TabularDataset, time_limit: int,
     # iterate over all train/val/test splits in the dataset property split_indeces
     for i, split_dictionary in enumerate(dataset.split_indeces):
         if time.time() - start_time > time_limit:
-            raise TimeoutException(f"time limit of {time_limit}s reached during fold {i}")
+            raise TimeoutException(
+                f"time limit of {time_limit}s reached during fold {i}"
+            )
 
         train_index = split_dictionary["train"]
         val_index = split_dictionary["val"]
@@ -245,7 +259,9 @@ def cross_validation(model: BaseModel, dataset: TabularDataset, time_limit: int,
 
         # evaluate on train set
         timers["train-eval"].start()
-        train_predictions, train_probs = curr_model.predict_wrapper(X_train, args.subset_rows)
+        train_predictions, train_probs = curr_model.predict_wrapper(
+            X_train, args.subset_rows
+        )
         timers["train-eval"].end()
         # evaluate on val set
         timers["val"].start()
@@ -253,7 +269,9 @@ def cross_validation(model: BaseModel, dataset: TabularDataset, time_limit: int,
         timers["val"].end()
         # evaluate on test set
         timers["test"].start()
-        test_predictions, test_probs = curr_model.predict_wrapper(X_test, args.subset_rows)
+        test_predictions, test_probs = curr_model.predict_wrapper(
+            X_test, args.subset_rows
+        )
         timers["test"].end()
         extra_scorer_args = {}
         if dataset.target_type == "classification":
@@ -326,7 +344,6 @@ def make_archive(source, destination):
 
 
 import configargparse
-import yaml
 
 # the parsers below are based on the TabSurvey parsers in utils.py
 
@@ -349,6 +366,11 @@ def get_experiment_parser():
         required=True,
         type=str,
         help="directory where experiment results will be written.",
+    )
+    experiment_parser.add_argument(
+        "--write_predictions",
+        action="store_true",
+        help="write the predictions of each model to a json file.",
     )
     experiment_parser.add(
         "--use_gpu", action="store_true", help="Set to true if GPU is available"
