@@ -9,12 +9,12 @@ from tqdm import tqdm
 # Subset of: ['landmarking', 'general', 'statistical', 'model-based', 'info-theory', 'relative', 'clustering',
 # 'complexity', 'itemset', 'concept']
 groups = [
-    'landmarking',
-    'general',
-    'statistical',
-    'model-based',
-    'info-theory',
-    'relative',
+    "landmarking",
+    "general",
+    "statistical",
+    "model-based",
+    "info-theory",
+    "relative",
     # 'clustering', # OOM
     # 'complexity', # OOM
     # 'itemset', # OOM
@@ -64,33 +64,29 @@ def featurize_dataset(dataset_path):
             one_hot_encode=False,
             impute=True,
             args=None,
-            )
+        )
         X_train, y_train = processed_data["data_train"]
 
         # Extract metafeatures
-        mfe = MFE(
-            groups=groups,
-            summary=summary_funcs,
-            random_state=0,
-            score=scoring)
+        mfe = MFE(groups=groups, summary=summary_funcs, random_state=0, score=scoring)
 
         mfe.fit(
             X_train,
             y_train,
             cat_cols=dataset.cat_idx,
             transform_num=False,
-            transform_cat=None)
+            transform_cat=None,
+        )
         ft = mfe.extract()
 
         # Consolidate results
         fold_metafeats = {"dataset_name": f"{dataset.name}__fold_{fold_idx}"}
         for group in groups:
             ft_group = mfe.parse_by_group(group, ft)
-            fold_metafeats.update({
-                f"f__pymfe.{group}.{name}": value
-                for name, value in zip(*ft_group)
-            })
-            #metafeats += [{"group": group, "name": name, "value": value} for name, value in zip(*ft_group)]
+            fold_metafeats.update(
+                {f"f__pymfe.{group}.{name}": value for name, value in zip(*ft_group)}
+            )
+            # metafeats += [{"group": group, "name": name, "value": value} for name, value in zip(*ft_group)]
         metafeats.append(fold_metafeats)
     return metafeats
 
@@ -107,11 +103,11 @@ def featurize_all_datasets():
 
     for dataset_path in data_path.glob("*"):
         sample_name = f"{dataset_path.name}__fold_0"
-        if computed_features is not None and  sample_name in computed_features.index:
+        if computed_features is not None and sample_name in computed_features.index:
             continue
 
         print(dataset_path)
-        #dataset = TabularDataset.read(Path("datasets/openml__covertype__7593"))
+        # dataset = TabularDataset.read(Path("datasets/openml__covertype__7593"))
 
         dataset_metafeatures = featurize_dataset(dataset_path)
         if dataset_metafeatures is None:
@@ -127,5 +123,6 @@ def featurize_all_datasets():
             computed_features = pd.concat([dataset_metafeatures, computed_features])
         print("Writing. Do not interrupt...")
         computed_features.to_csv(output_file)
+
 
 featurize_all_datasets()

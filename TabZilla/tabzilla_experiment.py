@@ -144,7 +144,13 @@ class TabZillaObjective(object):
 
         # Cross validate the chosen hyperparameters
         try:
-            result = cross_validation(model, self.dataset, self.time_limit, scaler=args.scale_numerical_features, args=args)
+            result = cross_validation(
+                model,
+                self.dataset,
+                self.time_limit,
+                scaler=args.scale_numerical_features,
+                args=args,
+            )
             obj_val = result.scorers["val"].get_objective_result()
         except Exception as e:
             print(f"caught exception during cross-validation...")
@@ -176,8 +182,10 @@ class TabZillaObjective(object):
 
         return obj_val
 
+
 def iteration_callback(study, trial):
     print(f"Trial {trial.number + 1} complete")
+
 
 def main(experiment_args, model_name, dataset_dir):
     # read dataset from folder

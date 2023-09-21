@@ -1,14 +1,17 @@
-import numpy as np
 import time
+
+import numpy as np
 from sklearn.compose import ColumnTransformer
+from sklearn.feature_selection import SelectKBest, mutual_info_classif
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, QuantileTransformer
-from sklearn.feature_selection import SelectKBest, mutual_info_classif
+
 
 class SubsetMaker(object):
-
-    def __init__(self, subset_features, subset_rows, subset_features_method, subset_rows_method):
+    def __init__(
+        self, subset_features, subset_rows, subset_features_method, subset_rows_method
+    ):
         self.subset_features = subset_features
         self.subset_rows = subset_rows
         self.subset_features_method = subset_features_method
@@ -17,39 +20,45 @@ class SubsetMaker(object):
         self.feature_selector = None
 
     def random_subset(self, X, y, action=[]):
-        if 'rows' in action:
+        if "rows" in action:
             row_indices = np.random.choice(X.shape[0], self.subset_rows, replace=False)
         else:
             row_indices = np.arange(X.shape[0])
-        if 'features' in action:
-            feature_indices = np.random.choice(X.shape[1], self.subset_features, replace=False)
+        if "features" in action:
+            feature_indices = np.random.choice(
+                X.shape[1], self.subset_features, replace=False
+            )
         else:
             feature_indices = np.arange(X.shape[1])
         return X[row_indices[:, None], feature_indices], y[row_indices]
-    
+
     def first_subset(self, X, y, action=[]):
-        if 'rows' in action:
+        if "rows" in action:
             row_indices = np.arange(self.subset_rows)
         else:
             row_indices = np.arange(X.shape[0])
-        if 'features' in action:
+        if "features" in action:
             feature_indices = np.arange(self.subset_features)
         else:
             feature_indices = np.arange(X.shape[1])
         return X[row_indices[:, None], feature_indices], y[row_indices]
-    
-    def mutual_information_subset(self, X, y, action='features', split='train'):
-        if split not in ['train', 'val', 'test']:
+
+    def mutual_information_subset(self, X, y, action="features", split="train"):
+        if split not in ["train", "val", "test"]:
             raise ValueError("split must be 'train', 'val', or 'test'")
-        if split == 'train':
-            #NOTE: we are only fitting on the first split we see to save time here
-            if getattr(self, 'feature_selector', None) is None:
+        if split == "train":
+            # NOTE: we are only fitting on the first split we see to save time here
+            if getattr(self, "feature_selector", None) is None:
                 print("Fitting mutual information feature selector ...")
-                #start the timer
+                # start the timer
                 timer = time.time()
-                self.feature_selector = SelectKBest(mutual_info_classif, k=self.subset_features)
+                self.feature_selector = SelectKBest(
+                    mutual_info_classif, k=self.subset_features
+                )
                 X = self.feature_selector.fit_transform(X, y)
-                print(f"Done fitting mutual information feature selector in {round(time.time() - timer, 1)} seconds")
+                print(
+                    f"Done fitting mutual information feature selector in {round(time.time() - timer, 1)} seconds"
+                )
             else:
                 X = self.feature_selector.transform(X)
             return X, y
@@ -61,7 +70,7 @@ class SubsetMaker(object):
         self,
         X,
         y,
-        split='train',
+        split="train",
         seed=0,
     ):
         """
@@ -77,25 +86,34 @@ class SubsetMaker(object):
         np.random.seed(seed)
 
         if X.shape[1] > self.subset_features > 0:
-            print(f"making {self.subset_features}-sized subset of {X.shape[1]} features ...")
+            print(
+                f"making {self.subset_features}-sized subset of {X.shape[1]} features ..."
+            )
             if self.subset_features_method == "random":
-                X, y = self.random_subset(X, y, action=['features'])
+                X, y = self.random_subset(X, y, action=["features"])
             elif self.subset_features_method == "first":
-                X, y = self.first_subset(X, y, action=['features'])
+                X, y = self.first_subset(X, y, action=["features"])
             elif self.subset_features_method == "mutual_information":
-                X, y = self.mutual_information_subset(X, y, action='features', split=split)
+                X, y = self.mutual_information_subset(
+                    X, y, action="features", split=split
+                )
             else:
-                raise ValueError(f"subset_features_method not recognized: {self.subset_features_method}")
+                raise ValueError(
+                    f"subset_features_method not recognized: {self.subset_features_method}"
+                )
         if X.shape[0] > self.subset_rows > 0:
             print(f"making {self.subset_rows}-sized subset of {X.shape[0]} rows ...")
             if self.subset_rows_method == "random":
-                X, y = self.random_subset(X, y, action=['rows'])
+                X, y = self.random_subset(X, y, action=["rows"])
             elif self.subset_rows_method == "first":
-                X, y = self.first_subset(X, y, action=['rows'])
+                X, y = self.first_subset(X, y, action=["rows"])
             else:
-                raise ValueError(f"subset_rows_method not recognized: {self.subset_rows_method}")
+                raise ValueError(
+                    f"subset_rows_method not recognized: {self.subset_rows_method}"
+                )
 
         return X, y
+
 
 def process_data(
     dataset,
@@ -190,27 +208,40 @@ def process_data(
             print("New Shape:", X_train.shape)
 
     # create subset of dataset if needed
-    if args is not None and (args.subset_features > 0 or args.subset_rows > 0) and (args.subset_features < args.num_features or args.subset_rows < len(X_train)):
-        print(f"making subset with {args.subset_features} features and {args.subset_rows} rows...")
-        if getattr(dataset, 'ssm', None) is None:
-            dataset.ssm = SubsetMaker(args.subset_features, args.subset_rows, args.subset_features_method, args.subset_rows_method)
+    if (
+        args is not None
+        and (args.subset_features > 0 or args.subset_rows > 0)
+        and (
+            args.subset_features < args.num_features or args.subset_rows < len(X_train)
+        )
+    ):
+        print(
+            f"making subset with {args.subset_features} features and {args.subset_rows} rows..."
+        )
+        if getattr(dataset, "ssm", None) is None:
+            dataset.ssm = SubsetMaker(
+                args.subset_features,
+                args.subset_rows,
+                args.subset_features_method,
+                args.subset_rows_method,
+            )
         X_train, y_train = dataset.ssm.make_subset(
             X_train,
             y_train,
-            split='train',
+            split="train",
             seed=dataset.subset_random_seed,
         )
         if args.subset_features < args.num_features:
             X_val, y_val = dataset.ssm.make_subset(
                 X_val,
                 y_val,
-                split='val',
+                split="val",
                 seed=dataset.subset_random_seed,
             )
             X_test, y_test = dataset.ssm.make_subset(
                 X_test,
                 y_test,
-                split='test',
+                split="test",
                 seed=dataset.subset_random_seed,
             )
         print("subset created")
