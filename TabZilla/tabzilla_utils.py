@@ -65,7 +65,6 @@ class ExperimentResult:
     - ground_truth(dict): ground truth for each prediction, stored here just for convenience.
     - hparam_source(str): a string describing how the hyperparameters were generated
     - trial_number(int): trial number
-    - write_predictions(bool): if False, do not write predictions
 
     attributes "predictions", "probabilities", and "ground_truth" each have the same shape as the lists in dataset.split_indeces.
     """
@@ -80,7 +79,6 @@ class ExperimentResult:
         predictions,
         probabilities,
         ground_truth,
-        write_predictions=False,
     ) -> None:
         self.dataset = dataset
         self.scaler = scaler
@@ -90,7 +88,6 @@ class ExperimentResult:
         self.predictions = predictions
         self.probabilities = probabilities
         self.ground_truth = ground_truth
-        self.write_predictions = write_predictions
 
         # we will set these after initialization
         self.hparam_source = None
@@ -98,11 +95,11 @@ class ExperimentResult:
         self.experiemnt_args = None
         self.exception = None
 
-    def write(self, filepath_base, compress=False):
+    def write(self, filepath_base, write_predictions=False, compress=False):
         """
         write two files:
         - one with the results from the trial, including metadata and performance, and
-        - one with all metadata, all predictions, ground truth, and split indices.
+        - if self.write_predictions, write one filew with all metadata, all predictions, ground truth, and split indices.
         """
 
         # create a dict with all output we want to store
@@ -134,7 +131,7 @@ class ExperimentResult:
             cls=NpEncoder,
         )
 
-        if self.write_predictions:
+        if write_predictions:
             # add the predictions (lots of data) to a new dict
             prediction_dict = result_dict.copy()
 

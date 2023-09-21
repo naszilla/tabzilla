@@ -178,7 +178,11 @@ class TabZillaObjective(object):
         result_file_base = self.output_path.joinpath(
             f"{hparam_source}_trial{trial.number}"
         )
-        result.write(result_file_base, compress=False)
+        result.write(
+            result_file_base,
+            write_predictions=self.experiment_args.write_predictions,
+            compress=False,
+        )
 
         return obj_val
 

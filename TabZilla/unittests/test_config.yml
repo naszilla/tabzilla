@@ -1,5 +1,6 @@
-###### directory where results will be written
+###### i/o
 output_dir: ./unittests/results/
+write_predictions: True
 
 ###### experiment & trial time limit in seconds (10 hours / 2 hours)
 experiment_time_limit: 36000
@@ -22,4 +23,6 @@ val_batch_size: 256
 early_stopping_rounds: 20
 epochs: 2
 logging_period: 100
+
+###### Preprocessing of numerical features
 scale_numerical_features: Quantile
