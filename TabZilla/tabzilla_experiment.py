@@ -45,7 +45,7 @@ class TabZillaObjective(object):
 
         self.dataset = dataset
         self.experiment_args = experiment_args
-
+        self.dataset.subset_random_seed = self.experiment_args.subset_random_seed
         # directory where results will be written
         self.output_path = Path(self.experiment_args.output_dir).resolve()
 
@@ -100,6 +100,10 @@ class TabZillaObjective(object):
                 "dataset",
                 "cat_idx",
                 "num_features",
+                "subset_features",
+                "subset_rows",
+                "subset_features_method",
+                "subset_rows_method",
                 "cat_dims",
                 "num_classes",
                 "logging_period",
@@ -127,6 +131,10 @@ class TabZillaObjective(object):
             dataset=self.dataset.name,
             cat_idx=self.dataset.cat_idx,
             num_features=self.dataset.num_features,
+            subset_features=self.experiment_args.subset_features,
+            subset_rows=self.experiment_args.subset_rows,
+            subset_features_method=self.experiment_args.subset_features_method,
+            subset_rows_method=self.experiment_args.subset_rows_method,
             cat_dims=self.dataset.cat_dims,
             num_classes=self.dataset.num_classes,
         )
@@ -136,12 +144,7 @@ class TabZillaObjective(object):
 
         # Cross validate the chosen hyperparameters
         try:
-            result = cross_validation(
-                model,
-                self.dataset,
-                self.time_limit,
-                scaler=args.scale_numerical_features,
-            )
+            result = cross_validation(model, self.dataset, self.time_limit, scaler=args.scale_numerical_features, args=args)
             obj_val = result.scorers["val"].get_objective_result()
         except Exception as e:
             print(f"caught exception during cross-validation...")
@@ -173,6 +176,8 @@ class TabZillaObjective(object):
 
         return obj_val
 
+def iteration_callback(study, trial):
+    print(f"Trial {trial.number + 1} complete")
 
 def main(experiment_args, model_name, dataset_dir):
     # read dataset from folder
@@ -209,6 +214,7 @@ def main(experiment_args, model_name, dataset_dir):
             objective,
             n_trials=experiment_args.n_random_trials,
             timeout=experiment_args.experiment_time_limit,
+            callbacks=[iteration_callback],
         )
         previous_trials = study.trials
     else:

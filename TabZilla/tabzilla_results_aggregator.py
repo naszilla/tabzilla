@@ -10,7 +10,10 @@ from pathlib import Path
 from zipfile import ZipFile
 
 import pandas as pd
-from google.cloud import storage  # pip install google-cloud-storage
+try:
+    from google.cloud import storage
+except ImportError:
+    print("Google cloud not installed")
 
 logging.basicConfig(format="[%(asctime)s] : %(message)s", level=logging.INFO)
 
@@ -202,11 +205,15 @@ def parse_results_file_blob(results_file, blob_path):
         contents = json.load(f)
 
     is_exception = contents["exception"] != "None"
+    try:
+        blob_path_posix = blob_path.as_posix()
+    except:
+        blob_path_posix = blob_path
     if not is_exception:
         num_folds = len(contents["timers"]["train"])
         for fold_number in range(num_folds):
             fold_results = dict(
-                results_bucket_path=blob_path.as_posix(),
+                results_bucket_path=blob_path_posix,
                 dataset_fold_id=f"{dataset_name}__fold_{fold_number}",
                 dataset_name=dataset_name,
                 target_type=contents["dataset"]["target_type"],
@@ -229,7 +236,7 @@ def parse_results_file_blob(results_file, blob_path):
             result_list.append(fold_results)
     else:
         exception_info = dict(
-            results_bucket_path=blob_path.as_posix(),
+            results_bucket_path=blob_path_posix,
             dataset_name=dataset_name,
             alg_name=contents["model"]["name"],
             hparam_source=contents["hparam_source"],

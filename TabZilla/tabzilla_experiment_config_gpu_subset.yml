@@ -25,7 +25,7 @@ logging_period: 100
 scale_numerical_features: Quantile
 
 ##### Subset parameters
-subset_features: -1
-subset_rows: -1
-subset_features_method: random
+subset_features: 100
+subset_rows: 1000
+subset_features_method: mutual_information
 subset_rows_method: random
