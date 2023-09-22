@@ -84,10 +84,10 @@ and activate the virtual environment:
 > python -m unittest unittests.test_experiments 
 ```
 
-and test a specific algorithm using `unittests.test_alg`. For example, to test algorithm "rtdl_MLP", run:
+and test a specific algorithm using `unittests.test_alg` **without** using the unittest module. For example, to test algorithm "rtdl_MLP", run:
 
 ```
-> python -m unittest unittests.test_alg rtdl_MLP
+> python -m unittests.test_alg rtdl_MLP
 ```
 
 # Running TabZilla Experiments
