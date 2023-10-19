@@ -7,7 +7,7 @@
 
 `TabZilla` is a framework which provides the functionality to compare many different tabular algorithms across a large, diverse set of tabular datasets, as well as to determine dataset properties associated with the performance of certain algorithms and algorithm families.
 
-See our paper at [https://arxiv.org/abs/2305.02997](https://arxiv.org/abs/2305.02997).
+See our NeurIPS 2023 Datasets and Benchmarks paper at [https://arxiv.org/abs/2305.02997](https://arxiv.org/abs/2305.02997).
 
 
 # Overview
