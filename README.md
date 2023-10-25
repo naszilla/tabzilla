@@ -402,3 +402,14 @@ SVM
 DecisionTree
 ...
 ```
+
+## Citation 
+Please cite our work if you use code from this repo:
+```bibtex
+@inproceedings{mcelfresh2023neural,
+  title={When Do Neural Nets Outperform Boosted Trees on Tabular Data?}, 
+  author={McElfresh, Duncan and Khandagale, Sujay and Valverde, Jonathan and Ramakrishnan, Ganesh and Prasad, Vishak and Goldblum, Micah and White, Colin}, 
+  booktitle={Advances in Neural Information Processing Systems},
+  year={2023}, 
+} 
+```
