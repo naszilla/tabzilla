@@ -140,6 +140,35 @@ The script [`scripts/test_tabzilla_on_instance.sh`](scripts/test_tabzilla_on_ins
 
 **Note:** Our code downloads datasets from [OpenML](https://www.openml.org/), so you will need to install the openml python module. If this code hangs or raises an error when downloading datasets, you may need to create an OpenML account (on their website) and authenticate your local machine in order to download datasets. If you run into any issues, please follow [these installation and authentication instructions](https://openml.github.io/openml-python/main/examples/20_basic/introduction_tutorial.html#sphx-glr-examples-20-basic-introduction-tutorial-py).  
 
+**To download and pre-process all datasets**, use run the following command from the TabZilla folder:
+
+```bash
+> python tabzilla_data_preprocessing.py --process_all
+```
+
+This will download all datasets, and write a pre-processed version of each
+to a local directory `TabZilla/datasets/<dataset name>`.
+
+**To download and pre-process a single dataset**, run the following from the TabZilla folder
+
+```bash
+> python tabzilla_data_preprocessing.py --dataset_name <dataset name>
+```
+
+For example, the following command will download the dataset "openml__california__361089":
+
+```bash
+> python tabzilla_data_preprocessing.py --dataset_name openml__california__361089
+```
+
+To print a list of all dataset names that can be passed to this script, run:
+
+```bash
+> python tabzilla_data_preprocessing.py --print_dataset_names
+```
+
+## More details about datasets
+
 Datasets are handled using the class [`TabZilla.tabzilla_datasets.TabularDataset`](TabZilla/tabzilla_datasets.py); all datasets are accessed using an instance of this class. Each dataset is initialized using a function with the decorator `dataset_preprocessor` defined in [`TabZilla/tabzilla_preprocessor_utils.py`](TabZilla/tabzilla_preprocessor_utils.py). Each of these functions is accessed through function `preprocess_dataset()`, which returns any defined datasets by name. For example, the following code will return a `TabularDataset` object representing the `openml__california__361089` dataset, and will write it to a local directory unless it already has been written:
 
 ```python
@@ -149,19 +178,6 @@ dataset = preprocess_dataset("openml__california__361089", overwrite=False)
 ```
 
 Calling function `preprocess_dataset()` will write a local copy of the dataset (flag `overwrite`) determines whether the dataset will be rewritten if it already exists. It is not necessary to write datasets to file to run experiments (they can just live in memory), however find it helpful to write dataset files for bookkeeping. Once a dataset is preprocessed and written to a local directory, it can be read directly into a `TabularDataset` object.
-
-Calling `tabzilla_data_preprocessing.py` as a script will preprocess selected datasets, writing them to local directories. For example, the following command:
-
-```bash
-> python tabzilla_data_preprocessing.py --dataset_name openml__california__361089
-```
-
-will preprocess and write the `CaliforniaHousing` dataset to local directory `tabzilla/TabZilla/datasets/CaliforniaHousing`.
-
-If you wish to process all of the datasets instead, you can execute the following:
-```bash
-> python tabzilla_data_preprocessing.py --process_all
-```
 
 ## Reading Preprocessed Datasets
 
