@@ -31,11 +31,12 @@ Adding new datasets and algorithms to this codebase is fairly easy. All datasets
     2. [Experiment Config Parser](#experiment-config-parser)
     3. [Running Individual Experiments](#running-individual-experiments)
 4. [Datasets](#datasets)
-    1. [Reading Preprocessed Datasets](#reading-preprocessed-datasets)
-    2. [Adding New Datasets](#adding-new-datasets)
-5. [Metafeature Extraction](#metafeature-extraction)
-6. [Implementing New Models](#implementing-new-models)
-7. [Unit Tests](#unit-tests)
+    1. [Dataset Class and Preprocessing](#dataset-class-and-preprocessing) 
+    2. [Reading Preprocessed Datasets](#reading-preprocessed-datasets)
+    3. [Adding New Datasets](#adding-new-datasets)
+6. [Metafeature Extraction](#metafeature-extraction)
+7. [Implementing New Models](#implementing-new-models)
+8. [Unit Tests](#unit-tests)
 
 # Documentation
 Here, we describe our dataset documentation. All of this information is also available in our paper.
@@ -167,7 +168,7 @@ To print a list of all dataset names that can be passed to this script, run:
 > python tabzilla_data_preprocessing.py --print_dataset_names
 ```
 
-## More details about datasets
+## Dataset Class and Preprocessing
 
 Datasets are handled using the class [`TabZilla.tabzilla_datasets.TabularDataset`](TabZilla/tabzilla_datasets.py); all datasets are accessed using an instance of this class. Each dataset is initialized using a function with the decorator `dataset_preprocessor` defined in [`TabZilla/tabzilla_preprocessor_utils.py`](TabZilla/tabzilla_preprocessor_utils.py). Each of these functions is accessed through function `preprocess_dataset()`, which returns any defined datasets by name. For example, the following code will return a `TabularDataset` object representing the `openml__california__361089` dataset, and will write it to a local directory unless it already has been written:
 
